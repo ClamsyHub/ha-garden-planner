@@ -1,3 +1,5 @@
+> Current: [v0.1.1](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.1) is published; [catalog PR #13526](https://github.com/hacs/default/pull/13526) is open, not accepted. See [current evidence](catalog/README.md). The v0.1.0 evidence below is historical.
+
 # Publication report — v0.1.0
 
 Date: 2026-11-06. First public **development pre-release**, not stable 1.0.

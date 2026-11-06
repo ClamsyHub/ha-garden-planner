@@ -45,12 +45,12 @@ truncation: SHA `670573f11dc9a6514efc630f884a80dbb501cc58` contains no garden_pl
 directory. We do not describe the failed website fetch as a passed test. Upstream
 CI repeats its own endpoint check after any actual PR submission.
 
-## Pending external evidence
+## Completed external evidence
 
-Candidate GitHub CI permalinks are added to the review record after those jobs
-finish. Publication, public-store upgrade verification, a complete truthful PR
-checklist and maintainer acceptance remain separate steps. Tests and source
-preparation do not authorize a new public release by themselves.
+[Protected release workflow](https://github.com/ClamsyHub/ha-garden-planner/actions/runs/42249493733)
+completed all nine jobs successfully. The owner-approved regular v0.1.1 is public.
+Actual public-package HACS/Marketplace upgrades preserved all exported garden tables.
+See [submission status and test matrix](README.md). Maintainer acceptance remains pending.
 
 ## Build reproducibility investigation
 
@@ -58,4 +58,4 @@ The first candidate CI correctly rejected a JavaScript byte mismatch. Local buil
 had reused an external node_modules tree. A clean npm ci from the same lockfile
 in this checkout generated the same-size output as the Linux runner. The exact
 comparison remains mandatory; the regenerated artifact and all browser tests are
-rechecked before readiness is claimed. No failed check is ignored or disabled.
+passed on the final release commit. No failed check is ignored or disabled.

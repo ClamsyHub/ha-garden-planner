@@ -2,13 +2,13 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand: öffentliche Entwicklungsversion v0.1.0
+## Stand: öffentliche Entwicklungsversion v0.1.1
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
 sowie einen Kalender für konkrete Aufgaben und dokumentierte Kulturereignisse
 bereit. [Repository](https://github.com/ClamsyHub/ha-garden-planner) und
-[Vorabversion v0.1.0](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.0)
+[Version v0.1.1](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.1)
 sind öffentlich. Keine Aufnahme in den offiziellen Katalog. Entwicklung und Tests
 erfolgen außerhalb produktiver Dateien.
 
@@ -28,16 +28,16 @@ wurden die in [Validierung](../validation.md) angegebenen Umgebungen.
 1. In HACS bzw. Marketplace **Benutzerdefiniertes Repository / Custom Repository**
    öffnen. Für ein eigenes Repository im Marketplace zuerst GitHub verbinden.
 2. `https://github.com/ClamsyHub/ha-garden-planner` als Typ **Integration** hinzufügen.
-3. **Vorabversionen / Pre-releases anzeigen** aktivieren, da v0.1.0 eine
-   Entwicklungsversion ist. Anschließend v0.1.0 herunterladen/installieren.
+3. v0.1.1 herunterladen/installieren. Dafür müssen Vorabversionen nicht aktiviert werden.
 4. HA bei entsprechender Aufforderung neu starten (bei HACS empfohlen).
 5. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden
    Planner auswählen und bestätigen. Das Panel erscheint automatisch.
 
 Die direkte Katalogsuche wird erst nach akzeptiertem Aufnahme-PR verfügbar.
 GitHub-Veröffentlichung, Custom Repository und offizieller Katalog sind drei
-getrennte Schritte. Tatsächlich getestet: HACS 2.0.5 mit HA 2026.6.0 und der native
-Marketplace mit HA 2026.11.0. [Nachweis](../publication.md).
+getrennte Schritte. Das öffentliche Update v0.1.0 → v0.1.1 wurde über HACS 2.0.5
+mit HA 2026.7.0 und den nativen Marketplace mit HA 2026.11.0 getestet.
+Alle Gartendaten blieben erhalten. [Nachweis und PR-Status](../catalog/README.md).
 
 ## Bedienung und Berechtigungen
 

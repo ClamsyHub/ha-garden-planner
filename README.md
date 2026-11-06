@@ -6,10 +6,10 @@
 
 Lokaler Aussaat-, Pflanz-, Pflege- und Erntekalender für Home Assistant.
 
-**Öffentliche Entwicklungsversion: [v0.1.0](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.0).**
+**Öffentliche Entwicklungsversion: [v0.1.1](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.1).**
 Automatisches Seitenleisten-Panel, Live-Temperaturen, Sensor-/Kalender-Entitäten,
 Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Dies ist eine
-Vorabversion, noch keine stabile Version 1.0.
+frühe Version 0.x, noch keine stabile Version 1.0.
 
 Quellcode: [ClamsyHub/ha-garden-planner](https://github.com/ClamsyHub/ha-garden-planner).
 Die erste Entwicklungsversion ist veröffentlicht und als Custom Repository
@@ -18,9 +18,9 @@ offiziellen Katalog. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**In Vorbereitung:** v0.1.1 mit Wochenansicht-/Sensor-Auswahl-Korrekturen und
-gepatchtem HA-Sicherheitsminimum. Der Katalogantrag wird vorbereitet;
-Veröffentlichung und Einreichung sind noch nicht erfolgt. [Status](docs/catalog/README.md).
+**Veröffentlicht:** v0.1.1 mit Wochenansicht-/Sensor-Auswahl-Korrekturen und
+gepatchtem HA-Sicherheitsminimum. [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
+ist eingereicht und wartet auf die Maintainer. [Status](docs/catalog/README.md).
 
 ## Oberfläche
 

@@ -1,6 +1,6 @@
 # Local UI fixes — 2026-11-06
 
-Unreleased changes following v0.1.0; no release tag or public asset is replaced.
+Changes published in v0.1.1; the v0.1.0 tag and public asset remain unchanged.
 
 - The panel's week view now lists seasonal windows that actually overlap the
   selected Monday–Sunday week, clipped to matching days. Winter/year boundaries

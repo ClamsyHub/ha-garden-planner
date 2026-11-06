@@ -18,10 +18,10 @@
 - **Phase 6 – publication:** approved public repository and development release
   v0.1.0, successful mandatory GitHub CI, actual HACS/Marketplace installation,
   re-download and restart tests. Complete; see [evidence](publication.md).
-- **Phase 7 – catalog:** prepare an English PR to hacs/default; submit only after
-  approval. Membership is complete only when maintainers accept the PR and the
-  catalog processes it.
+- **Phase 7 – catalog:** owner-approved regular v0.1.1 published; public store
+  upgrades verified. [PR #13526](https://github.com/hacs/default/pull/13526) submitted.
+  Awaiting maintainer triage and acceptance; catalog membership is not complete.
 
-Version 0.1.0 is published as a development pre-release. Feature releases and 1.0.0 require passing runtime tests.
+Version 0.1.1 is published as a regular early-development release. Feature releases and 1.0.0 require passing runtime tests.
 Later scope: photos, seed stock, yields, crop rotation, companion planting and
 weather history. No unsourced horticultural claims or private user data in samples.

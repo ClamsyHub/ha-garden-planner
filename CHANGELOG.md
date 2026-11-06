@@ -1,13 +1,13 @@
 # Changelog
 
-## 0.1.1 — release candidate (not published)
+## 0.1.1 — 2026-11-06
 
 - Show seasonal growing windows overlapping the selected week, alongside actual tasks/events.
 - Replace the native temperature-sensor datalist with an anchored, searchable and keyboard/touch-accessible picker.
 
 
 - Replace vulnerable HA 2026.6 test dependency; security minimum is HA 2026.7.
-- Prepare catalog submission and an owner-approved regular release channel.
+- Publish through the owner-approved regular release channel; catalog PR #13526 submitted, acceptance pending.
 
 ## 0.1.0 — 2026-11-06 (development pre-release)
 

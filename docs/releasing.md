@@ -88,3 +88,10 @@ Review release maturity requirements before submitting.
 Current Marketplace docs/validators accept a local brand folder. Legacy HACS docs
 still mention the brands repository; validate current requirements rather than
 suppressing checks or opening an unnecessary upstream PR.
+
+## Completed v0.1.1 publication
+
+The owner explicitly approved the regular v0.1.1 release and catalog PR.
+[Release](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.1) and [protected workflow](https://github.com/ClamsyHub/ha-garden-planner/actions/runs/42249493733)
+are complete; all nine workflow jobs succeeded. [PR #13526](https://github.com/hacs/default/pull/13526)
+is open, with maintainer edits enabled. Future releases still require approval.

@@ -11,15 +11,15 @@ Make sure to check out the guide here: https://hacs.xyz/docs/publish/start
 - [x] (For integrations only) I've added the [hassfest action](https://developers.home-assistant.io/blog/2020/04/16/hassfest/) to my repository.
 - [x] The actions are passing without any disabled checks in my repository.
 - [x] I've added a link to the action run on my repository below in the links section.
-- [ ] I've created a new release of the repository after the validation actions were run successfully.
+- [x] I've created a new release of the repository after the validation actions were run successfully.
 
 ## Links
 
 <!-- Do not open a pull request before you have provided all these, it will be closed. -->
 
-Link to current release: PENDING — candidate v0.1.1 must be published after successful validation.
-Link to successful HACS action (without the `ignore` key): PENDING candidate CI permalink.
-Link to successful hassfest action (if integration): PENDING candidate CI permalink.
+Link to current release: https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.1
+Link to successful HACS action (without the `ignore` key): https://github.com/ClamsyHub/ha-garden-planner/actions/runs/42249493733/job/128000469761
+Link to successful hassfest action (if integration): https://github.com/ClamsyHub/ha-garden-planner/actions/runs/42249493733/job/128000469529
 
 <!-- tid:73253df5-5376-4e68-8c16-b234da6a2de3 -->
 
@@ -34,6 +34,6 @@ temperature sensors and explicitly opt-in reminders use existing HA facilities.
 This submission is for the `integration` category and the `garden_planner` domain.
 It does not replace a core integration. Local original brand icons are included.
 Custom Repository installation has been tested with HACS and native Marketplace.
-Version 0.1.1 will require HA >=2026.7.0; it remains an early 0.x project.
+Version 0.1.1 requires HA >=2026.7.0; it remains an early 0.x project.
 
 No catalog membership is claimed before maintainer acceptance.
