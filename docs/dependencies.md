@@ -7,8 +7,8 @@ are declared in manifest.json; Lit and fflate are compiled into the bundled UI.
 
 Development tooling: Ruff (MIT) and mypy (MIT), pinned in pyproject.toml. GitHub
 Actions: checkout, setup-python, HACS Action and hassfest. Review their current
-licenses and transitive dependencies before public release. Workflows pin reviewed upstream commit SHAs (2026-11-06); Dependabot maintains
-Action and npm/Python update proposals. GitHub execution evidence is recorded
+licenses and transitive dependencies before public release. Workflows pin reviewed upstream commit SHAs (2026-11-06); Dependabot version-update PRs are paused
+(open-pull-requests-limit: 0) until separately authorized; review updates manually. GitHub execution evidence is recorded
 in the publication report. No skipped HACS checks are configured.
 
 Frontend runtime dependencies are locked in frontend/package-lock.json:
