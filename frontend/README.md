@@ -19,6 +19,10 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
+Use a fresh `npm ci --ignore-scripts` inside this checkout; do not symlink
+node_modules from another checkout. External dependency realpaths can change
+bundler module ordering and break the exact distribution comparison.
+
 For intentional source changes, run `npm run build` before `check:bundle` and
 commit the resulting bundle and license asset with the source. Do not hand-edit
 generated JavaScript. `check:bundle` compares a fresh build byte-for-byte against

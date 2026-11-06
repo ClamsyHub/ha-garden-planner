@@ -51,3 +51,11 @@ Candidate GitHub CI permalinks are added to the review record after those jobs
 finish. Publication, public-store upgrade verification, a complete truthful PR
 checklist and maintainer acceptance remain separate steps. Tests and source
 preparation do not authorize a new public release by themselves.
+
+## Build reproducibility investigation
+
+The first candidate CI correctly rejected a JavaScript byte mismatch. Local builds
+had reused an external node_modules tree. A clean npm ci from the same lockfile
+in this checkout generated the same-size output as the Linux runner. The exact
+comparison remains mandatory; the regenerated artifact and all browser tests are
+rechecked before readiness is claimed. No failed check is ignored or disabled.

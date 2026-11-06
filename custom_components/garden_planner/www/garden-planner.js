@@ -177,7 +177,7 @@ function T(e, t) {
 		name: typeof t.attributes.friendly_name == "string" ? t.attributes.friendly_name : e
 	})).filter(({ id: e, name: t }) => `${e} ${t}`.toLocaleLowerCase().includes(n)).sort((e, t) => e.name.localeCompare(t.name) || e.id.localeCompare(t.id));
 }
-// ../../garden-planner-phase6/frontend/node_modules/@lit/reactive-element/css-tag.js
+// node_modules/@lit/reactive-element/css-tag.js
 var E = globalThis, D = E.ShadowRoot && (E.ShadyCSS === void 0 || E.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, O = Symbol(), ee = /* @__PURE__ */ new WeakMap(), k = class {
 	constructor(e, t, n) {
 		if (this._$cssResult$ = !0, n !== O) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
@@ -431,7 +431,7 @@ var ce = class extends HTMLElement {
 	firstUpdated(e) {}
 };
 ce.elementStyles = [], ce.shadowRootOptions = { mode: "open" }, ce[B("elementProperties")] = /* @__PURE__ */ new Map(), ce[B("finalized")] = /* @__PURE__ */ new Map(), ie?.({ ReactiveElement: ce }), (R.reactiveElementVersions ??= []).push("2.1.2");
-// ../../garden-planner-phase6/frontend/node_modules/lit-html/lit-html.js
+// node_modules/lit-html/lit-html.js
 var le = globalThis, ue = (e) => e, de = le.trustedTypes, fe = de ? de.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, pe = "$lit$", V = `lit$${Math.random().toFixed(9).slice(2)}$`, me = "?" + V, he = `<${me}>`, ge = document, _e = () => ge.createComment(""), ve = (e) => e === null || typeof e != "object" && typeof e != "function", ye = Array.isArray, be = (e) => ye(e) || typeof e?.[Symbol.iterator] == "function", xe = "[ 	\n\f\r]", Se = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ce = /-->/g, we = />/g, Te = RegExp(`>|${xe}(?:([^\\s"'>=/]+)(${xe}*=${xe}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), Ee = /'/g, De = /"/g, Oe = /^(?:script|style|textarea|title)$/i, ke = (e) => (t, ...n) => ({
 	_$litType$: e,
 	strings: t,
@@ -701,7 +701,7 @@ var qe = (e, t, n) => {
 Ye._$litElement$ = !0, Ye.finalized = !0, Je.litElementHydrateSupport?.({ LitElement: Ye });
 var Xe = Je.litElementPolyfillSupport;
 Xe?.({ LitElement: Ye }), (Je.litElementVersions ??= []).push("4.2.2");
-// ../../garden-planner-phase6/frontend/node_modules/lit-html/directive.js
+// node_modules/lit-html/directive.js
 var Ze = {
 	ATTRIBUTE: 1,
 	CHILD: 2,
@@ -1653,7 +1653,7 @@ function Et(e, t, n, r) {
 	if (a.temperature_c !== void 0 && a.temperature_c !== null && !a.measurement_kind || a.sensor_entity_id && !a.measurement_kind) throw Error("invalid_data");
 	return i;
 }
-// ../../garden-planner-phase6/frontend/node_modules/fflate/esm/browser.js
+// node_modules/fflate/esm/browser.js
 var G = Uint8Array, K = Uint16Array, Dt = Int32Array, Ot = new G([
 	0,
 	0,
