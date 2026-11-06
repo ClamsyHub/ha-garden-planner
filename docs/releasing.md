@@ -1,66 +1,74 @@
 # Publication and release checklist
 
-## Separate approval gates
+[First publication evidence](publication.md) · [Runtime validation](validation.md)
 
-1. Local development approval does not authorize production deployment.
-2. Public repository creation needs explicit owner approval.
-3. Every tag/release publication needs explicit approval.
-4. Catalog PR submission needs explicit approval.
+## Approval boundaries
 
-The development release workflow is read-only, manually dispatched and intentionally
-blocked. There is no automatic publish, push or tag action. Later publication
-must depend on all required validation, backend, frontend/build, compatibility
-and security jobs, with a protected approval environment configured on GitHub.
-The frontend bundle/build/browser prerequisites are implemented in phase 4;
-native HA setup/restart validation is recorded in docs/validation.md. Published
-HACS/Marketplace install/update checks and the publication gate remain outstanding.
+Public repository creation and v0.1.0 publication were explicitly approved by the
+owner. Future releases, productive deployment and catalog PRs need their own
+approval. Development approval alone does not authorize those actions.
 
-## Before public repository creation
+The manually dispatched `release.yml` calls both complete validation/test workflows.
+Only after every mandatory job succeeds does it build the deterministic integration
+ZIP and checksum. Publication then waits for approval in the `release` environment,
+restricted to main. ClamsyHub is the reviewer; self-review is enabled with explicit
+owner approval because this is a single-account project. No PR/push automatically
+publishes. Only the publish job receives contents:write. Action refs are SHA-pinned.
+Existing tags must point directly at the exact tested commit; releases/tags are
+never overwritten. The current workflow publishes **pre-releases only**.
 
-- [ ] Confirm CLI account (locally configured: ClamsyHub; API auth unverified).
-- [ ] Check repository/domain availability and repository metadata.
-- [ ] Review full tracked tree for credentials, private HA files and runtime data.
-- [ ] Audit dependency/asset licenses; MIT project license.
-- [ ] Enable issues, description and relevant topics.
-- [ ] Set branch protection and release environment reviewers on GitHub.
+The local `--release` check verifies structural/package readiness. It cannot prove
+remote CI, authorization or real installation; those are separate workflow and
+owner gates. Build locally with:
+
+```sh
+python scripts/check_repository.py --release --tag v0.1.0
+python -m scripts.build_release --tag v0.1.0 --output /tmp/garden_planner.zip
+```
 
 ## Before each release
 
-- [ ] Run HACS Action without ignore and Hassfest successfully.
-- [ ] Run lint, format and type checks, backend/migration tests and HA matrix.
-- [ ] Run frontend tests, TypeScript, browser tests and reproducible bundle build.
-- [ ] Test actual install, update, restart and backup/restore in isolated HA.
-- [ ] Confirm all runtime assets are inside the integration folder.
-- [ ] Include original PNG brand assets and finished de/en translations.
-- [ ] Update changelog, compatibility and migration instructions.
-- [ ] Match manifest/project version and normalized v-prefixed tag.
-- [ ] Review screenshots using neutral example data.
-- [ ] Obtain release approval; publish a full GitHub Release, not only a tag.
-- [ ] Verify download and installation from the published artifact.
+- [x] Initial public repository, account, issues, description and topics verified.
+- [x] Initial source/artifact privacy review and original MIT artwork/license notices.
+- [x] HACS Action without ignored checks and Hassfest passed for v0.1.0.
+- [x] Backend, HA matrix, frontend, browser, lint/types/build and npm audit passed.
+- [x] Initial HACS/Marketplace public-asset installation and restart tested.
+- [x] Published ZIP contains compiled frontend, translations, brands and license.
+- [ ] Repeat all checks against the exact **next** release commit.
+- [ ] Test next-version upgrade, restart, backup/restore and migration instructions.
+- [ ] Update manifest/project/frontend versions, changelog and versioned notes together.
+- [ ] Review current dependencies, Action pins, assets and validator requirements.
+- [ ] Obtain approval for that release and dispatch the workflow on main.
+- [ ] Approve the tested deployment; verify published download/checksum/install.
 
-## Before catalog submission
+Do not overwrite published tags/assets to fix a release. Prepare a new version and
+obtain release approval. The first public version has no earlier public upgrade
+baseline; its actual store replacement test is documented in the publication report.
 
-- [ ] Public non-archived repository, metadata and working release.
-- [ ] Tested Custom Repository installation in HACS and Marketplace.
-- [ ] Passing HACS Action and Hassfest links with no skipped checks.
-- [ ] Check current local-brand vs legacy brands requirements.
-- [ ] Fork hacs/default and branch from master using the owner's account.
-- [ ] Add ClamsyHub/ha-garden-planner alphabetically to integration JSON list.
-- [ ] Fill upstream PR template completely and truthfully.
-- [ ] Obtain separate submission approval; do not request maintainer reviews.
-- [ ] Report membership only after upstream acceptance and catalog processing.
+## Before catalog submission — phase 7
 
-Proposed PR title: **Add ClamsyHub/ha-garden-planner**
+- [ ] Recheck current catalog rules, repository metadata and acceptable release status.
+- [ ] Attach real release, HACS Action, Hassfest and Custom Repository install evidence.
+- [ ] Check current local-brand vs legacy brands requirements without ignoring checks.
+- [ ] Prepare the upstream integration-list change and fill its PR template truthfully.
+- [ ] Obtain explicit PR submission approval; do not request maintainer reviews.
+- [ ] Report membership only after maintainer acceptance and catalog processing.
 
-Proposed description (replace with verified links before submission):
+Proposed title: **Add ClamsyHub/ha-garden-planner**
+
+Proposed English description (adapt to the current upstream template):
 
 > Garden Planner is a local sowing, planting and harvest planner with multi-year
-> cultivation history. It bundles its frontend with a Home Assistant integration
-> and stores user data outside the installation directory. This submission adds
-> the repository to the integration catalog. Release, HACS validation, hassfest
-> and installation evidence will be linked in the upstream template.
+> cultivation history. Its frontend ships with the integration and its SQLite
+> user data stays outside the replaceable component directory. The repository
+> has a public development release and passing HACS Action/Hassfest validations.
+> Custom Repository installation was tested with HACS and the native Marketplace.
+> See docs/publication.md for exact validation and installation evidence.
 
-## Official references (reviewed 2026-11-06)
+The first development release is not a claim of catalog eligibility or acceptance.
+Review release maturity requirements before submitting.
+
+## Official references — reviewed 2026-11-06
 
 - https://contributors.home-assistant.io/marketplace/guides/integrations/
 - https://contributors.home-assistant.io/marketplace/guides/catalog/
@@ -72,6 +80,6 @@ Proposed description (replace with verified links before submission):
 - https://github.com/hacs/default
 - https://github.com/home-assistant/brands
 
-Current Marketplace docs accept a local brand folder; older HACS docs still
-mention a brands-repository contribution. Check the actual validators at release
-time instead of suppressing checks. Planned GitHub URLs may not yet resolve.
+Current Marketplace docs/validators accept a local brand folder. Legacy HACS docs
+still mention the brands repository; validate current requirements rather than
+suppressing checks or opening an unnecessary upstream PR.

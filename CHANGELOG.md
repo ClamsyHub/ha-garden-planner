@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-11-06 (development pre-release)
+
+- First public repository and pre-release, deterministic integration ZIP/checksum.
+- Protected owner-approved release workflow with all mandatory CI prerequisites.
+- Original local brand assets; SHA-pinned Actions and current Marketplace category.
+- Actual public-package HACS/Marketplace install and re-download/restart checks.
 
 ### Phase 5 — native HA integration
 
@@ -42,4 +47,5 @@
 - Read-only validation, foundation-test and blocked release-readiness workflows.
 - German and English documentation and publication approval boundaries.
 
-No GitHub release has been published. Version 0.1.0 is reserved in metadata only.
+v0.1.0 is the first public development pre-release. Earlier phase notes describe
+their historical implementation state, not the current publication status.

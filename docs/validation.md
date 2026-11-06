@@ -1,5 +1,8 @@
 # Validation report — phase 5
 
+Historical phase-5 report. Current public release and real HACS/Marketplace
+installation evidence: [publication report](publication.md).
+
 Date: 2026-11-06. Synthetic records and temporary directories only. No productive
 HA configuration, Synology mount, private database or GitHub repository was changed.
 

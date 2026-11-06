@@ -14,6 +14,15 @@ are implemented. The loopback development bridge has synthetic identities and is
 not shipped inside the integration. Never expose it on a public network or point
 it at a production data directory.
 
+## Native Home-Assistant-Oberfläche
+
+Nach Installation des öffentlichen v0.1.0-Pakets im echten HA-Frontend aufgenommen.
+Ausschließlich synthetische Daten und temporäre Testkonten.
+
+![Marketplace / HA 2026.11](screenshots/native-marketplace.png)
+
+[HACS / HA 2026.6](screenshots/native-legacy.png) · [Installationsnachweis](publication.md)
+
 ## Screenshots
 
 Tatsächliche Screenshots des gebauten Frontends aus den Browserprüfungen.
@@ -129,4 +138,5 @@ Vitest exercises date/window/form/ZIP/error contracts. Playwright exercises the
 actual compiled bundle against real PlannerService/SQLite through a loopback-only
 bridge, on desktop Chromium, mobile Chromium and WebKit. Axe checks both themes
 and open forms without disabling rules. Screenshots document actual rendering.
-These checks are not a full HA webview, physical-device or live-install test.
+These harness checks are not physical-device or Companion App tests. Actual
+public-package HA installation evidence is in [publication](publication.md).

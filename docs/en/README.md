@@ -4,9 +4,9 @@
 
 Local sowing, planting, care and harvest planning for Home Assistant.
 
-**Phase 5: backend, interactive frontend and native HA integration implemented.**
-The planned `ClamsyHub/ha-garden-planner` repository has not been publicly created.
-No published release or catalog membership exists.
+**Public development pre-release: [v0.1.0](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.0).**
+[Source](https://github.com/ClamsyHub/ha-garden-planner) is public. Not a stable 1.0
+release and not included in the official catalog. [Publication evidence](../publication.md).
 
 ## Interface and features
 
@@ -27,11 +27,15 @@ Target HA >=2026.6.0. Copy the complete `custom_components/garden_planner/` fold
 including `www/`, into an **isolated test instance**, restart HA and add Garden
 Planner in Settings → Devices & services. One shared garden is supported.
 
-After approved publication, add the public repository as an Integration custom
-repository in HACS/Marketplace, install a tested release, restart and add the
-integration. Direct catalog search requires an accepted catalog submission.
+Add `https://github.com/ClamsyHub/ha-garden-planner` as an **Integration** custom
+repository in HACS/Marketplace (connect GitHub first in Marketplace). Enable
+**Pre-releases**, install v0.1.0, restart when requested and add Garden Planner
+under Settings → Devices & services. Direct catalog search requires an accepted
+catalog submission.
 GitHub publication, custom-repository installation and official catalog membership
-are separate milestones. Published install/update validation remains pending.
+are separate milestones. The published asset was installed through HACS 2.0.5/HA
+2026.6 and Marketplace/HA 2026.11; re-download/restart preserved the same records.
+There is no earlier public version for a cross-version upgrade test yet.
 
 ## Access, temperatures and reminders
 

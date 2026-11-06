@@ -6,16 +6,19 @@
 
 Lokaler Aussaat-, Pflanz-, Pflege- und Erntekalender für Home Assistant.
 
-**Stand: Phase 6 – erste öffentliche Entwicklungsversion in Vorbereitung.**
+**Öffentliche Entwicklungsversion: [v0.1.0](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.0).**
 Automatisches Seitenleisten-Panel, Live-Temperaturen, Sensor-/Kalender-Entitäten,
-Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Noch kein
-öffentlicher produktiver Release.
+Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Dies ist eine
+Vorabversion, noch keine stabile Version 1.0.
 
 Quellcode: [ClamsyHub/ha-garden-planner](https://github.com/ClamsyHub/ha-garden-planner).
-Die erste Entwicklungsversion wird derzeit validiert. Keine Aufnahme in den
+Die erste Entwicklungsversion ist veröffentlicht und als Custom Repository
+in HACS und Marketplace getestet. Keine Aufnahme in den
 offiziellen Katalog. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 ## Oberfläche
+
+![Garden Planner im nativen Home Assistant](docs/screenshots/native-marketplace.png)
 
 Eine zusammenhängende Anwendung mit sieben Bereichen:
 
@@ -57,11 +60,11 @@ weder Node.js noch einen eigenen Build benötigen.
 Die Integration registriert das Panel automatisch; YAML und zusätzliche
 Frontend-Ressourcen sind nicht erforderlich. Eine vollständige Einrichtung wurde
 in einem separaten offiziellen HA-Container getestet. Für eigene Tests nur eine
-isolierte Instanz verwenden. HACS-/Marketplace-Installations- und Updateprüfungen
-folgen nach freigegebener Veröffentlichung. Die lokale Vorschau verwendet einen
+isolierte Instanz verwenden. Installation und erneuter Download des veröffentlichten Pakets wurden mit HACS
+und Marketplace in separaten HA-Containern getestet. Die lokale Vorschau verwendet einen
 separaten Testadapter mit ausschließlich temporären Daten.
 
-[Geplante Installation](docs/de/README.md) · [Lokale Vorschau](docs/frontend.md)
+[Installation](docs/de/README.md) · [Lokale Vorschau](docs/frontend.md)
 
 ## Entwicklung und Prüfungen
 
@@ -99,9 +102,10 @@ produktive HA-Konfigurationen oder private Testdaten.
 
 ## Noch offen vor einem stabilen Release
 
-HACS-/Marketplace-Installations- und Updateprüfungen anhand veröffentlichter
-Artefakte, Brand-Assets, abschließende Sicherheitsprüfung und freigegebene
-GitHub-Veröffentlichung. Die [Release-Checkliste](docs/releasing.md) bleibt verbindlich.
+Versionswechsel beim nächsten Release, weitere Praxis-/Gerätetests und die
+gesondert freizugebende Katalogaufnahme. GitHub-Veröffentlichung und erste
+Custom-Repository-Installation sind abgeschlossen: [Veröffentlichungsnachweis](docs/publication.md).
+Die [Release-Checkliste](docs/releasing.md) bleibt für weitere Versionen verbindlich.
 Administratoren bearbeiten und verwalten Freigaben; weitere aktive HA-Nutzer
 lesen den gemeinsamen Garten. Erinnerungen sind standardmäßig ausgeschaltet.
 Ihre Aktivierung erfordert einen vorhandenen HA-Benachrichtigungskanal.

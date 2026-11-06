@@ -2,13 +2,15 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand: Phase 5
+## Stand: öffentliche Entwicklungsversion v0.1.0
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
 sowie einen Kalender für konkrete Aufgaben und dokumentierte Kulturereignisse
-bereit. Kein öffentliches Repository, kein veröffentlichter Release und keine
-Katalogaufnahme. Entwicklung und Tests erfolgen außerhalb produktiver Dateien.
+bereit. [Repository](https://github.com/ClamsyHub/ha-garden-planner) und
+[Vorabversion v0.1.0](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.0)
+sind öffentlich. Keine Aufnahme in den offiziellen Katalog. Entwicklung und Tests
+erfolgen außerhalb produktiver Dateien.
 
 ## Isolierte Testinstallation
 
@@ -21,11 +23,21 @@ Es wird genau ein gemeinsamer Garten unterstützt. Mit allen unterstützten
 Installationsarten soll dieselbe Integration funktionieren; tatsächlich geprüft
 wurden die in [Validierung](../validation.md) angegebenen Umgebungen.
 
-Nach freigegebener Veröffentlichung: das Repository als Typ **Integration** in
-HACS/Marketplace hinzufügen, den geprüften Release installieren, HA neu starten
-und die Integration hinzufügen. Die direkte Katalogsuche wird erst nach akzeptiertem
-Aufnahme-PR verfügbar. GitHub-Veröffentlichung, Custom Repository und offizieller
-Katalog sind drei getrennte Schritte.
+## Installation über HACS oder Marketplace
+
+1. In HACS bzw. Marketplace **Benutzerdefiniertes Repository / Custom Repository**
+   öffnen. Für ein eigenes Repository im Marketplace zuerst GitHub verbinden.
+2. `https://github.com/ClamsyHub/ha-garden-planner` als Typ **Integration** hinzufügen.
+3. **Vorabversionen / Pre-releases anzeigen** aktivieren, da v0.1.0 eine
+   Entwicklungsversion ist. Anschließend v0.1.0 herunterladen/installieren.
+4. HA bei entsprechender Aufforderung neu starten (bei HACS empfohlen).
+5. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden
+   Planner auswählen und bestätigen. Das Panel erscheint automatisch.
+
+Die direkte Katalogsuche wird erst nach akzeptiertem Aufnahme-PR verfügbar.
+GitHub-Veröffentlichung, Custom Repository und offizieller Katalog sind drei
+getrennte Schritte. Tatsächlich getestet: HACS 2.0.5 mit HA 2026.6.0 und der native
+Marketplace mit HA 2026.11.0. [Nachweis](../publication.md).
 
 ## Bedienung und Berechtigungen
 
@@ -109,6 +121,7 @@ prüfen. Native Zählsensoren/Kalender aktualisieren nach Änderungen, zusätzli
 alle 15 Minuten. Allgemeine saisonale Fenster erscheinen im Garden-Planner-Panel;
 der HA-Kalender enthält konkrete Aufgaben und Kulturereignisse.
 
-HACS-/Marketplace-Installation aus veröffentlichten Releases, Katalogaufnahme
-und physische Geräte sind noch nicht abschließend geprüft. Der Release-Check
-bleibt gesperrt. [Prüfergebnisse und offene Punkte](../validation.md).
+Die Installation des veröffentlichten Pakets und erneuter Download/Neustart
+sind in beiden Stores geprüft. Ein Wechsel zwischen zwei öffentlichen Versionen
+steht beim ersten Release noch aus. Katalogaufnahme und physische Geräte sind
+weiterhin offen. [Prüfergebnisse und offene Punkte](../validation.md).
