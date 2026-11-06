@@ -14,7 +14,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["ruff==0.14.4", "mypy==1.18.2"]
-ha-test = ["homeassistant==2026.6.0"]
+ha-test = ["homeassistant==2026.10.4"]
 
 [tool.ruff]
 target-version = "py314"
