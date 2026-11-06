@@ -1,0 +1,9 @@
+name: Feature request / Funktionswunsch
+description: Suggest a Garden Planner improvement.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and suggested improvement
+    validations:
+      required: true

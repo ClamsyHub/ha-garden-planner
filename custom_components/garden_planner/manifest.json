@@ -1,0 +1,22 @@
+{
+  "domain": "garden_planner",
+  "name": "Garden Planner",
+  "categories": [
+    "garden_plants"
+  ],
+  "codeowners": [
+    "@ClamsyHub"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "frontend",
+    "http",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/ClamsyHub/ha-garden-planner",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/ClamsyHub/ha-garden-planner/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

@@ -1,0 +1,45 @@
+# Changelog
+
+## Unreleased
+
+### Phase 5 — native HA integration
+
+- Automatic sidebar panel with bundled static code and content-hash cache busting.
+- Five count sensors, read-only task/event calendar and HA options flow.
+- Admin-managed editor grants and authenticated bounded HTTP file transport.
+- Optional air/soil/substrate temperature display with °C/°F/K conversion.
+- Substrate-only comparison against explicitly stored germination ranges.
+- Opt-in reminders with persistent attempt reservations and delivery audit state.
+- Native HA tests, actual isolated Container setup and restart persistence checks.
+- Correct date-field rows: start month/day together, then end month/day.
+- No production deployment, public repository, release or catalog submission.
+
+### Phase 4 — interactive frontend
+
+- Seven German/English views with responsive light/dark layouts.
+- Plant/variety/window/location CRUD, sowing capture, lifecycle, tasks and history.
+- Month/week/year calendars with filters and accurate partial-month/winter bars.
+- Immutable snapshot display, reviewed JSON/CSV ZIP import, export and backups.
+- Explicit labels, keyboard dialogs, preserved drafts on errors and read-only UI.
+- Locked frontend dependencies, distributed license notices and reproducible bundle.
+- Browser tests of the built bundle against real temporary SQLite data.
+- No production deployment, automatic HA panel registration or publication yet.
+
+### Phase 3 — backend
+
+- Validated plants, varieties, seasonal windows, beds, cultivations, lifecycle events and tasks.
+- Single-worker SQLite persistence, schema migrations and optimistic edit conflicts.
+- Historical snapshots, explicit success observations and multi-year history.
+- Reviewed JSON/CSV imports, consistent backups and transactional restore.
+- Restore revision protection against forms opened before replacement.
+- Basic HA config flow, authenticated/authorized WebSocket commands and subscriptions.
+- Real-file backend tests and isolated HA adapter tests; no production deployment.
+
+### Phase 2 — foundation
+
+- Local phase-2 repository foundation, integration metadata and MIT license.
+- Structural/version/private-data validation and tests.
+- Read-only validation, foundation-test and blocked release-readiness workflows.
+- German and English documentation and publication approval boundaries.
+
+No GitHub release has been published. Version 0.1.0 is reserved in metadata only.

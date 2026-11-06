@@ -1,0 +1,23 @@
+name: Bug report / Fehler melden
+description: Report a reproducible Garden Planner problem.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Never attach secrets, private databases or full Home Assistant configuration."
+  - type: input
+    id: versions
+    attributes:
+      label: Garden Planner and Home Assistant versions
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behavior and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted relevant logs

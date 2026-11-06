@@ -1,0 +1,4 @@
+node_modules
+../custom_components/garden_planner/www
+test-results
+playwright-report

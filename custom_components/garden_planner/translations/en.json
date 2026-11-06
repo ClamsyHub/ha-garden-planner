@@ -1,0 +1,57 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Create a local garden. The application appears automatically in the sidebar. Reminders default to off."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "No messages are sent unless enabled.",
+        "data": {
+          "writers": "Editing grants",
+          "reminders_enabled": "Explicitly enable reminders",
+          "lead_days": "Lead time (days)",
+          "reminder_hour": "Send from hour (HA timezone)",
+          "notify_service": "Notification channel",
+          "notify_entity": "Notification entity (required for notify.send_message)",
+          "language": "Reminder language"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Check active users, the available notification channel and notification entity."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Plants"
+      },
+      "planned": {
+        "name": "Planned sowings"
+      },
+      "active": {
+        "name": "Active crops"
+      },
+      "successful": {
+        "name": "Successful sowings"
+      },
+      "open_tasks": {
+        "name": "Open garden tasks"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Garden work"
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Garden Planner – lokale Testumgebung</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f5f7f3;
+        font-family: system-ui;
+      }
+      .dev-banner {
+        background: #f6edcf;
+        color: #5c4823;
+        padding: 7px 15px;
+        font-size: 12px;
+        text-align: center;
+      }
+      body.dark {
+        --primary-background-color: #17211b;
+        --primary-text-color: #e1eade;
+        --secondary-text-color: #b1c0b4;
+        --card-background-color: #202e25;
+        --divider-color: #3a4b3e;
+        --primary-color: #87c39a;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dev-banner">
+      Lokale Testumgebung · temporäre Daten · keine Verbindung zur Live-Instanz
+    </div>
+    <garden-planner-panel></garden-planner-panel>
+    <script type="module" src="/dev/harness.ts"></script>
+  </body>
+</html>

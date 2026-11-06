@@ -1,0 +1,57 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Lokalen Garten einrichten. Die Anwendung wird automatisch in der Seitenleiste bereitgestellt. Erinnerungen sind standardmäßig aus."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner ist bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Ohne Aktivierung werden keine Nachrichten versendet.",
+        "data": {
+          "writers": "Bearbeitungsfreigaben",
+          "reminders_enabled": "Erinnerungen ausdrücklich aktivieren",
+          "lead_days": "Vorlaufzeit (Tage)",
+          "reminder_hour": "Versand ab Stunde (HA-Zeitzone)",
+          "notify_service": "Benachrichtigungskanal",
+          "notify_entity": "Benachrichtigungs-Entität (bei notify.send_message erforderlich)",
+          "language": "Sprache der Erinnerungen"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Einstellungen prüfen: aktive Nutzer, verfügbarer Kanal und Benachrichtigungs-Entität."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Pflanzen"
+      },
+      "planned": {
+        "name": "Geplante Aussaaten"
+      },
+      "active": {
+        "name": "Laufende Kulturen"
+      },
+      "successful": {
+        "name": "Erfolgreiche Aussaaten"
+      },
+      "open_tasks": {
+        "name": "Offene Gartenarbeiten"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Gartenarbeiten"
+      }
+    }
+  }
+}
