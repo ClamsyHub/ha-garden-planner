@@ -13,7 +13,7 @@ authors = [{ name = "Garden Planner contributors" }]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["ruff==0.14.4", "mypy==1.18.2"]
+dev = ["ruff==0.17.3", "mypy==1.18.2"]
 ha-test = ["homeassistant==2026.6.0"]
 
 [tool.ruff]
