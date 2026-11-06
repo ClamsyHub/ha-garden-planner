@@ -140,3 +140,17 @@ export function sowingDate(culture: Entity, events: Entity[]): string {
     "date",
   );
 }
+
+export function windowWeekSegments(
+  window: Entity,
+  anchor: string,
+): { start: string; end: string }[] {
+  const segments: { start: string; end: string }[] = [];
+  for (const day of weekDays(anchor)) {
+    if (!contains(window, day)) continue;
+    const last = segments.at(-1);
+    if (last && addDays(last.end, 1) === day) last.end = day;
+    else segments.push({ start: day, end: day });
+  }
+  return segments;
+}

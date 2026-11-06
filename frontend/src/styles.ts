@@ -600,6 +600,102 @@ export const styles = css`
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 12px;
   }
+  .week-windows {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .week-window {
+    width: 100%;
+    text-align: left;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    border-left: 4px solid var(--bar-color, var(--gp-green));
+    padding: 14px;
+  }
+  .week-window > span {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .week-window strong {
+    overflow-wrap: anywhere;
+  }
+  .week-window span span,
+  .week-window small {
+    font-size: 12px;
+    font-weight: 400;
+  }
+  .week-heading {
+    margin: 20px 0 12px;
+    font-size: 17px;
+  }
+  .week-empty {
+    font-size: 12px;
+    margin-top: 10px;
+  }
+  .sensor-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .sensor-picker {
+    position: relative;
+    min-width: 0;
+  }
+  .sensor-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 5;
+    max-height: var(--sensor-max-height, 240px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--gp-card);
+    border: 1px solid var(--gp-border);
+    border-radius: 9px;
+    box-shadow: 0 8px 22px #0002;
+    padding: 4px;
+  }
+  .sensor-options.above {
+    top: auto;
+    bottom: calc(100% + 4px);
+  }
+  .sensor-options[hidden] {
+    display: none;
+  }
+  .sensor-options button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    padding: 10px;
+    min-height: 48px;
+  }
+  .sensor-options button[aria-selected="true"] {
+    background: var(--gp-soft);
+  }
+  .sensor-options strong,
+  .sensor-options small {
+    overflow-wrap: anywhere;
+  }
+  .sensor-options strong {
+    font-size: 13px;
+  }
+  .sensor-options small {
+    font-size: 11px;
+    font-weight: 400;
+  }
+  .sensor-empty {
+    font-size: 12px;
+    padding: 10px;
+  }
   .week-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(120px, 1fr));

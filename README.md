@@ -16,6 +16,12 @@ Die erste Entwicklungsversion ist veröffentlicht und als Custom Repository
 in HACS und Marketplace getestet. Keine Aufnahme in den
 offiziellen Katalog. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
+[![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
+
+**In Vorbereitung:** v0.1.1 mit Wochenansicht-/Sensor-Auswahl-Korrekturen und
+gepatchtem HA-Sicherheitsminimum. Der Katalogantrag wird vorbereitet;
+Veröffentlichung und Einreichung sind noch nicht erfolgt. [Status](docs/catalog/README.md).
+
 ## Oberfläche
 
 ![Garden Planner im nativen Home Assistant](docs/screenshots/native-marketplace.png)

@@ -9,8 +9,10 @@ from pathlib import Path
 from scripts.check_repository import ROOT, validate
 
 
-def publish(tag: str, commit: str, assets: Path) -> None:
+def publish(tag: str, commit: str, assets: Path, channel: str = "prerelease") -> None:
     """Never overwrite a tag/release or publish an untested target commit."""
+    if channel not in {"prerelease", "release"}:
+        raise ValueError("Choose an explicit release channel.")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError("An exact tested commit is required.")
     errors = validate(ROOT, release=True, tag=tag)
@@ -56,9 +58,10 @@ def publish(tag: str, commit: str, assets: Path) -> None:
             str(assets / "garden_planner.zip"),
             str(assets / "SHA256SUMS"),
             "--verify-tag",
-            "--prerelease",
+            "--prerelease" if channel == "prerelease" else "--latest",
             "--title",
-            f"Garden Planner {tag} — development preview",
+            f"Garden Planner {tag}"
+            + (" — development preview" if channel == "prerelease" else ""),
             "--notes-file",
             str(ROOT / "docs/releases" / f"{tag}.md"),
         ],
@@ -71,8 +74,11 @@ def main() -> None:
     parser.add_argument("--tag", required=True)
     parser.add_argument("--commit", required=True)
     parser.add_argument("--assets", type=Path, required=True)
+    parser.add_argument(
+        "--channel", choices=("prerelease", "release"), default="prerelease"
+    )
     args = parser.parse_args()
-    publish(args.tag, args.commit, args.assets)
+    publish(args.tag, args.commit, args.assets, args.channel)
 
 
 if __name__ == "__main__":

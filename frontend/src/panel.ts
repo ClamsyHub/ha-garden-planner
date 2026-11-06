@@ -1,4 +1,8 @@
-import { recommendedRange, temperatureReading } from "./temperature";
+import {
+  recommendedRange,
+  temperatureReading,
+  temperatureSensors,
+} from "./temperature";
 import type { Capabilities, HostSettings, SettingsResponse } from "./types";
 import {
   LitElement,
@@ -23,6 +27,7 @@ import {
   todayInZone,
   weekDays,
   windowLabel,
+  windowWeekSegments,
 } from "./dates";
 import { fieldsFor, formData, initialData } from "./fields";
 import { csvZip, download, MAX_BYTES, readCsvZip } from "./files";
@@ -114,6 +119,10 @@ export class GardenPlannerPanel extends LitElement {
     activity: { state: true },
     selected: { state: true },
     editor: { state: true },
+    sensorOpen: { state: true },
+    sensorIndex: { state: true },
+    sensorAbove: { state: true },
+    sensorMaxHeight: { state: true },
     deleting: { state: true },
     reviewed: { state: true },
     importMode: { state: true },
@@ -145,6 +154,10 @@ export class GardenPlannerPanel extends LitElement {
   private activity = "";
   private selected: Selection | null = null;
   private editor: Editor | null = null;
+  private sensorOpen = false;
+  private sensorIndex = -1;
+  private sensorAbove = false;
+  private sensorMaxHeight = 240;
   private deleting: { table: Table; record: Entity } | null = null;
   private reviewed: Reviewed | null = null;
   private importMode: "merge" | "replace" = "merge";
@@ -244,11 +257,39 @@ export class GardenPlannerPanel extends LitElement {
     super.connectedCallback();
     this.addEventListener("click", this.rememberTrigger, true);
     this.renderRoot.addEventListener("close", this.restoreDialogFocus, true);
+    this.renderRoot.addEventListener(
+      "scroll",
+      this.positionSensorOptions,
+      true,
+    );
+    window.addEventListener("resize", this.positionSensorOptions);
+    window.visualViewport?.addEventListener(
+      "resize",
+      this.positionSensorOptions,
+    );
+    window.visualViewport?.addEventListener(
+      "scroll",
+      this.positionSensorOptions,
+    );
     if (this.hass) void this.bind();
   }
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.removeEventListener("click", this.rememberTrigger, true);
+    this.renderRoot.removeEventListener(
+      "scroll",
+      this.positionSensorOptions,
+      true,
+    );
+    window.removeEventListener("resize", this.positionSensorOptions);
+    window.visualViewport?.removeEventListener(
+      "resize",
+      this.positionSensorOptions,
+    );
+    window.visualViewport?.removeEventListener(
+      "scroll",
+      this.positionSensorOptions,
+    );
     this.renderRoot.removeEventListener("close", this.restoreDialogFocus, true);
     this.connectionGeneration++;
     this.loadGeneration++;
@@ -425,6 +466,8 @@ export class GardenPlannerPanel extends LitElement {
     return cultureStatus(culture, this.tables.cultivation_events);
   }
   private startEditor(table: Table, record?: Entity, seed: Data = {}): void {
+    this.sensorOpen = false;
+    this.sensorIndex = -1;
     this.error = "";
     this.editor = {
       table,
@@ -521,7 +564,155 @@ export class GardenPlannerPanel extends LitElement {
       this.startEditor("plants", result);
     }
   }
+  private readonly positionSensorOptions = (): void => {
+    if (!this.sensorOpen) return;
+    const input = this.renderRoot.querySelector<HTMLInputElement>(
+      "#field-sensor_entity_id",
+    );
+    if (!input) return;
+    const rect = input.getBoundingClientRect();
+    const dialog = input.closest("dialog")?.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const top = Math.max(
+      (viewport?.offsetTop ?? 0) + 8,
+      (dialog?.top ?? 0) + 8,
+    );
+    const bottom = Math.min(
+      (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight) - 8,
+      (dialog?.bottom ?? window.innerHeight) - 8,
+    );
+    if (rect.bottom < top || rect.top > bottom) {
+      this.sensorOpen = false;
+      return;
+    }
+    const above = Math.max(0, rect.top - top - 4);
+    const below = Math.max(0, bottom - rect.bottom - 4);
+    this.sensorAbove = below < 240 && above > below;
+    this.sensorMaxHeight = Math.floor(
+      Math.min(240, this.sensorAbove ? above : below),
+    );
+  };
+  private openSensorOptions(): void {
+    this.sensorOpen = true;
+    this.positionSensorOptions();
+  }
+  private chooseSensor(id: string): void {
+    this.changeField("sensor_entity_id", id);
+    this.renderRoot
+      .querySelector<HTMLInputElement>("#field-sensor_entity_id")
+      ?.focus();
+    this.sensorOpen = false;
+    this.sensorIndex = -1;
+  }
+  private renderSensorField(field: Field): TemplateResult {
+    const value = String(this.editor?.draft.sensor_entity_id ?? "");
+    const options = temperatureSensors(this.hass, value);
+    const active =
+      this.sensorOpen &&
+      this.sensorIndex >= 0 &&
+      this.sensorIndex < options.length;
+    return html`<div class="sensor-field">
+      <label id="field-sensor_entity_id-label" for="field-sensor_entity_id"
+        >${this.tr(field.key)}</label
+      >
+      <div
+        class="sensor-picker"
+        @focusout=${(event: FocusEvent) => {
+          if (
+            !(event.relatedTarget instanceof Node) ||
+            !(event.currentTarget as HTMLElement).contains(event.relatedTarget)
+          ) {
+            this.sensorOpen = false;
+            this.sensorIndex = -1;
+          }
+        }}
+      >
+        <input
+          id="field-sensor_entity_id"
+          name="sensor_entity_id"
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-labelledby="field-sensor_entity_id-label"
+          aria-controls="temperature-sensor-options"
+          aria-expanded=${String(this.sensorOpen)}
+          aria-activedescendant=${active ? `temperature-sensor-option-${this.sensorIndex}` : nothing}
+          autocomplete="off"
+          .value=${value}
+          ?disabled=${this.busy || field.disabled}
+          @focus=${() => this.openSensorOptions()}
+          @click=${() => this.openSensorOptions()}
+          @input=${(event: Event) => {
+            this.changeField(
+              field.key,
+              (event.target as HTMLInputElement).value,
+            );
+            this.openSensorOptions();
+            this.sensorIndex = -1;
+          }}
+          @keydown=${(event: KeyboardEvent) => {
+            if (event.key === "Escape" && this.sensorOpen) {
+              event.preventDefault();
+              event.stopPropagation();
+              this.sensorOpen = false;
+              this.sensorIndex = -1;
+            } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+              event.preventDefault();
+              this.openSensorOptions();
+              if (options.length) {
+                this.sensorIndex =
+                  event.key === "ArrowDown"
+                    ? Math.min(this.sensorIndex + 1, options.length - 1)
+                    : this.sensorIndex < 0
+                      ? options.length - 1
+                      : Math.max(
+                          0,
+                          Math.min(this.sensorIndex - 1, options.length - 1),
+                        );
+                void this.updateComplete.then(() =>
+                  this.renderRoot
+                    .querySelector(
+                      `#temperature-sensor-option-${this.sensorIndex}`,
+                    )
+                    ?.scrollIntoView({ block: "nearest" }),
+                );
+              }
+            } else if (event.key === "Enter" && active) {
+              event.preventDefault();
+              this.chooseSensor(options[this.sensorIndex]!.id);
+            }
+          }}
+        />
+        <div
+          id="temperature-sensor-options"
+          role="listbox"
+          aria-labelledby="field-sensor_entity_id-label"
+          class=${`sensor-options ${this.sensorAbove ? "above" : ""}`}
+          style=${`--sensor-max-height:${this.sensorMaxHeight}px`}
+          ?hidden=${!this.sensorOpen}
+        >
+          ${options.map(
+            (option, index) =>
+              html`<button
+                type="button"
+                role="option"
+                tabindex="-1"
+                id=${`temperature-sensor-option-${index}`}
+                aria-selected=${String(index === this.sensorIndex)}
+                @mousedown=${(event: MouseEvent) => event.preventDefault()}
+                @click=${() => this.chooseSensor(option.id)}
+              >
+                <strong>${option.name}</strong><small>${option.id}</small>
+              </button>`,
+          )}
+          ${!options.length ? html`<div class="sensor-empty" role="option" aria-disabled="true">${this.tr("noSensors")}</div>` : nothing}
+        </div>
+      </div>
+    </div>`;
+  }
   private renderField(field: Field): TemplateResult {
+    if (field.key === "sensor_entity_id") return this.renderSensorField(field);
     const editor = this.editor!;
     const value = editor.draft[field.key];
     const input = (event: Event) =>
@@ -567,7 +758,6 @@ export class GardenPlannerPanel extends LitElement {
                 id=${id}
                 aria-labelledby=${`${id}-label`}
                 name=${field.key}
-                list=${field.key === "sensor_entity_id" ? "temperature-sensor-options" : nothing}
                 type=${field.type ?? "text"}
                 .value=${String(value ?? "")}
                 ?required=${field.required}
@@ -578,26 +768,6 @@ export class GardenPlannerPanel extends LitElement {
                 maxlength="20000"
                 @input=${input}
               />`
-      }
-      ${
-        field.key === "sensor_entity_id"
-          ? html`<datalist id="temperature-sensor-options">
-              ${Object.entries(this.hass?.states ?? {})
-                .filter(
-                  ([id, state]) =>
-                    id.startsWith("sensor.") &&
-                    ["°C", "°F", "K"].includes(
-                      String(state.attributes.unit_of_measurement),
-                    ),
-                )
-                .map(
-                  ([id, state]) =>
-                    html`<option value=${id}>
-                      ${String(state.attributes.friendly_name ?? id)}
-                    </option>`,
-                )}
-            </datalist>`
-          : nothing
       }
     </label>`;
   }
@@ -690,6 +860,7 @@ export class GardenPlannerPanel extends LitElement {
       >
       <label
         >${this.tr(calendar ? "activity" : "method")}<select
+          aria-label=${this.tr(calendar ? "activity" : "method")}
           @change=${(e: Event) => {
             if (calendar) this.activity = (e.target as HTMLSelectElement).value;
             else this.method = (e.target as HTMLSelectElement).value;
@@ -1143,7 +1314,45 @@ export class GardenPlannerPanel extends LitElement {
   private renderWeek(): TemplateResult {
     const days = weekDays(this.anchor || this.today);
     const visible = new Set(this.filteredPlants(true).map((p) => p.id));
-    return html`<p class="muted">${this.tr("actualWork")}</p>
+    const windows = this.calendarWindows()
+      .map((window) => ({
+        window,
+        segments: windowWeekSegments(window, this.anchor || this.today),
+      }))
+      .filter(({ segments }) => segments.length);
+    return html`<section class="panel" aria-labelledby="week-windows-title">
+        <h2 id="week-windows-title">${this.tr("possibleThisWeek")}</h2>
+        <p class="muted">${this.tr("recommendation")}</p>
+        <div class="week-windows">
+          ${windows.map(
+            ({ window, segments }) =>
+              html`<button
+                class=${`week-window ${text(window, "activity")}`}
+                @click=${() => {
+                  this.selected = {
+                    kind: "plant",
+                    id: text(window, "plant_id"),
+                  };
+                }}
+              >
+                <span
+                  ><strong
+                    >${this.nameFor(text(window, "plant_id"), "plants")}</strong
+                  >
+                  <span
+                    >${this.lab(text(window, "activity"))} ·
+                    ${this.lab(text(window, "environment"))}${text(window, "variety_id") ? ` · ${this.nameFor(text(window, "variety_id"), "varieties")}` : ""}</span
+                  ></span
+                >
+                <small
+                  >${segments.map((segment) => (segment.start === segment.end ? formatDate(segment.start, this.language) : `${formatDate(segment.start, this.language)} – ${formatDate(segment.end, this.language)}`)).join(" · ")}</small
+                >
+              </button>`,
+          )}
+        </div>
+        ${!windows.length ? html`<p class="muted">${this.tr("noWeekWindows")}</p>` : nothing}
+      </section>
+      <h2 class="week-heading">${this.tr("actualWork")}</h2>
       <div class="scroll" tabindex="0" aria-label=${this.tr("week")}>
         <div class="week-grid">
           ${days.map((day) => {
@@ -1171,6 +1380,7 @@ export class GardenPlannerPanel extends LitElement {
               <h3>
                 ${new Intl.DateTimeFormat(this.language === "de" ? "de-DE" : "en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}<br />${formatDate(day, this.language)}
               </h3>
+              ${!tasks.length && !events.length ? html`<p class="muted week-empty">${this.tr("noAppointments")}</p>` : nothing}
               ${tasks.map((task) => html`<button class=${`week-event ${text(task, "activity")}`} ?disabled=${!this.editable} @click=${() => this.startEditor("tasks", task)}>${text(task, "title")}${task.data.completed ? " ✓" : ""}</button>`)}${events.map(
                 (event) => {
                   const culture = this.tables.cultivations.find(

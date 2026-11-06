@@ -1,11 +1,19 @@
-name: Publish development release
+name: Publish release
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Approved development tag, e.g. v0.1.0"
+        description: "Approved version tag, e.g. v0.1.1"
         required: true
         type: string
+      channel:
+        description: "Approved channel (regular release needs explicit owner approval)"
+        required: true
+        type: choice
+        default: prerelease
+        options:
+          - prerelease
+          - release
 permissions:
   contents: read
 concurrency:
@@ -50,13 +58,14 @@ jobs:
         with:
           name: release-package
           path: ${{ runner.temp }}/release/
-      - name: Publish only the tested commit as a pre-release
+      - name: Publish only the tested commit in the approved channel
         env:
           GH_TOKEN: ${{ github.token }}
           CANDIDATE_TAG: ${{ inputs.tag }}
           GH_REPO: ${{ github.repository }}
+          RELEASE_CHANNEL: ${{ inputs.channel }}
         run: |
           cd "$RUNNER_TEMP/release"
           sha256sum --check SHA256SUMS
           cd "$GITHUB_WORKSPACE"
-          python -m scripts.publish_release --tag "$CANDIDATE_TAG" --commit "$GITHUB_SHA" --assets "$RUNNER_TEMP/release"
+          python -m scripts.publish_release --tag "$CANDIDATE_TAG" --commit "$GITHUB_SHA" --assets "$RUNNER_TEMP/release" --channel "$RELEASE_CHANNEL"

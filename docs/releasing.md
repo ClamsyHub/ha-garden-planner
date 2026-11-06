@@ -15,7 +15,9 @@ restricted to main. ClamsyHub is the reviewer; self-review is enabled with expli
 owner approval because this is a single-account project. No PR/push automatically
 publishes. Only the publish job receives contents:write. Action refs are SHA-pinned.
 Existing tags must point directly at the exact tested commit; releases/tags are
-never overwritten. The current workflow publishes **pre-releases only**.
+never overwritten. The workflow defaults to **pre-release**. A regular release requires the explicit
+`release` channel choice and owner approval; every validation/environment gate
+remains in force.
 
 The local `--release` check verifies structural/package readiness. It cannot prove
 remote CI, authorization or real installation; those are separate workflow and
@@ -46,6 +48,9 @@ obtain release approval. The first public version has no earlier public upgrade
 baseline; its actual store replacement test is documented in the publication report.
 
 ## Before catalog submission — phase 7
+
+Current preparation: [catalog readiness](catalog/README.md). No submission or
+maintainer acceptance is claimed.
 
 - [ ] Recheck current catalog rules, repository metadata and acceptable release status.
 - [ ] Attach real release, HACS Action, Hassfest and Custom Repository install evidence.

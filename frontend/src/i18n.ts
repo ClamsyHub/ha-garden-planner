@@ -34,6 +34,12 @@ const de = {
   emptyHistory: "Hier wächst deine Gartengeschichte.",
   emptyLocations: "Gib deinen Pflanzen einen Platz.",
   noResults: "Keine passenden Einträge gefunden.",
+  possibleThisWeek: "Diese Woche möglich",
+  noWeekWindows:
+    "Keine passenden Anbauzeiträume in dieser Woche. Prüfe bei Bedarf die Filter oder die hinterlegten Zeiträume.",
+  noAppointments: "Keine Termine",
+  noSensors:
+    "Keine passenden Temperatursensoren. Eine Sensor-ID kann auch manuell eingegeben werden.",
   noTasks: "Gerade steht nichts an. Zeit für einen Blick ins Grüne.",
   managedPlants: "Pflanzen im Garten",
   planned: "Geplant",
@@ -281,6 +287,12 @@ const en: Record<keyof typeof de, string> = {
   emptyHistory: "Your garden story grows here.",
   emptyLocations: "Give your plants a place to grow.",
   noResults: "No matching records.",
+  possibleThisWeek: "Possible this week",
+  noWeekWindows:
+    "No matching growing windows this week. Check the filters or your recorded periods.",
+  noAppointments: "No appointments",
+  noSensors:
+    "No matching temperature sensors. You can also enter a sensor ID manually.",
   noTasks: "Nothing due right now. A moment to enjoy your garden.",
   managedPlants: "Plants in the garden",
   planned: "Planned",

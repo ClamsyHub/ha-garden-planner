@@ -626,3 +626,175 @@ test("explicit reminder settings and editor grants are editable without YAML", a
   await page.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(enable).not.toBeChecked();
 });
+
+test("week view includes overlapping growing windows and keeps concrete appointments", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Aussaatkalender");
+  await page.getByRole("button", { name: "Woche", exact: true }).click();
+  const possible = page.getByRole("region", { name: "Diese Woche möglich" });
+  await expect(
+    possible.getByRole("button", {
+      name: /Blattkultur · Beispiel.*Direktsaat/,
+    }),
+  ).toBeVisible();
+  await expect(
+    possible.getByText("02.11.2026 – 08.11.2026", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Tätigkeit", { exact: true }).selectOption("indoors");
+  await expect(
+    possible.getByText(/Keine passenden Anbauzeiträume/),
+  ).toBeVisible();
+  await page.getByLabel("Tätigkeit", { exact: true }).selectOption("");
+  await page.getByLabel("Woche auswählen", { exact: true }).fill("2026-10-30");
+  await page.getByLabel("Woche auswählen", { exact: true }).press("Tab");
+  await expect(possible.getByText("01.11.2026", { exact: true })).toBeVisible();
+  await possible
+    .getByRole("button", { name: /Blattkultur · Beispiel.*Direktsaat/ })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "Blattkultur · Beispiel", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Schließen", exact: true })
+    .click();
+  await page.screenshot({
+    path: testInfo.outputPath("weekly-windows.png"),
+    scale: "css",
+  });
+});
+
+test("sensor suggestions stay anchored in the form and support keyboard and touch", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await page.evaluate(() => {
+    const host = (
+      window as unknown as { gardenPlannerTestHost: { hass: Hass } }
+    ).gardenPlannerTestHost;
+    host.hass.states = {
+      "sensor.greenhouse_air": {
+        state: "22",
+        attributes: {
+          friendly_name: "Gewächshaus Luft",
+          unit_of_measurement: "°C",
+        },
+      },
+      "sensor.soil_temperature": {
+        state: "unavailable",
+        attributes: {
+          friendly_name: "Boden Temperatur",
+          device_class: "temperature",
+        },
+      },
+      "sensor.greenhouse_humidity": {
+        state: "60",
+        attributes: {
+          friendly_name: "Gewächshaus Feuchte",
+          unit_of_measurement: "%",
+        },
+      },
+    };
+    const panel = document.querySelector(
+      "garden-planner-panel",
+    ) as HTMLElement & { hass: Hass };
+    panel.hass = { ...host.hass };
+  });
+  await navigate(page, "Beete & Standorte");
+  await page
+    .locator("header")
+    .getByRole("button", { name: "Standort anlegen", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Standort anlegen" });
+  await dialog.getByLabel("Name *", { exact: true }).fill("Sensor-Testbeet");
+  const input = dialog.getByRole("combobox", {
+    name: "Temperatursensor (optional)",
+  });
+  await input.fill("GEWÄCHS");
+  const list = dialog.getByRole("listbox", {
+    name: "Temperatursensor (optional)",
+  });
+  await expect(list.getByRole("option")).toHaveCount(1);
+  const [fieldBox, listBox] = await Promise.all([
+    input.boundingBox(),
+    list.boundingBox(),
+  ]);
+  expect(Math.abs(fieldBox!.x - listBox!.x)).toBeLessThan(2);
+  expect(Math.abs(fieldBox!.width - listBox!.width)).toBeLessThan(2);
+  expect(
+    listBox!.y >= fieldBox!.y + fieldBox!.height ||
+      listBox!.y + listBox!.height <= fieldBox!.y,
+  ).toBe(true);
+  expect(listBox!.y).toBeGreaterThanOrEqual(0);
+  expect(listBox!.y + listBox!.height).toBeLessThanOrEqual(
+    (await page.viewportSize())!.height,
+  );
+  expect(listBox!.x + listBox!.width).toBeLessThanOrEqual(
+    (await page.viewportSize())!.width,
+  );
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+  await page.screenshot({
+    path: testInfo.outputPath("sensor-options.png"),
+    scale: "css",
+  });
+  await input.press("ArrowDown");
+  await input.press("Enter");
+  await expect(input).toHaveValue("sensor.greenhouse_air");
+  await expect(list).toBeHidden();
+  await expect(dialog).toBeVisible();
+  await input.fill("Boden");
+  const option = list.getByRole("option", { name: /Boden Temperatur/ });
+  if (testInfo.project.name === "mobile-chromium") await option.tap();
+  else await option.click();
+  await expect(input).toHaveValue("sensor.soil_temperature");
+  await page.evaluate(() => {
+    const host = (
+      window as unknown as { gardenPlannerTestHost: { hass: Hass } }
+    ).gardenPlannerTestHost;
+    for (let index = 0; index < 40; index++) {
+      const suffix = String(index).padStart(2, "0");
+      host.hass.states![`sensor.many_${suffix}`] = {
+        state: "20",
+        attributes: {
+          friendly_name: `Many Test ${suffix}`,
+          unit_of_measurement: "°C",
+        },
+      };
+    }
+    (
+      document.querySelector("garden-planner-panel") as HTMLElement & {
+        hass: Hass;
+      }
+    ).hass = { ...host.hass };
+  });
+  await input.fill("Many");
+  await expect(list.getByRole("option")).toHaveCount(40);
+  const longList = await list.boundingBox();
+  expect(longList!.y).toBeGreaterThanOrEqual(0);
+  expect(longList!.y + longList!.height).toBeLessThanOrEqual(
+    (await page.viewportSize())!.height,
+  );
+  await input.press("ArrowUp");
+  const last = list.getByRole("option", { name: /Many Test 39/ });
+  if (testInfo.project.name === "mobile-chromium") await last.tap();
+  else await last.click();
+  await expect(input).toHaveValue("sensor.many_39");
+  await input.fill("sensor.manual_temperature");
+  await expect(
+    dialog.getByText(/Keine passenden Temperatursensoren/),
+  ).toBeVisible();
+  await input.press("Escape");
+  await expect(dialog).toBeVisible();
+  await expect(list).toBeHidden();
+  await dialog.getByLabel("Art der Temperaturmessung").selectOption("soil");
+  await dialog.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByText("sensor.manual_temperature", { exact: false }),
+  ).toBeVisible();
+});

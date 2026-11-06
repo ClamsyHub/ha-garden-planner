@@ -61,3 +61,30 @@ export function temperatureReading(
     state: value < range.min || value > range.max ? "outside" : "within",
   };
 }
+
+export function temperatureSensors(
+  hass: Hass | undefined,
+  query: string,
+): { id: string; name: string }[] {
+  const search = query.trim().toLocaleLowerCase();
+  return Object.entries(hass?.states ?? {})
+    .filter(
+      ([id, state]) =>
+        id.startsWith("sensor.") &&
+        (state.attributes.device_class === "temperature" ||
+          ["°C", "°F", "K"].includes(
+            String(state.attributes.unit_of_measurement),
+          )),
+    )
+    .map(([id, state]) => ({
+      id,
+      name:
+        typeof state.attributes.friendly_name === "string"
+          ? state.attributes.friendly_name
+          : id,
+    }))
+    .filter(({ id, name }) =>
+      `${id} ${name}`.toLocaleLowerCase().includes(search),
+    )
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+}

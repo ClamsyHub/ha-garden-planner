@@ -82,8 +82,9 @@ eine Browserpräferenz; Fachdaten gehören weiterhin ins Backend.
   und beliebig viele Anbauzeitfenster ergänzen. Jedes Fenster hat Tätigkeit,
   Umgebung, eigene Tagesgrenzen und optionale Keim-/Quellenangaben.
 - **Kalender:** Monat, Woche oder Jahr auswählen. Monats-/Jahresansichten zeigen
-  gepflegte Zeitfenster; die Woche zeigt konkrete Aufgaben und dokumentierte
-  Ereignisse. Jahresbalken berücksichtigen Teilmonate und den Jahreswechsel.
+  gepflegte Zeitfenster; die Woche zeigt unter **Diese Woche möglich** die
+  überlappenden Anbauzeiträume mit den tatsächlich in der Woche liegenden Tagen.
+  Darunter stehen konkrete Aufgaben und dokumentierte Ereignisse. Jahresbalken berücksichtigen Teilmonate und den Jahreswechsel.
   Balken oder Pflanzennamen öffnen die Details. Kategorien, Tätigkeiten und Suche
   filtern die Ansichten. Im Smartphone-Jahresplan horizontal wischen.
 - **Aussaat erfassen:** Pflanze, Datum (heute in der HA-Zeitzone), Methode und
@@ -98,7 +99,10 @@ eine Browserpräferenz; Fachdaten gehören weiterhin ins Backend.
   Zeitfenster zum Zeitpunkt der Erfassung.
 - **Standorte:** auch ohne Sensor nutzbar. Sensor-ID und Messart können gespeichert
   werden; verfügbare Livewerte werden angezeigt (°C/°F/K werden umgerechnet). Lufttemperatur ist
-  kein Ersatz für eine Messung des Keimsubstrats.
+  kein Ersatz für eine Messung des Keimsubstrats. Die Sensorliste erscheint direkt
+  am Eingabefeld (bei wenig Platz nach oben) und sucht nach Namen oder Entity-ID; Auswahl per Maus,
+  Touch oder Pfeiltasten/Enter. Escape schließt zunächst die Liste. Sensor-IDs
+  lassen sich weiterhin manuell eingeben.
 - **Aufgaben:** auf Übersicht oder bei aktuellen Kulturen anlegen, bearbeiten und
   abhaken. Der Wochenkalender zeigt sie an ihren konkreten Terminen.
 - **Sicherheit:** Löschen verlangt eine Rückfrage. Verknüpfte Datensätze können die

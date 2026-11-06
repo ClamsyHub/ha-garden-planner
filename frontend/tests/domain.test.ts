@@ -1,4 +1,8 @@
-import { recommendedRange, temperatureReading } from "../src/temperature";
+import {
+  recommendedRange,
+  temperatureReading,
+  temperatureSensors,
+} from "../src/temperature";
 import type { Hass } from "../src/types";
 import { describe, expect, it } from "vitest";
 import {
@@ -10,6 +14,7 @@ import {
   sowingDate,
   todayInZone,
   weekDays,
+  windowWeekSegments,
 } from "../src/dates";
 import { fieldsFor, formData, initialData } from "../src/fields";
 import { csvZip, readCsvZip } from "../src/files";
@@ -244,4 +249,51 @@ describe("optional HA temperature integration", () => {
     });
     expect(recommendedRange(culture)).toEqual({ min: 12, max: 15 });
   });
+});
+
+it("clips seasonal windows to the chosen week, including winter and gaps", () => {
+  expect(windowWeekSegments(window(11, 1, 2, 20), "2026-10-30")).toEqual([
+    { start: "2026-11-01", end: "2026-11-01" },
+  ]);
+  expect(windowWeekSegments(window(12, 31, 1, 3), "2026-12-31")).toEqual([
+    { start: "2026-12-31", end: "2027-01-03" },
+  ]);
+  expect(windowWeekSegments(window(1, 2, 12, 31), "2026-03-02")).toEqual([
+    { start: "2026-03-02", end: "2026-03-08" },
+  ]);
+  expect(windowWeekSegments(window(3, 1, 3, 2), "2026-02-26")).toEqual([
+    { start: "2026-03-01", end: "2026-03-01" },
+  ]);
+  expect(windowWeekSegments(window(1, 5, 1, 2), "2027-01-01")).toEqual([
+    { start: "2026-12-28", end: "2027-01-02" },
+  ]);
+  expect(windowWeekSegments(window(11, 1, 2, 20), "2026-04-06")).toEqual([]);
+});
+
+it("sensor search matches friendly names or IDs and excludes non-temperature sensors", () => {
+  const hass = {
+    states: {
+      "sensor.air": {
+        state: "20",
+        attributes: { friendly_name: "Gewächshaus", unit_of_measurement: "°C" },
+      },
+      "sensor.soil": {
+        state: "unavailable",
+        attributes: { friendly_name: "Boden", device_class: "temperature" },
+      },
+      "sensor.humidity": {
+        state: "60",
+        attributes: { unit_of_measurement: "%" },
+      },
+      "climate.air": { state: "20", attributes: { unit_of_measurement: "°C" } },
+    },
+  } as unknown as Hass;
+  expect(temperatureSensors(hass, "GEWÄCHS").map((x) => x.id)).toEqual([
+    "sensor.air",
+  ]);
+  expect(temperatureSensors(hass, "sensor.soil").map((x) => x.id)).toEqual([
+    "sensor.soil",
+  ]);
+  expect(temperatureSensors(hass, "")).toHaveLength(2);
+  expect(temperatureSensors(undefined, "air")).toEqual([]);
 });

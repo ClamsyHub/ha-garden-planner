@@ -1,6 +1,7 @@
 """Verify the artifact HACS actually installs, rather than the whole source ZIP."""
 
 import hashlib
+import json
 import shutil
 import tempfile
 import unittest
@@ -9,6 +10,13 @@ from zipfile import ZipFile
 
 from scripts.build_release import build
 from scripts.check_repository import ROOT
+
+TAG = (
+    "v"
+    + json.loads((ROOT / "custom_components/garden_planner/manifest.json").read_text())[
+        "version"
+    ]
+)
 
 
 class ReleaseTests(unittest.TestCase):
@@ -35,8 +43,8 @@ class ReleaseTests(unittest.TestCase):
 
     def test_artifact_is_reproducible_and_complete(self) -> None:
         one, two = Path(self.temp.name) / "one.zip", Path(self.temp.name) / "two.zip"
-        build(self.root, one, "v0.1.0")
-        build(self.root, two, "v0.1.0")
+        build(self.root, one, TAG)
+        build(self.root, two, TAG)
         self.assertEqual(
             hashlib.sha256(one.read_bytes()).digest(),
             hashlib.sha256(two.read_bytes()).digest(),
@@ -66,7 +74,7 @@ class ReleaseTests(unittest.TestCase):
     def test_private_database_never_enters_an_artifact(self) -> None:
         (self.root / "custom_components/garden_planner/private.sqlite3").touch()
         with self.assertRaises(ValueError):
-            build(self.root, Path(self.temp.name) / "blocked.zip", "v0.1.0")
+            build(self.root, Path(self.temp.name) / "blocked.zip", TAG)
 
     def test_tag_version_and_notes_are_required(self) -> None:
         with self.assertRaises(ValueError):
