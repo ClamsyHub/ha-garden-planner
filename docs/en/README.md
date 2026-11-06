@@ -23,7 +23,7 @@ YAML or extra container is required. Existing HA authentication is used througho
 
 ## Isolated test installation
 
-Target HA >=2026.6.0. Copy the complete `custom_components/garden_planner/` folder,
+Security minimum: HA >=2026.7.0. Copy the complete `custom_components/garden_planner/` folder,
 including `www/`, into an **isolated test instance**, restart HA and add Garden
 Planner in Settings → Devices & services. One shared garden is supported.
 

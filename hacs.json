@@ -1,6 +1,6 @@
 {
   "name": "Garden Planner",
-  "homeassistant": "2026.6.0",
+  "homeassistant": "2026.7.0",
   "hide_default_branch": true,
   "zip_release": true,
   "filename": "garden_planner.zip"

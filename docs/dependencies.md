@@ -29,8 +29,13 @@ release. Keep the SHA-pinning/security review requirement above before publicati
 Jinja2 in the user's private HomeAssistant project is unrelated to this repository
 and is not a Garden Planner requirement.
 
-The `ha-test` development extra pins Home Assistant 2026.6.0 in an isolated venv.
+The `ha-test` development extra pins Home Assistant 2026.7.0 in an isolated venv.
 It is not a manifest requirement or a dependency to inject into a running HA.
 Native HA APIs, voluptuous and the host runtime are supplied by Home Assistant.
 The backend itself uses only Python standard-library SQLite, JSON and CSV.
 The frontend distribution is self-contained and has no runtime CDN imports.
+
+The HA test matrix uses 2026.7.0 as the patched minimum and >=2026.11.0 for
+current-stable coverage. Versions below 2026.7.0 are deliberately not installed
+in CI because of GHSA-wx4m-69m9-gx3m. No check is dismissed or ignored. Historical
+release/validation reports retain their exact original test versions.

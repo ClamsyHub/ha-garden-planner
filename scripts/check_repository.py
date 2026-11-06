@@ -36,7 +36,7 @@ def validate(root: Path, *, release: bool = False, tag: str | None = None) -> li
         errors.append("Manifest and project versions differ.")
     if hacs.get("name") != manifest.get("name"):
         errors.append("HACS and manifest names differ.")
-    if hacs.get("homeassistant") != "2026.6.0":
+    if hacs.get("homeassistant") != "2026.7.0":
         errors.append("Review the documented HA compatibility floor.")
     for p in root.rglob("*"):
         if not p.is_file() or any(

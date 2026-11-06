@@ -52,7 +52,7 @@ Nutzerdaten liegen getrennt. Details: [Backend/API](docs/backend.md).
 
 ## Voraussetzungen und Installation
 
-Ziel: Home Assistant **ab 2026.6.0**, einschließlich Container und anderer
+Sicherheitsminimum: Home Assistant **ab 2026.7.0**, einschließlich Container und anderer
 unterstützter Installationsarten. Keine zusätzlichen Container, Cloud-Dienste oder
 HACS-Karten. Das fertige Frontend liegt bereits im Integrationspaket; Nutzer werden
 weder Node.js noch einen eigenen Build benötigen.
@@ -65,6 +65,12 @@ und Marketplace in separaten HA-Containern getestet. Die lokale Vorschau verwend
 separaten Testadapter mit ausschließlich temporären Daten.
 
 [Installation](docs/de/README.md) · [Lokale Vorschau](docs/frontend.md)
+
+**Sicherheit:** HA vor 2026.7.0 enthält die kritische XSS-Lücke
+[CVE-2026-91130](https://github.com/advisories/GHSA-wx4m-69m9-gx3m).
+Die alte HA-2026.6-Testabhängigkeit wurde entfernt. Das höhere Minimum gilt für
+den aktuellen Entwicklungsstand; veröffentlichte v0.1.0-Dateien werden nicht
+nachträglich verändert. [Details](docs/security/CVE-2026-91130.md).
 
 ## Entwicklung und Prüfungen
 

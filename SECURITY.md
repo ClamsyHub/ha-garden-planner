@@ -17,3 +17,12 @@ security and installation review for every future release.
 Release review includes dependency and secret scanning. Keep default GitHub
 workflow permissions read-only. Never execute untrusted PR code with release
 credentials. No production deployment workflow belongs in this repository.
+
+## Home Assistant host versions
+
+Use Home Assistant >=2026.7.0, preferably current stable. Earlier hosts are
+vulnerable to CVE-2026-91130 in the native Statistics Graph card. Garden Planner
+cannot patch an installed Home Assistant host. The development test extra is
+pinned to the patched minimum 2026.7.0 and CI covers the patched minimum/current stable. Published
+v0.1.0 artifacts retain their historical metadata; see
+[the remediation record](docs/security/CVE-2026-91130.md).

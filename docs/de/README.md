@@ -14,7 +14,7 @@ erfolgen außerhalb produktiver Dateien.
 
 ## Isolierte Testinstallation
 
-HA >=2026.6.0. Das vollständige Verzeichnis `custom_components/garden_planner/`
+Sicherheitsminimum: HA >=2026.7.0. Das vollständige Verzeichnis `custom_components/garden_planner/`
 mit `www/` in das gleichnamige Verzeichnis der **separaten Testinstanz** kopieren.
 HA neu starten. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen**
 Garden Planner wählen und bestätigen. Das Panel **Garden Planner** erscheint in

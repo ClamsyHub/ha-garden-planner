@@ -45,7 +45,7 @@ substrate. Never infer substrate temperature from an air sensor.
 
 ## Compatibility and distribution
 
-Target floor: HA 2026.6.0; test baseline plus current stable before release.
+Security floor for the next release: HA 2026.7.0; test baseline plus current stable before release.
 Beta checks are early warnings. This is a project support target, not a claim
 that upstream maintains old HA releases. UI text supports German and English.
 Custom-integration translations ship as translations/de.json and en.json.
