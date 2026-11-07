@@ -185,11 +185,6 @@ export function fieldsFor(
           required: true,
         },
       ]),
-      ...measures
-        .filter(
-          (key) => !["depth_cm", "spacing_cm", "row_spacing_cm"].includes(key),
-        )
-        .map(scalarField),
       ...["notes", "regional_notes", "source", "source_url"].map(scalarField),
     ];
   if (table === "locations")

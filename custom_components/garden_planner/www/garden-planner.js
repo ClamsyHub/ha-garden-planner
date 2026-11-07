@@ -1501,11 +1501,6 @@ function wt(e, n, r, i, a) {
 			step: "1",
 			required: !0
 		}]),
-		...xt.filter((e) => ![
-			"depth_cm",
-			"spacing_cm",
-			"row_spacing_cm"
-		].includes(e)).map(W),
 		...[
 			"notes",
 			"regional_notes",
