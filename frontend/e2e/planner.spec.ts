@@ -74,36 +74,6 @@ test("plant CRUD, winter window, variety and confirmed deletion", async ({
   await expect(
     detail.getByRole("heading", { name: "Testsorte" }),
   ).toBeVisible();
-  const windowItem = detail.locator("article").filter({
-    has: page.getByRole("heading", { name: /Direktsaat.*15/ }),
-  });
-  await windowItem
-    .getByRole("button", { name: "Bearbeiten", exact: true })
-    .click();
-  const windowEditor = page.locator("#editor-dialog");
-  await expect(
-    windowEditor.getByLabel("Pflanze *", { exact: true }),
-  ).toBeDisabled();
-  const varietySelect = windowEditor.getByLabel("Sorte (optional)", {
-    exact: true,
-  });
-  await expect(varietySelect).toBeEnabled();
-  await varietySelect.selectOption({ label: "Testsorte" });
-  await windowEditor
-    .getByRole("button", { name: "Speichern", exact: true })
-    .click();
-  await expect(windowEditor).not.toBeVisible();
-  await expect(windowItem.getByRole("heading")).toContainText("Testsorte");
-  await windowItem
-    .getByRole("button", { name: "Bearbeiten", exact: true })
-    .click();
-  await expect(varietySelect.locator("option:checked")).toHaveText("Testsorte");
-  await varietySelect.selectOption("");
-  await windowEditor
-    .getByRole("button", { name: "Speichern", exact: true })
-    .click();
-  await expect(windowEditor).not.toBeVisible();
-  await expect(windowItem.getByRole("heading")).not.toContainText("Testsorte");
   await detail.getByRole("button", { name: "Schließen", exact: true }).click();
   await navigate(page, "Aussaatkalender");
   await page.getByRole("button", { name: "Jahr", exact: true }).click();
@@ -1099,4 +1069,55 @@ test("user matrix persists separate push and email selections and viewing grants
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
+});
+
+test("growing-window variety can be added and cleared after creation", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Meine Pflanzen");
+  await page
+    .getByRole("button", { name: "Blattkultur · Beispiel", exact: true })
+    .click();
+  const detail = page.getByRole("dialog", {
+    name: "Blattkultur · Beispiel",
+    exact: true,
+  });
+  await detail
+    .getByRole("button", { name: "Sorte hinzufügen", exact: true })
+    .click();
+  const variety = page.locator("#editor-dialog");
+  await variety.getByLabel("Name *", { exact: true }).fill("Testsorte");
+  await variety.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(variety).not.toBeVisible();
+  const windowItem = detail.locator("article").filter({
+    has: page.getByRole("heading", { name: /^Direktsaat/ }),
+  });
+  await windowItem
+    .getByRole("button", { name: "Bearbeiten", exact: true })
+    .click();
+  const windowEditor = page.locator("#editor-dialog");
+  await expect(
+    windowEditor.getByLabel("Pflanze *", { exact: true }),
+  ).toBeDisabled();
+  const varietySelect = windowEditor.getByLabel("Sorte (optional)", {
+    exact: true,
+  });
+  await expect(varietySelect).toBeEnabled();
+  await varietySelect.selectOption({ label: "Testsorte" });
+  await windowEditor
+    .getByRole("button", { name: "Speichern", exact: true })
+    .click();
+  await expect(windowEditor).not.toBeVisible();
+  await expect(windowItem.getByRole("heading")).toContainText("Testsorte");
+  await windowItem
+    .getByRole("button", { name: "Bearbeiten", exact: true })
+    .click();
+  await expect(varietySelect.locator("option:checked")).toHaveText("Testsorte");
+  await varietySelect.selectOption("");
+  await windowEditor
+    .getByRole("button", { name: "Speichern", exact: true })
+    .click();
+  await expect(windowEditor).not.toBeVisible();
+  await expect(windowItem.getByRole("heading")).not.toContainText("Testsorte");
 });
