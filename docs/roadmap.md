@@ -22,6 +22,6 @@
   upgrades verified. [PR #13526](https://github.com/hacs/default/pull/13526) submitted.
   Awaiting maintainer triage and acceptance; catalog membership is not complete.
 
-Version 0.1.1 is published as a regular early-development release. Feature releases and 1.0.0 require passing runtime tests.
+Version 0.1.3 is published as a regular early-development release. Feature releases and 1.0.0 require passing runtime tests.
 Later scope: photos, seed stock, yields, crop rotation, companion planting and
 weather history. No unsourced horticultural claims or private user data in samples.
