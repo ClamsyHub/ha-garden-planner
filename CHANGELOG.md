@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.2 — unreleased candidate
+## 0.1.2 — 2026-11-07
 
 - Allow adding, changing and clearing a growing window’s variety within its plant; preserve cultivation history.
 - Remove duplicate measurement fields from growing-window forms; retain existing data.
