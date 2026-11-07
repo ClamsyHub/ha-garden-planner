@@ -93,7 +93,7 @@ test("plant CRUD, winter window, variety and confirmed deletion", async ({
     .getByRole("button", { name: "Speichern", exact: true })
     .click();
   await expect(windowEditor).not.toBeVisible();
-  await expect(windowItem.locator("small")).toContainText("Testsorte");
+  await expect(windowItem.getByRole("heading")).toContainText("Testsorte");
   await windowItem
     .getByRole("button", { name: "Bearbeiten", exact: true })
     .click();
@@ -103,7 +103,7 @@ test("plant CRUD, winter window, variety and confirmed deletion", async ({
     .getByRole("button", { name: "Speichern", exact: true })
     .click();
   await expect(windowEditor).not.toBeVisible();
-  await expect(windowItem.locator("small")).not.toContainText("Testsorte");
+  await expect(windowItem.getByRole("heading")).not.toContainText("Testsorte");
   await detail.getByRole("button", { name: "Schließen", exact: true }).click();
   await navigate(page, "Aussaatkalender");
   await page.getByRole("button", { name: "Jahr", exact: true }).click();
@@ -827,4 +827,85 @@ test("sensor suggestions stay anchored in the form and support keyboard and touc
   await expect(
     page.getByText("sensor.manual_temperature", { exact: false }),
   ).toBeVisible();
+});
+
+test("plant details keep varieties and chronological windows compact", async ({
+  page,
+}) => {
+  await open(page);
+  await addPlant(page, "Compact crop");
+  await page.getByRole("button", { name: "Compact crop", exact: true }).click();
+  const detail = page.getByRole("dialog", {
+    name: "Compact crop",
+    exact: true,
+  });
+  await detail
+    .getByRole("button", { name: "Sorte hinzufügen", exact: true })
+    .click();
+  const variety = page.locator("#editor-dialog");
+  await variety.getByLabel("Name *", { exact: true }).fill("Compact variety");
+  await variety
+    .getByLabel("Botanischer Name", { exact: true })
+    .fill("Capsicum annuum");
+  await variety
+    .getByLabel("Notizen", { exact: true })
+    .fill("Only in variety editor");
+  await variety.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(variety).not.toBeVisible();
+  const varietyItem = detail.locator("article").filter({
+    has: page.getByRole("heading", {
+      name: "Compact variety (Capsicum annuum)",
+    }),
+  });
+  await expect(varietyItem).toBeVisible();
+  await expect(varietyItem.getByText("Only in variety editor")).toHaveCount(0);
+  await expect(varietyItem.locator("h3 span")).toHaveCSS("font-weight", "400");
+  await varietyItem
+    .getByRole("button", { name: "Bearbeiten", exact: true })
+    .click();
+  await expect(variety.getByLabel("Notizen", { exact: true })).toHaveValue(
+    "Only in variety editor",
+  );
+  await variety.getByRole("button", { name: "Abbrechen", exact: true }).click();
+  for (const [activity, month] of [
+    ["prick_out", "3"],
+    ["indoors", "2"],
+  ]) {
+    await detail
+      .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+      .click();
+    const editor = page.locator("#editor-dialog");
+    await editor
+      .getByLabel("Tätigkeit *", { exact: true })
+      .selectOption(activity!);
+    await editor
+      .getByLabel("Sorte (optional)", { exact: true })
+      .selectOption({ label: "Compact variety" });
+    await editor
+      .getByLabel("Startmonat *", { exact: true })
+      .selectOption(month!);
+    await editor.getByLabel("Starttag *", { exact: true }).fill("1");
+    await editor.getByLabel("Endmonat *", { exact: true }).selectOption(month!);
+    await editor.getByLabel("Endtag *", { exact: true }).fill("28");
+    await editor
+      .getByLabel("Notizen", { exact: true })
+      .fill("Visible window note");
+    await editor
+      .getByLabel("Regionale Hinweise", { exact: true })
+      .fill("Only in window editor");
+    await editor
+      .getByRole("button", { name: "Speichern", exact: true })
+      .click();
+    await expect(editor).not.toBeVisible();
+  }
+  const windows = detail.locator("article").filter({
+    has: page.getByRole("heading", {
+      name: /^(Vorziehen|Pikieren) \(Compact variety\)/,
+    }),
+  });
+  await expect(windows).toHaveCount(2);
+  await expect(windows.nth(0).getByRole("heading")).toContainText("Vorziehen");
+  await expect(windows.nth(1).getByRole("heading")).toContainText("Pikieren");
+  await expect(windows.nth(0).getByText("Visible window note")).toBeVisible();
+  await expect(detail.getByText("Only in window editor")).toHaveCount(0);
 });

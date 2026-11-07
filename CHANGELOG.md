@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 — unreleased candidate
+
+- Allow adding, changing and clearing a growing window’s variety within its plant; preserve cultivation history.
+- Remove duplicate measurement fields from growing-window forms; retain existing data.
+- Compact variety rows to name and botanical name; retain full editing fields.
+- Sort plant-detail growing windows chronologically; show activity, optional variety, date range and notes.
+
 ## 0.1.1 — 2026-11-06
 
 - Show seasonal growing windows overlapping the selected week, alongside actual tasks/events.

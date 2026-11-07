@@ -3594,7 +3594,16 @@ var Bn = class extends Ye {
 		return t(this.tables[n].find((t) => t.id === e), "name") || "—";
 	}
 	plantWindows(e) {
-		return this.tables.growing_windows.filter((n) => t(n, "plant_id") === e);
+		let n = [
+			"indoors",
+			"direct",
+			"prick_out",
+			"transplant",
+			"care",
+			"harvest",
+			"other"
+		];
+		return this.tables.growing_windows.filter((n) => t(n, "plant_id") === e).sort((e, r) => Number(e.data.start_month) - Number(r.data.start_month) || Number(e.data.start_day) - Number(r.data.start_day) || n.indexOf(t(e, "activity")) - n.indexOf(t(r, "activity")) || Number(e.data.end_month) - Number(r.data.end_month) || Number(e.data.end_day) - Number(r.data.end_day) || e.id.localeCompare(r.id));
 	}
 	status(e) {
 		return y(e, this.tables.cultivation_events);
@@ -4530,8 +4539,9 @@ var Bn = class extends Ye {
       </div>
       ${n.length ? n.map((e) => H`<article class="item">
                   <div class="item-content">
-                    <h3>${t(e, "name")}</h3>
-                    ${this.renderData(e.data, ["name"])}
+                    <h3>
+                      ${t(e, "name")}${t(e, "botanical_name") ? H` <span style="font-weight: normal">(${t(e, "botanical_name")})</span>` : U}
+                    </h3>
                   </div>
                   ${this.editable ? H`<button
                             @click=${() => this.startEditor("varieties", e)}
@@ -4556,19 +4566,10 @@ var Bn = class extends Ye {
       ${this.plantWindows(e.id).length ? this.plantWindows(e.id).map((e) => H`<article class="item">
                   <div class="item-content">
                     <h3>
-                      ${this.lab(t(e, "activity"))} ·
-                      ${_(e, this.language)}
+                      ${this.lab(t(e, "activity"))}${t(e, "variety_id") ? ` (${this.nameFor(t(e, "variety_id"), "varieties")})` : ""}
+                      · ${_(e, this.language)}
                     </h3>
-                    <small
-                      >${this.lab(t(e, "environment"))}${t(e, "variety_id") ? ` · ${this.nameFor(t(e, "variety_id"), "varieties")}` : ""}</small
-                    >${this.renderData(e.data, [
-			"start_month",
-			"start_day",
-			"end_month",
-			"end_day",
-			"activity",
-			"environment"
-		])}
+                    ${t(e, "notes") ? H`<p style="white-space: pre-wrap">${t(e, "notes")}</p>` : U}
                   </div>
                   ${this.editable ? H`<button
                             @click=${() => this.startEditor("growing_windows", e)}

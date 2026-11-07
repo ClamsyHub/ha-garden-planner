@@ -458,9 +458,27 @@ export class GardenPlannerPanel extends LitElement {
     );
   }
   private plantWindows(id: string): Entity[] {
-    return this.tables.growing_windows.filter(
-      (w) => text(w, "plant_id") === id,
-    );
+    const activities = [
+      "indoors",
+      "direct",
+      "prick_out",
+      "transplant",
+      "care",
+      "harvest",
+      "other",
+    ];
+    return this.tables.growing_windows
+      .filter((w) => text(w, "plant_id") === id)
+      .sort(
+        (a, b) =>
+          Number(a.data.start_month) - Number(b.data.start_month) ||
+          Number(a.data.start_day) - Number(b.data.start_day) ||
+          activities.indexOf(text(a, "activity")) -
+            activities.indexOf(text(b, "activity")) ||
+          Number(a.data.end_month) - Number(b.data.end_month) ||
+          Number(a.data.end_day) - Number(b.data.end_day) ||
+          a.id.localeCompare(b.id),
+      );
   }
   private status(culture: Entity): string {
     return cultureStatus(culture, this.tables.cultivation_events);
@@ -1733,8 +1751,9 @@ export class GardenPlannerPanel extends LitElement {
               (v) =>
                 html`<article class="item">
                   <div class="item-content">
-                    <h3>${text(v, "name")}</h3>
-                    ${this.renderData(v.data, ["name"])}
+                    <h3>
+                      ${text(v, "name")}${text(v, "botanical_name") ? html` <span style="font-weight: normal">(${text(v, "botanical_name")})</span>` : nothing}
+                    </h3>
                   </div>
                   ${
                     this.editable
@@ -1767,12 +1786,10 @@ export class GardenPlannerPanel extends LitElement {
                 html`<article class="item">
                   <div class="item-content">
                     <h3>
-                      ${this.lab(text(w, "activity"))} ·
-                      ${windowLabel(w, this.language)}
+                      ${this.lab(text(w, "activity"))}${text(w, "variety_id") ? ` (${this.nameFor(text(w, "variety_id"), "varieties")})` : ""}
+                      · ${windowLabel(w, this.language)}
                     </h3>
-                    <small
-                      >${this.lab(text(w, "environment"))}${text(w, "variety_id") ? ` · ${this.nameFor(text(w, "variety_id"), "varieties")}` : ""}</small
-                    >${this.renderData(w.data, ["start_month", "start_day", "end_month", "end_day", "activity", "environment"])}
+                    ${text(w, "notes") ? html`<p style="white-space: pre-wrap">${text(w, "notes")}</p>` : nothing}
                   </div>
                   ${
                     this.editable
