@@ -639,10 +639,10 @@ test("explicit reminder settings and editor grants are editable without YAML", a
   });
   await expect(enable).not.toBeChecked();
   await page
-    .getByLabel("Bearbeiten erlauben", { exact: true })
-    .selectOption("test-reader");
+    .getByLabel("Test reader: Garden Planner bearbeiten", { exact: true })
+    .check();
   await page
-    .getByLabel("Benachrichtigungskanal", { exact: true })
+    .getByLabel("Bisheriger gemeinsamer Kanal (optional)", { exact: true })
     .selectOption("notify.test_local");
   await enable.check();
   await page.getByRole("button", { name: "Speichern", exact: true }).click();
@@ -908,4 +908,176 @@ test("plant details keep varieties and chronological windows compact", async ({
   await expect(windows.nth(1).getByRole("heading")).toContainText("Pikieren");
   await expect(windows.nth(0).getByText("Visible window note")).toBeVisible();
   await expect(detail.getByText("Only in window editor")).toHaveCount(0);
+});
+
+test("all seven calendar activities have distinct bars and lifecycle order", async ({
+  page,
+}) => {
+  await open(page);
+  await addPlant(page, "Calendar colors");
+  await page
+    .getByRole("button", { name: "Calendar colors", exact: true })
+    .click();
+  const detail = page.getByRole("dialog", {
+    name: "Calendar colors",
+    exact: true,
+  });
+  const sequence = [
+    "indoors",
+    "direct",
+    "prick_out",
+    "transplant",
+    "care",
+    "harvest",
+    "other",
+  ];
+  for (const activity of [...sequence].reverse()) {
+    await detail
+      .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+      .click();
+    const editor = page.locator("#editor-dialog");
+    await editor
+      .getByLabel("Tätigkeit *", { exact: true })
+      .selectOption(activity);
+    await editor.getByLabel("Startmonat *", { exact: true }).selectOption("11");
+    await editor.getByLabel("Starttag *", { exact: true }).fill("1");
+    await editor.getByLabel("Endmonat *", { exact: true }).selectOption("11");
+    await editor.getByLabel("Endtag *", { exact: true }).fill("28");
+    await editor
+      .getByRole("button", { name: "Speichern", exact: true })
+      .click();
+    await expect(editor).not.toBeVisible();
+  }
+  await detail.getByRole("button", { name: "Schließen", exact: true }).click();
+  await navigate(page, "Aussaatkalender");
+  await expect(page.locator(".legend > span")).toHaveCount(7);
+  const colors = await page
+    .locator(".legend .dot")
+    .evaluateAll((nodes) =>
+      nodes.map((n) => getComputedStyle(n).backgroundColor),
+    );
+  expect(new Set(colors).size).toBe(7);
+  const labels = [
+    "Vorziehen",
+    "Direktsaat",
+    "Pikieren",
+    "Auspflanzen",
+    "Pflege",
+    "Ernte",
+    "Sonstige",
+  ];
+  await page.getByRole("button", { name: "Jahr", exact: true }).click();
+  await expect(page.locator(".year-grid .row-title small")).toHaveText(
+    labels.map((v) => new RegExp(`^${v}`)),
+  );
+  await expect(page.locator(".year-grid .bar")).toHaveCount(7);
+  expect(
+    new Set(
+      await page
+        .locator(".year-grid .bar")
+        .evaluateAll((nodes) =>
+          nodes.map((n) => getComputedStyle(n).backgroundColor),
+        ),
+    ).size,
+  ).toBe(7);
+  await page.getByRole("button", { name: "Monat", exact: true }).click();
+  await expect(page.locator(".month-list .badge")).toHaveText(labels);
+  await page.getByRole("button", { name: "Woche", exact: true }).click();
+  await expect(page.locator(".week-window")).toHaveCount(7);
+  expect(
+    await page
+      .locator(".week-window")
+      .evaluateAll((nodes) =>
+        nodes.map((n) => n.className.replace("week-window ", "")),
+      ),
+  ).toEqual(sequence);
+  await page.getByLabel("Tätigkeit", { exact: true }).selectOption("prick_out");
+  await expect(page.locator(".week-window")).toHaveCount(1);
+});
+
+test("user matrix persists separate push and email selections and viewing grants", async ({
+  page,
+}) => {
+  await open(page, { host: "1" });
+  await navigate(page, "Einstellungen");
+  await expect(
+    page.getByLabel("Test admin: Garden Planner sehen", { exact: true }),
+  ).toBeDisabled();
+  await page
+    .getByLabel("Test reader: Garden Planner bearbeiten", { exact: true })
+    .check();
+  for (const [user, service] of [
+    ["Test reader", "notify.push_one"],
+    ["Test two", "notify.push_two"],
+    ["Test three", "notify.push_three"],
+  ]) {
+    await page.getByLabel(`${user}: Push erhalten`, { exact: true }).check();
+    await page
+      .getByLabel(`${user}: Push erhalten: Gerät / Versandziel`, {
+        exact: true,
+      })
+      .selectOption(service!);
+  }
+  await page
+    .getByLabel("Test reader: E-Mail erhalten", { exact: true })
+    .check();
+  await page
+    .getByLabel("Test reader: E-Mail erhalten: Gerät / Versandziel", {
+      exact: true,
+    })
+    .selectOption("notify.email");
+  await page
+    .getByLabel("Test reader: Empfänger-E-Mail-Adresse", { exact: true })
+    .fill("reader@example.invalid");
+  await page.getByLabel("Test three: E-Mail erhalten", { exact: true }).check();
+  await page
+    .getByLabel("Test three: E-Mail erhalten: Gerät / Versandziel", {
+      exact: true,
+    })
+    .selectOption("entity:notify.email_three");
+  await page
+    .getByLabel("Erinnerungen ausdrücklich aktivieren", { exact: true })
+    .check();
+  await page.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(
+    page.getByText("Einstellungen gespeichert.", { exact: true }),
+  ).toBeVisible();
+  await navigate(page, "Übersicht");
+  await navigate(page, "Einstellungen");
+  await expect(
+    page.getByLabel("Test reader: Garden Planner bearbeiten", { exact: true }),
+  ).toBeChecked();
+  await expect(
+    page.getByLabel("Test two: E-Mail erhalten", { exact: true }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByLabel("Test reader: Empfänger-E-Mail-Adresse", { exact: true }),
+  ).toHaveValue("reader@example.invalid");
+  await expect(
+    page.getByLabel("Test three: E-Mail erhalten: Gerät / Versandziel", {
+      exact: true,
+    }),
+  ).toHaveValue("entity:notify.email_three");
+  await page
+    .getByLabel("Test two: Garden Planner sehen", { exact: true })
+    .uncheck();
+  await expect(
+    page.getByLabel("Test two: Push erhalten", { exact: true }),
+  ).not.toBeChecked();
+  await expect(
+    page.getByLabel("Test two: Push erhalten", { exact: true }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(
+    page.getByText("Einstellungen gespeichert.", { exact: true }),
+  ).toBeVisible();
+  const accessibility = await new AxeBuilder({ page })
+    .include("garden-planner-panel")
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 });

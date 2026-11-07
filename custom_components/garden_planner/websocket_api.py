@@ -63,7 +63,14 @@ def subscribe(
     hass: HomeAssistant, connection: ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Send invalidation only; clients reload authorized records as needed."""
-    if not connection.user.is_active:
+    service = hass.data.get(DOMAIN)
+    user = connection.user
+    if not user.is_active or (
+        service is not None
+        and not user.is_admin
+        and service.readers is not None
+        and user.id not in service.readers
+    ):
         connection.send_error(msg["id"], "unauthorized", "An active user is required.")
         return
 

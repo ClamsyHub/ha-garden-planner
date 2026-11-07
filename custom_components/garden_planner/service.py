@@ -79,10 +79,14 @@ class PlannerService:
     """Single authorization boundary used by future UI and HA commands."""
 
     def __init__(
-        self, worker: PlannerWorker, writers: frozenset[str] = frozenset()
+        self,
+        worker: PlannerWorker,
+        writers: frozenset[str] = frozenset(),
+        readers: frozenset[str] | None = None,
     ) -> None:
         self.worker = worker
         self.writers = writers
+        self.readers = readers
         self.host_handler: (
             Callable[[str, dict[str, Any], Actor], Awaitable[Any]] | None
         ) = None
@@ -93,6 +97,14 @@ class PlannerService:
         """Authorize, validate the command shape and dispatch a bounded operation."""
         if not actor.user_id or not actor.is_active:
             raise AuthorizationError("An active authenticated user is required.")
+        if (
+            not actor.is_admin
+            and self.readers is not None
+            and actor.user_id not in self.readers
+        ):
+            raise AuthorizationError(
+                "Garden viewing has not been granted to this user."
+            )
         if not isinstance(operation, str) or operation not in PARAMETERS:
             raise ValidationError("Unknown Garden Planner operation.")
         if operation in ADMIN_OPERATIONS and not actor.is_admin:

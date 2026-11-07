@@ -99,7 +99,17 @@ export interface Capabilities {
   http_transfer?: boolean;
   reminders?: boolean;
 }
+export interface NotificationRoute {
+  user_id: string;
+  kind: "push" | "email";
+  enabled: boolean;
+  service: string;
+  entity: string;
+  target: string;
+}
 export interface HostSettings {
+  readers: string[] | null;
+  notification_routes: NotificationRoute[];
   writers: string[];
   reminders_enabled: boolean;
   lead_days: number;
@@ -110,6 +120,7 @@ export interface HostSettings {
 }
 export interface SettingsResponse {
   settings: HostSettings;
-  users: { id: string; name: string }[];
+  users: { id: string; name: string; is_admin?: boolean }[];
+  notify_entities?: { id: string; name: string }[];
   channels: string[];
 }

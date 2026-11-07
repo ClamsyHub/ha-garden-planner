@@ -3,7 +3,12 @@ import {
   temperatureReading,
   temperatureSensors,
 } from "./temperature";
-import type { Capabilities, HostSettings, SettingsResponse } from "./types";
+import type {
+  Capabilities,
+  HostSettings,
+  SettingsResponse,
+  NotificationRoute,
+} from "./types";
 import {
   LitElement,
   html,
@@ -65,7 +70,15 @@ const pages: Page[] = [
   "locations",
   "settings",
 ];
-const activities = ["indoors", "direct", "transplant", "harvest"];
+const activities = [
+  "indoors",
+  "direct",
+  "prick_out",
+  "transplant",
+  "care",
+  "harvest",
+  "other",
+];
 const paths: Record<string, string> = {
   overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
   calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
@@ -387,8 +400,21 @@ export class GardenPlannerPanel extends LitElement {
       this.loaded = true;
       this.error = "";
     } catch (error) {
-      if (generation === this.loadGeneration)
+      if (generation === this.loadGeneration) {
         this.error = errorText(this.language, error);
+        if (
+          error &&
+          typeof error === "object" &&
+          "code" in error &&
+          error.code === "unauthorized"
+        ) {
+          this.tables = emptyTables();
+          this.capabilities = null;
+          this.selected = null;
+          this.editor = null;
+          this.loaded = true;
+        }
+      }
     }
   }
   private announce(key: string): void {
@@ -458,28 +484,24 @@ export class GardenPlannerPanel extends LitElement {
     );
   }
   private plantWindows(id: string): Entity[] {
-    const activities = [
-      "indoors",
-      "direct",
-      "prick_out",
-      "transplant",
-      "care",
-      "harvest",
-      "other",
-    ];
     return this.tables.growing_windows
       .filter((w) => text(w, "plant_id") === id)
-      .sort(
-        (a, b) =>
-          Number(a.data.start_month) - Number(b.data.start_month) ||
-          Number(a.data.start_day) - Number(b.data.start_day) ||
-          activities.indexOf(text(a, "activity")) -
-            activities.indexOf(text(b, "activity")) ||
-          Number(a.data.end_month) - Number(b.data.end_month) ||
-          Number(a.data.end_day) - Number(b.data.end_day) ||
-          a.id.localeCompare(b.id),
-      );
+      .sort((a, b) => this.compareWindows(a, b));
   }
+  private compareWindows(a: Entity, b: Entity): number {
+    return (
+      activities.indexOf(text(a, "activity")) -
+        activities.indexOf(text(b, "activity")) ||
+      Number(a.data.start_month) - Number(b.data.start_month) ||
+      Number(a.data.start_day) - Number(b.data.start_day) ||
+      this.nameFor(text(a, "plant_id"), "plants").localeCompare(
+        this.nameFor(text(b, "plant_id"), "plants"),
+        this.language,
+      ) ||
+      a.id.localeCompare(b.id)
+    );
+  }
+
   private status(culture: Entity): string {
     return cultureStatus(culture, this.tables.cultivation_events);
   }
@@ -1010,15 +1032,17 @@ export class GardenPlannerPanel extends LitElement {
     </article>`;
   }
   private renderOverview(): TemplateResult {
-    const windows = this.tables.growing_windows.filter(
-      (w) =>
-        this.plantList.some((p) => p.id === text(w, "plant_id")) &&
-        activeInMonth(
-          w,
-          Number(this.today.slice(0, 4)),
-          Number(this.today.slice(5, 7)),
-        ),
-    );
+    const windows = this.tables.growing_windows
+      .filter(
+        (w) =>
+          this.plantList.some((p) => p.id === text(w, "plant_id")) &&
+          activeInMonth(
+            w,
+            Number(this.today.slice(0, 4)),
+            Number(this.today.slice(5, 7)),
+          ),
+      )
+      .sort((a, b) => this.compareWindows(a, b));
     const cultures = this.tables.cultivations;
     const stats: [string, number][] = [
       ["managedPlants", this.plantList.length],
@@ -1068,7 +1092,7 @@ export class GardenPlannerPanel extends LitElement {
             windows.length
               ? windows.map(
                   (w) =>
-                    html`<div class="item">
+                    html`<div class=${`item activity ${text(w, "activity")}`}>
                       <span class="plant-symbol">${icon("plants")}</span>
                       <div class="item-content">
                         <button
@@ -1140,13 +1164,9 @@ export class GardenPlannerPanel extends LitElement {
           ids.has(text(w, "plant_id")) &&
           (!this.activity || this.activity === text(w, "activity")),
       )
-      .sort((a, b) =>
-        this.nameFor(text(a, "plant_id"), "plants").localeCompare(
-          this.nameFor(text(b, "plant_id"), "plants"),
-          this.language,
-        ),
-      );
+      .sort((a, b) => this.compareWindows(a, b));
   }
+
   private shiftCalendar(direction: number): void {
     if (this.calendarMode === "week")
       this.anchor = addDays(this.anchor || this.today, direction * 7);
@@ -1293,7 +1313,9 @@ export class GardenPlannerPanel extends LitElement {
                     )
                     .map(
                       (window) =>
-                        html`<article class="plant">
+                        html`<article
+                          class=${`plant activity ${text(window, "activity")}`}
+                        >
                           <h3>
                             <button
                               class="link"
@@ -1381,6 +1403,11 @@ export class GardenPlannerPanel extends LitElement {
                 (!text(task, "plant_id") ||
                   visible.has(text(task, "plant_id"))),
             );
+            tasks.sort(
+              (a, b) =>
+                activities.indexOf(text(a, "activity")) -
+                activities.indexOf(text(b, "activity")),
+            );
             const events = this.tables.cultivation_events.filter(
               (event) =>
                 text(event, "date") === day &&
@@ -1392,6 +1419,28 @@ export class GardenPlannerPanel extends LitElement {
                       this.eventActivity(event, c) === this.activity),
                 ),
             );
+            const appointments = [
+              ...tasks.map((record) => ({
+                kind: "task" as const,
+                record,
+                activity: text(record, "activity"),
+              })),
+              ...events.map((record) => ({
+                kind: "event" as const,
+                record,
+                activity: this.eventActivity(
+                  record,
+                  this.tables.cultivations.find(
+                    (c) => c.id === text(record, "cultivation_id"),
+                  )!,
+                ),
+              })),
+            ].sort(
+              (a, b) =>
+                activities.indexOf(a.activity) -
+                  activities.indexOf(b.activity) ||
+                a.record.id.localeCompare(b.record.id),
+            );
             return html`<section
               class=${`week-day ${day === this.today ? "today" : ""}`}
             >
@@ -1399,22 +1448,28 @@ export class GardenPlannerPanel extends LitElement {
                 ${new Intl.DateTimeFormat(this.language === "de" ? "de-DE" : "en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}<br />${formatDate(day, this.language)}
               </h3>
               ${!tasks.length && !events.length ? html`<p class="muted week-empty">${this.tr("noAppointments")}</p>` : nothing}
-              ${tasks.map((task) => html`<button class=${`week-event ${text(task, "activity")}`} ?disabled=${!this.editable} @click=${() => this.startEditor("tasks", task)}>${text(task, "title")}${task.data.completed ? " ✓" : ""}</button>`)}${events.map(
-                (event) => {
-                  const culture = this.tables.cultivations.find(
-                    (c) => c.id === text(event, "cultivation_id"),
-                  )!;
+              ${appointments.map((item) => {
+                if (item.kind === "task")
                   return html`<button
-                    class="week-event"
-                    @click=${() => {
-                      this.selected = { kind: "culture", id: culture.id };
-                    }}
+                    class=${`week-event ${item.activity}`}
+                    ?disabled=${!this.editable}
+                    @click=${() => this.startEditor("tasks", item.record)}
                   >
-                    ${this.plantName(culture)} ·
-                    ${this.lab(text(event, "status"))}
+                    ${text(item.record, "title")}${item.record.data.completed ? " ✓" : ""}
                   </button>`;
-                },
-              )}
+                const culture = this.tables.cultivations.find(
+                  (c) => c.id === text(item.record, "cultivation_id"),
+                )!;
+                return html`<button
+                  class=${`week-event ${item.activity}`}
+                  @click=${() => {
+                    this.selected = { kind: "culture", id: culture.id };
+                  }}
+                >
+                  ${this.plantName(culture)} ·
+                  ${this.lab(text(item.record, "status"))}
+                </button>`;
+              })}
             </section>`;
           })}
         </div>
@@ -2165,6 +2220,183 @@ export class GardenPlannerPanel extends LitElement {
       ${reading.state === "outside" ? html`<p>${this.tr("outsideRange")}</p>` : reading.state === "information" && text(location, "measurement_kind") !== "substrate" ? html`<small>${this.tr("notComparable")}</small>` : nothing}
     </div>`;
   }
+  private setUserPermission(
+    id: string,
+    key: "readers" | "writers",
+    enabled: boolean,
+  ): void {
+    const draft = this.hostDraft!;
+    const readers = new Set(
+      draft.readers ?? this.hostSettings!.users.map((u) => u.id),
+    );
+    const writers = new Set(draft.writers);
+    const values = key === "readers" ? readers : writers;
+    if (enabled) values.add(id);
+    else values.delete(id);
+    if (key === "writers" && enabled) readers.add(id);
+    if (key === "readers" && !enabled) writers.delete(id);
+    this.hostDraft = {
+      ...draft,
+      readers: [...readers],
+      writers: [...writers],
+      notification_routes: draft.notification_routes.map((r) =>
+        r.user_id === id && key === "readers" && !enabled
+          ? { ...r, enabled: false }
+          : r,
+      ),
+    };
+  }
+  private updateRoute(
+    id: string,
+    kind: "push" | "email",
+    patch: Partial<NotificationRoute>,
+  ): void {
+    const draft = this.hostDraft!;
+    const route = draft.notification_routes.find(
+      (r) => r.user_id === id && r.kind === kind,
+    ) ?? {
+      user_id: id,
+      kind,
+      enabled: false,
+      service: "",
+      entity: "",
+      target: "",
+    };
+    this.hostDraft = {
+      ...draft,
+      notification_routes: [
+        ...draft.notification_routes.filter(
+          (r) => !(r.user_id === id && r.kind === kind),
+        ),
+        { ...route, ...patch },
+      ],
+    };
+  }
+  private renderRoute(
+    user: SettingsResponse["users"][number],
+    kind: "push" | "email",
+    canView: boolean,
+  ): TemplateResult {
+    const response = this.hostSettings!;
+    const route = this.hostDraft!.notification_routes.find(
+      (r) => r.user_id === user.id && r.kind === kind,
+    );
+    const title = `${user.name}: ${this.tr(kind)}`;
+    const destination =
+      route?.service === "notify.send_message"
+        ? `entity:${route.entity}`
+        : route?.service || "";
+    return html`<td>
+      <label class="check"
+        ><input
+          type="checkbox"
+          aria-label=${title}
+          .checked=${route?.enabled ?? false}
+          ?disabled=${!canView}
+          @change=${(e: Event) => this.updateRoute(user.id, kind, { enabled: (e.target as HTMLInputElement).checked })}
+        />${this.tr(kind)}</label
+      >
+      ${
+        route?.enabled
+          ? html`<label
+                >${this.tr("routeDestination")}<select
+                  aria-label=${`${title}: ${this.tr("routeDestination")}`}
+                  required
+                  @change=${(e: Event) => {
+                    const v = (e.target as HTMLSelectElement).value;
+                    this.updateRoute(
+                      user.id,
+                      kind,
+                      v.startsWith("entity:")
+                        ? {
+                            service: "notify.send_message",
+                            entity: v.slice(7),
+                            target: "",
+                          }
+                        : { service: v, entity: "", target: "" },
+                    );
+                  }}
+                >
+                  <option value="" .selected=${!destination}>
+                    ${this.tr("noChannel")}
+                  </option>
+                  ${response.channels.filter((c) => c !== "notify.send_message").map((c) => html`<option value=${c} .selected=${destination === c}>${c}</option>`)}
+                  ${(response.notify_entities ?? []).map((n) => html`<option value=${`entity:${n.id}`} .selected=${destination === `entity:${n.id}`}>${n.name} (${n.id})</option>`)}
+                  ${destination && !response.channels.includes(destination) && !(response.notify_entities ?? []).some((n) => destination === `entity:${n.id}`) ? html`<option value=${destination} selected>${destination} · ${this.tr("missingDestination")}</option>` : nothing}
+                </select></label
+              >
+              ${
+                kind === "email" &&
+                route.service &&
+                route.service !== "notify.send_message"
+                  ? html`<label
+                      >${this.tr("emailRecipient")}<input
+                        type="email"
+                        required
+                        autocomplete="off"
+                        aria-label=${`${user.name}: ${this.tr("emailRecipient")}`}
+                        .value=${route.target}
+                        @input=${(e: Event) => this.updateRoute(user.id, kind, { target: (e.target as HTMLInputElement).value })}
+                    /></label>`
+                  : nothing
+              }`
+          : nothing
+      }
+    </td>`;
+  }
+  private renderUserRoles(
+    response: SettingsResponse,
+    draft: HostSettings,
+  ): TemplateResult {
+    return html`<h3>${this.tr("userRoles")}</h3>
+      <p class="muted">${this.tr("rolesHint")}</p>
+      <div class="roles-scroll" tabindex="0" aria-label=${this.tr("userRoles")}>
+        <table class="roles-table">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("haUser")}</th>
+              <th scope="col">${this.tr("canView")}</th>
+              <th scope="col">${this.tr("canEdit")}</th>
+              <th scope="col">${this.tr("push")}</th>
+              <th scope="col">${this.tr("email")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${response.users.map((user) => {
+              const view =
+                !!user.is_admin ||
+                draft.readers === null ||
+                draft.readers.includes(user.id);
+              return html`<tr>
+                <th scope="row">
+                  ${user.name}${user.is_admin ? html`<small>${this.tr("administrator")}</small>` : nothing}
+                </th>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label=${`${user.name}: ${this.tr("canView")}`}
+                    .checked=${view}
+                    ?disabled=${user.is_admin ?? false}
+                    @change=${(e: Event) => this.setUserPermission(user.id, "readers", (e.target as HTMLInputElement).checked)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label=${`${user.name}: ${this.tr("canEdit")}`}
+                    .checked=${!!user.is_admin || draft.writers.includes(user.id)}
+                    ?disabled=${user.is_admin ?? false}
+                    @change=${(e: Event) => this.setUserPermission(user.id, "writers", (e.target as HTMLInputElement).checked)}
+                  />
+                </td>
+                ${this.renderRoute(user, "push", view)}${this.renderRoute(user, "email", view)}
+              </tr>`;
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">${this.tr("routeHint")}</p>`;
+  }
   private renderHostSettings(): TemplateResult | typeof nothing {
     if (!this.capabilities?.reminders || !this.admin) return nothing;
     const response = this.hostSettings;
@@ -2177,7 +2409,7 @@ export class GardenPlannerPanel extends LitElement {
       </section>`;
     const set = (
       key: keyof HostSettings,
-      value: string | number | boolean | string[],
+      value: HostSettings[keyof HostSettings],
     ) => {
       this.hostDraft = { ...draft, [key]: value };
     };
@@ -2195,21 +2427,7 @@ export class GardenPlannerPanel extends LitElement {
         }}
       >
         <div class="form-grid" style="margin-top:18px">
-          <label class="wide"
-            >${this.tr("writers")}<select
-              multiple
-              aria-label=${this.tr("writers")}
-              @change=${(e: Event) =>
-                set(
-                  "writers",
-                  [...(e.target as HTMLSelectElement).selectedOptions].map(
-                    (o) => o.value,
-                  ),
-                )}
-            >
-              ${response.users.map((u) => html`<option value=${u.id} .selected=${draft.writers.includes(u.id)}>${u.name}</option>`)}
-            </select></label
-          >
+          <div class="wide">${this.renderUserRoles(response, draft)}</div>
           <label class="check wide"
             ><input
               type="checkbox"
@@ -2238,8 +2456,10 @@ export class GardenPlannerPanel extends LitElement {
           <label
             >${this.tr("notify_service")}<select
               aria-label=${this.tr("notify_service")}
-              ?required=${draft.reminders_enabled}
-              @change=${(e: Event) => set("notify_service", (e.target as HTMLSelectElement).value)}
+              @change=${(e: Event) => {
+                set("notify_service", (e.target as HTMLSelectElement).value);
+                this.hostDraft = { ...this.hostDraft!, notify_entity: "" };
+              }}
             >
               <option value="" .selected=${!draft.notify_service}>
                 ${this.tr("noChannel")}
@@ -2249,6 +2469,9 @@ export class GardenPlannerPanel extends LitElement {
           >
           <label
             >${this.tr("notify_entity")}<input
+              aria-describedby="notify-entity-help"
+              placeholder="notify.…"
+              ?disabled=${draft.notify_service !== "notify.send_message"}
               .value=${draft.notify_entity}
               ?required=${draft.notify_service === "notify.send_message"}
               @input=${(e: Event) => set("notify_entity", (e.target as HTMLInputElement).value)}
@@ -2270,7 +2493,9 @@ export class GardenPlannerPanel extends LitElement {
         <p class="notice">
           ${this.tr("reminderInfo")} ${this.tr("reminderCatchup")}
         </p>
-        <p class="muted">${this.tr("notifyEntityHint")}</p>
+        <p class="muted" id="notify-entity-help">
+          ${this.tr("notifyEntityHint")}
+        </p>
         <button class="primary" type="submit" ?disabled=${this.busy}>
           ${this.tr("save")}
         </button>

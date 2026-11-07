@@ -528,6 +528,53 @@ export const styles = css`
   .direct {
     --bar-color: #397456;
   }
+  .prick_out {
+    --bar-color: #9167ad;
+  }
+  .care {
+    --bar-color: #287f89;
+  }
+  .other {
+    --bar-color: #767676;
+  }
+  .activity {
+    border-left: 4px solid var(--bar-color);
+  }
+  .roles-scroll {
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 12px 0;
+  }
+  .roles-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+  }
+  .roles-table th,
+  .roles-table td {
+    padding: 12px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--gp-border);
+  }
+  .roles-table td label {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .roles-table small {
+    display: block;
+    font-weight: normal;
+  }
+  .roles-table input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    min-height: 22px;
+    accent-color: var(--gp-accent);
+  }
+  .roles-table select,
+  .roles-table input[type="email"] {
+    min-width: 150px;
+  }
   .transplant {
     --bar-color: #5986a0;
   }
@@ -829,10 +876,11 @@ export const styles = css`
   }
   .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 17px;
   }
   .form-grid .wide {
+    min-width: 0;
     grid-column: 1/-1;
   }
   .dialog-body h3 {
@@ -990,7 +1038,7 @@ export const styles = css`
       min-width: 180px;
     }
     .form-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     dialog {
       width: calc(100vw - 16px);

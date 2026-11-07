@@ -79,7 +79,7 @@ des Zeitraums. Die Prüfung berücksichtigt bis zu sieben verpasste Tage. Pikier
 Pflege und Auspflanzen werden nur anhand selbst erfasster Aufgaben/Zeiträume
 angekündigt; die Integration erfindet keine pflanzenspezifischen Termine.
 
-Pro Aufgabe/Fenster und Datum wird höchstens **ein Versandversuch** ausgeführt.
+Pro Aufgabe/Fenster, Datum und Versandziel wird höchstens **ein Versandversuch** ausgeführt.
 Die Reservierung wird vor dem Aufruf des Kanals dauerhaft gespeichert. Nach einem
 Fehler oder Timeout bleibt der Zustand unklar; es gibt keinen automatischen
 Wiederholungsversuch. Das verhindert doppelte Nachrichten, kann aber eine nicht
@@ -125,3 +125,5 @@ Die Installation des veröffentlichten Pakets und erneuter Download/Neustart
 sind in beiden Stores geprüft. Ein Wechsel zwischen zwei öffentlichen Versionen
 steht beim ersten Release noch aus. Katalogaufnahme und physische Geräte sind
 weiterhin offen. [Prüfergebnisse und offene Punkte](../validation.md).
+
+[Rollen und Benachrichtigungen / Users and notifications](../notifications.md)

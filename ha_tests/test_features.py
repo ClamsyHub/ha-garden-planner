@@ -151,6 +151,170 @@ class FeatureTests(IntegrationHarness):
             (await self.request("backup"))["error"]["code"], "unauthorized"
         )
 
+    async def test_user_routes_deliver_independently_and_deduplicate(self) -> None:
+        user2 = await self.hass.auth.async_create_user("Synthetic two")
+        user3 = await self.hass.auth.async_create_user("Synthetic three")
+        calls: list[tuple[str, dict[str, Any]]] = []
+
+        async def record(call: ServiceCall) -> None:
+            calls.append((call.service, dict(call.data)))
+
+        for name in ("push_one", "push_two", "push_three", "email", "send_message"):
+            self.hass.services.async_register("notify", name, record)
+        self.hass.states.async_set("notify.email_three", "unknown")
+
+        def route(
+            user_id: str, kind: str, service: str, entity: str = "", target: str = ""
+        ) -> dict[str, Any]:
+            return {
+                "user_id": user_id,
+                "kind": kind,
+                "enabled": True,
+                "service": service,
+                "entity": entity,
+                "target": target,
+            }
+
+        routes = [
+            route(self.editor.id, "push", "notify.push_one"),
+            route(user2.id, "push", "notify.push_two"),
+            route(user3.id, "push", "notify.push_three"),
+            route(
+                self.editor.id, "email", "notify.email", target="one@example.invalid"
+            ),
+            route(
+                user3.id, "email", "notify.send_message", entity="notify.email_three"
+            ),
+        ]
+        await self.request(
+            "create",
+            {
+                "table": "tasks",
+                "data": {
+                    "title": "Route test",
+                    "date": "2026-11-06",
+                    "activity": "care",
+                },
+            },
+        )
+        response = await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "notification_routes": routes,
+                },
+                "confirm": True,
+            },
+        )
+        self.assertTrue(response["success"], response)
+        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
+        await reminder.async_check(datetime(2026, 11, 6, 13, tzinfo=UTC))
+        self.assertEqual(len(calls), 5)
+        self.assertEqual(
+            [data["target"] for service, data in calls if service == "email"],
+            [["one@example.invalid"]],
+        )
+        self.assertEqual(
+            [data["entity_id"] for service, data in calls if service == "send_message"],
+            ["notify.email_three"],
+        )
+        # Overlapping recipients to the same destination never double-send.
+        routes[1]["service"] = "notify.push_one"
+        response = await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "notification_routes": routes,
+                },
+                "confirm": True,
+            },
+        )
+        self.assertTrue(response["success"])
+        await reminder.async_check(datetime(2026, 11, 6, 14, tzinfo=UTC))
+        self.assertEqual(len(calls), 5)
+        # A revoked user cannot read through the real websocket command boundary.
+        response = await self.request(
+            "set_settings",
+            {"settings": {**DEFAULT_OPTIONS, "readers": []}, "confirm": True},
+        )
+        self.assertTrue(response["success"])
+        self.connection.user = self.editor
+        self.assertEqual(
+            (await self.request("list", {"table": "plants"}))["error"]["code"],
+            "unauthorized",
+        )
+
+    async def test_failed_route_does_not_block_healthy_route_or_retry(self) -> None:
+        calls: list[str] = []
+
+        async def failing(call: ServiceCall) -> None:
+            calls.append("failed")
+            raise RuntimeError("Synthetic route failure")
+
+        async def healthy(call: ServiceCall) -> None:
+            calls.append("healthy")
+
+        self.hass.services.async_register("notify", "route_failing", failing)
+        self.hass.services.async_register("notify", "route_healthy", healthy)
+        user2 = await self.hass.auth.async_create_user("Synthetic healthy recipient")
+        routes = [
+            {
+                "user_id": self.editor.id,
+                "kind": "push",
+                "enabled": True,
+                "service": "notify.route_failing",
+                "entity": "",
+                "target": "",
+            },
+            {
+                "user_id": user2.id,
+                "kind": "push",
+                "enabled": True,
+                "service": "notify.route_healthy",
+                "entity": "",
+                "target": "",
+            },
+        ]
+        await self.request(
+            "create",
+            {
+                "table": "tasks",
+                "data": {
+                    "title": "Independent routes",
+                    "date": "2026-11-06",
+                    "activity": "care",
+                },
+            },
+        )
+        response = await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "notification_routes": routes,
+                },
+                "confirm": True,
+            },
+        )
+        self.assertTrue(response["success"], response)
+        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        with self.assertLogs(
+            "custom_components.garden_planner.reminders", level="ERROR"
+        ):
+            await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
+        await reminder.async_check(datetime(2026, 11, 6, 13, tzinfo=UTC))
+        self.assertEqual(calls, ["failed", "healthy"])
+        self.assertEqual(
+            sorted(r["state"] for r in (await self.request("reminder_log"))["result"]),
+            ["sent", "uncertain"],
+        )
+
     async def test_native_options_form_and_validation(self) -> None:
         flow = GardenOptionsFlow()
         flow.hass = self.hass

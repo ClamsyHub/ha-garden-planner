@@ -46,7 +46,12 @@ class GardenOptionsFlow(config_entries.OptionsFlow):
         settings = validate_options(dict(self.config_entry.options))
         if user_input is not None:
             try:
-                settings = validate_options(user_input)
+                merged = {**settings, **user_input}
+                if merged["readers"] is not None:
+                    merged["readers"] = list(
+                        set(merged["readers"]) | set(merged["writers"])
+                    )
+                settings = validate_options(merged)
                 await validate_host_options(self.hass, settings)
             except ValidationError:
                 errors["base"] = "invalid_settings"

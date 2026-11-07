@@ -127,10 +127,35 @@ async def main() -> None:
                             return {
                                 "settings": settings_state,
                                 "users": [
-                                    {"id": "test-admin", "name": "Test admin"},
-                                    {"id": "test-reader", "name": "Test reader"},
+                                    {
+                                        "id": "test-admin",
+                                        "name": "Test admin",
+                                        "is_admin": True,
+                                    },
+                                    {
+                                        "id": "test-reader",
+                                        "name": "Test reader",
+                                        "is_admin": False,
+                                    },
+                                    {
+                                        "id": "test-two",
+                                        "name": "Test two",
+                                        "is_admin": False,
+                                    },
+                                    {
+                                        "id": "test-three",
+                                        "name": "Test three",
+                                        "is_admin": False,
+                                    },
+                                ],
+                                "notify_entities": [
+                                    {"id": "notify.email_three", "name": "Email three"}
                                 ],
                                 "channels": [
+                                    "notify.push_one",
+                                    "notify.push_two",
+                                    "notify.push_three",
+                                    "notify.email",
                                     "notify.test_local",
                                     "notify.send_message",
                                 ],
@@ -139,6 +164,11 @@ async def main() -> None:
                             raise ValidationError("Confirmation required")
                         settings_state = validate_options(parameters["settings"])
                         service.writers = frozenset(settings_state["writers"])
+                        service.readers = (
+                            None
+                            if settings_state["readers"] is None
+                            else frozenset(settings_state["readers"])
+                        )
                         return settings_state
 
                     service.host_handler = test_host

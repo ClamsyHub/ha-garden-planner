@@ -1,6 +1,8 @@
 """Opt-in reminders, reserved durably before calling a local HA notify service."""
 
 import asyncio
+import hashlib
+import json
 import logging
 from datetime import date, datetime
 from typing import Any
@@ -9,7 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
-from .options import validate_options
+from .options import notification_destinations, validate_options
 from .service import PlannerService
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,11 +80,51 @@ class Reminders:
             current = dt_util.as_local(instant or dt_util.utcnow())
             if current.hour < settings["reminder_hour"]:
                 return
-            domain, action = settings["notify_service"].split(".", 1)
-            if not self.hass.services.has_service(domain, action):
-                _LOGGER.warning(
-                    "Garden Planner reminder channel is unavailable; nothing sent"
+            users = {u.id: u for u in await self.hass.auth.async_get_users()}
+            destinations = []
+            seen = set()
+            for destination in notification_destinations(settings):
+                if not destination["legacy"]:
+                    user = users.get(destination["user_id"])
+                    if (
+                        user is None
+                        or not user.is_active
+                        or (
+                            settings["readers"] is not None
+                            and not user.is_admin
+                            and user.id not in settings["readers"]
+                        )
+                    ):
+                        continue
+                signature = json.dumps(
+                    [
+                        destination["service"],
+                        destination["entity"],
+                        destination["target"],
+                    ]
                 )
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                domain, action = destination["service"].split(".", 1)
+                if not self.hass.services.has_service(domain, action):
+                    _LOGGER.warning(
+                        "Garden Planner reminder channel is unavailable; route skipped"
+                    )
+                    continue
+                if destination["entity"]:
+                    state = self.hass.states.get(destination["entity"])
+                    if state is None or state.state == "unavailable":
+                        continue
+                destinations.append(
+                    (
+                        destination,
+                        domain,
+                        action,
+                        hashlib.sha256(signature.encode()).hexdigest()[:24],
+                    )
+                )
+            if not destinations:
                 return
             data = {}
             for table in ("plants", "growing_windows", "tasks"):
@@ -94,25 +136,35 @@ class Reminders:
             ):
                 if len(message) > 1000:
                     message = message[:999] + "…"
-                if not await self.service.worker.async_call(
-                    "claim_reminder", key, message
-                ):
-                    continue
-                payload = {"message": message, "title": "Garden Planner"}
-                if settings["notify_entity"]:
-                    payload["entity_id"] = settings["notify_entity"]
-                try:
-                    await self.hass.services.async_call(
-                        domain, action, payload, blocking=True
+                for destination, domain, action, signature in destinations:
+                    delivery_key = (
+                        key if destination["legacy"] else f"{key}:route:{signature}"
                     )
-                except Exception:
-                    # A timeout might mean the channel already delivered the message.
-                    await self.service.worker.async_call(
-                        "finish_reminder", key, "uncertain"
-                    )
-                    _LOGGER.exception(
-                        "Garden Planner reminder attempt failed; "
-                        "not automatically repeated"
-                    )
-                else:
-                    await self.service.worker.async_call("finish_reminder", key, "sent")
+                    if not await self.service.worker.async_call(
+                        "claim_reminder", delivery_key, message
+                    ):
+                        continue
+                    payload: dict[str, Any] = {
+                        "message": message,
+                        "title": "Garden Planner",
+                    }
+                    if destination["entity"]:
+                        payload["entity_id"] = destination["entity"]
+                    if destination["target"]:
+                        payload["target"] = [destination["target"]]
+                    try:
+                        await self.hass.services.async_call(
+                            domain, action, payload, blocking=True
+                        )
+                    except Exception:
+                        await self.service.worker.async_call(
+                            "finish_reminder", delivery_key, "uncertain"
+                        )
+                        _LOGGER.exception(
+                            "Garden Planner reminder attempt failed; "
+                            "not automatically repeated"
+                        )
+                    else:
+                        await self.service.worker.async_call(
+                            "finish_reminder", delivery_key, "sent"
+                        )

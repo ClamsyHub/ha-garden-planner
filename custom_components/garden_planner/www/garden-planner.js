@@ -833,13 +833,25 @@ var Ze = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, ft = {
+	userRoles: "Benutzer und Benachrichtigungen",
+	haUser: "Home-Assistant-Benutzer",
+	canView: "Garden Planner sehen",
+	canEdit: "Garden Planner bearbeiten",
+	administrator: "Administrator · volle Rechte",
+	push: "Push erhalten",
+	email: "E-Mail erhalten",
+	routeDestination: "Gerät / Versandziel",
+	missingDestination: "nicht verfügbar",
+	emailRecipient: "Empfänger-E-Mail-Adresse",
+	rolesHint: "Administratoren haben immer volle Rechte. Bearbeiten schließt Sehen ein. Diese Rechte schützen die Garden-Planner-Oberfläche und ihre Datenzugriffe; native HA-Entitäten unterliegen zusätzlich den Home-Assistant-Rechten.",
+	routeHint: "Push und E-Mail lassen sich je Benutzer getrennt aktivieren. Wähle das tatsächliche Gerät oder die E-Mail-Entität; Home Assistant ordnet diese Ziele nicht automatisch einem Benutzer zu. Es werden keine Testnachrichten gesendet. Identische Versandziele werden pro Termin nur einmal angesprochen.",
 	integrationSettings: "Home-Assistant-Einstellungen",
 	writers: "Bearbeiten erlauben",
 	settingsSaved: "Einstellungen gespeichert.",
 	reminders_enabled: "Erinnerungen ausdrücklich aktivieren",
 	lead_days: "Vorlaufzeit (Tage)",
 	reminder_hour: "Versand ab Stunde (HA-Zeitzone)",
-	notify_service: "Benachrichtigungskanal",
+	notify_service: "Bisheriger gemeinsamer Kanal (optional)",
 	notify_entity: "Benachrichtigungs-Entität",
 	reminderLanguage: "Sprache der Erinnerungen",
 	reminderInfo: "Nur gespeicherte Zeitfenster und Aufgaben werden berücksichtigt. Es werden keine Pflegezeitpunkte geschätzt. Pro Termin erfolgt höchstens ein Versandversuch; ein unklar fehlgeschlagener Versuch wird nicht automatisch wiederholt.",
@@ -856,15 +868,27 @@ var Ze = {
 	uncertain: "Ergebnis unklar, keine automatische Wiederholung",
 	noDeliveries: "Noch keine Versandversuche.",
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
-	notifyEntityHint: "Für notify.send_message eine vorhandene notify-Entität wählen. Andere notify-Dienste benötigen gewöhnlich keine zusätzliche Entität."
+	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Der bisherige gemeinsame Kanal sendet zusätzlich an seine konfigurierten Standardempfänger; leere ihn, wenn nur die Tabelle verwendet werden soll."
 }, pt = {
+	userRoles: "Users and notifications",
+	haUser: "Home Assistant user",
+	canView: "View Garden Planner",
+	canEdit: "Edit Garden Planner",
+	administrator: "Administrator · full access",
+	push: "Receive push",
+	email: "Receive email",
+	routeDestination: "Device / destination",
+	missingDestination: "unavailable",
+	emailRecipient: "Recipient email address",
+	rolesHint: "Administrators always have full access. Editing includes viewing. These permissions protect the Garden Planner panel and its data API; native HA entities also follow Home Assistant permissions.",
+	routeHint: "Enable push and email independently for each user. Select the actual device or email entity; Home Assistant does not automatically assign destinations to users. No test messages are sent. Identical destinations receive at most one attempt per date.",
 	integrationSettings: "Home Assistant settings",
 	writers: "Allow editing",
 	settingsSaved: "Settings saved.",
 	reminders_enabled: "Explicitly enable reminders",
 	lead_days: "Lead time (days)",
 	reminder_hour: "Send from hour (HA timezone)",
-	notify_service: "Notification channel",
+	notify_service: "Existing shared channel (optional)",
 	notify_entity: "Notification entity",
 	reminderLanguage: "Reminder language",
 	reminderInfo: "Only stored windows and tasks are considered. No care dates are guessed. At most one delivery attempt is made per date; an uncertain failed attempt is not automatically repeated.",
@@ -881,7 +905,7 @@ var Ze = {
 	uncertain: "Result uncertain, no automatic retry",
 	noDeliveries: "No delivery attempts yet.",
 	grantedEditor: "You have permission to edit this shared garden.",
-	notifyEntityHint: "For notify.send_message choose an existing notify entity. Other notify services usually do not need an extra entity."
+	notifyEntityHint: "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. The existing shared channel also sends to its configured defaults; clear it to use only the table."
 };
 function mt(e, t) {
 	return (e === "de" ? ft : pt)[t];
@@ -1465,10 +1489,10 @@ function wt(e, n, r, i, a) {
 		o("activity", [
 			"indoors",
 			"direct",
-			"transplant",
-			"harvest",
 			"prick_out",
+			"transplant",
 			"care",
+			"harvest",
 			"other"
 		], !0),
 		o("environment", [
@@ -1575,10 +1599,10 @@ function wt(e, n, r, i, a) {
 		o("activity", [
 			"indoors",
 			"direct",
-			"transplant",
-			"harvest",
 			"prick_out",
+			"transplant",
 			"care",
+			"harvest",
 			"other"
 		], !0),
 		s("plant_id", r.plants),
@@ -2882,6 +2906,53 @@ var Fn = j`
   .direct {
     --bar-color: #397456;
   }
+  .prick_out {
+    --bar-color: #9167ad;
+  }
+  .care {
+    --bar-color: #287f89;
+  }
+  .other {
+    --bar-color: #767676;
+  }
+  .activity {
+    border-left: 4px solid var(--bar-color);
+  }
+  .roles-scroll {
+    overflow-x: auto;
+    max-width: 100%;
+    margin: 12px 0;
+  }
+  .roles-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+  }
+  .roles-table th,
+  .roles-table td {
+    padding: 12px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--gp-border);
+  }
+  .roles-table td label {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .roles-table small {
+    display: block;
+    font-weight: normal;
+  }
+  .roles-table input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    min-height: 22px;
+    accent-color: var(--gp-accent);
+  }
+  .roles-table select,
+  .roles-table input[type="email"] {
+    min-width: 150px;
+  }
   .transplant {
     --bar-color: #5986a0;
   }
@@ -3183,10 +3254,11 @@ var Fn = j`
   }
   .form-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 17px;
   }
   .form-grid .wide {
+    min-width: 0;
     grid-column: 1/-1;
   }
   .dialog-body h3 {
@@ -3344,7 +3416,7 @@ var Fn = j`
       min-width: 180px;
     }
     .form-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
     dialog {
       width: calc(100vw - 16px);
@@ -3383,8 +3455,11 @@ var Fn = j`
 ], Ln = [
 	"indoors",
 	"direct",
+	"prick_out",
 	"transplant",
-	"harvest"
+	"care",
+	"harvest",
+	"other"
 ], Rn = {
 	overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
 	calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
@@ -3557,7 +3632,7 @@ var Bn = class extends Ye {
 			if (e !== this.loadGeneration || !this.isConnected) return;
 			this.tables = t, this.capabilities = n, this.loaded = !0, this.error = "";
 		} catch (t) {
-			e === this.loadGeneration && (this.error = yt(this.language, t));
+			e === this.loadGeneration && (this.error = yt(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
 		}
 	}
 	announce(e) {
@@ -3594,16 +3669,10 @@ var Bn = class extends Ye {
 		return t(this.tables[n].find((t) => t.id === e), "name") || "—";
 	}
 	plantWindows(e) {
-		let n = [
-			"indoors",
-			"direct",
-			"prick_out",
-			"transplant",
-			"care",
-			"harvest",
-			"other"
-		];
-		return this.tables.growing_windows.filter((n) => t(n, "plant_id") === e).sort((e, r) => Number(e.data.start_month) - Number(r.data.start_month) || Number(e.data.start_day) - Number(r.data.start_day) || n.indexOf(t(e, "activity")) - n.indexOf(t(r, "activity")) || Number(e.data.end_month) - Number(r.data.end_month) || Number(e.data.end_day) - Number(r.data.end_day) || e.id.localeCompare(r.id));
+		return this.tables.growing_windows.filter((n) => t(n, "plant_id") === e).sort((e, t) => this.compareWindows(e, t));
+	}
+	compareWindows(e, n) {
+		return Ln.indexOf(t(e, "activity")) - Ln.indexOf(t(n, "activity")) || Number(e.data.start_month) - Number(n.data.start_month) || Number(e.data.start_day) - Number(n.data.start_day) || this.nameFor(t(e, "plant_id"), "plants").localeCompare(this.nameFor(t(n, "plant_id"), "plants"), this.language) || e.id.localeCompare(n.id);
 	}
 	status(e) {
 		return y(e, this.tables.cultivation_events);
@@ -3987,7 +4056,7 @@ var Bn = class extends Ye {
     </article>`;
 	}
 	renderOverview() {
-		let e = this.tables.growing_windows.filter((e) => this.plantList.some((n) => n.id === t(e, "plant_id")) && f(e, Number(this.today.slice(0, 4)), Number(this.today.slice(5, 7)))), n = this.tables.cultivations, r = [
+		let e = this.tables.growing_windows.filter((e) => this.plantList.some((n) => n.id === t(e, "plant_id")) && f(e, Number(this.today.slice(0, 4)), Number(this.today.slice(5, 7)))).sort((e, t) => this.compareWindows(e, t)), n = this.tables.cultivations, r = [
 			["managedPlants", this.plantList.length],
 			["planned", n.filter((e) => this.status(e) === "planned").length],
 			["active", n.filter((e) => ![
@@ -4024,7 +4093,7 @@ var Bn = class extends Ye {
             </button>
           </div>
           <p class="muted">${this.tr("recommendation")}</p>
-          ${e.length ? e.map((e) => H`<div class="item">
+          ${e.length ? e.map((e) => H`<div class=${`item activity ${t(e, "activity")}`}>
                       <span class="plant-symbol">${$("plants")}</span>
                       <div class="item-content">
                         <button
@@ -4083,7 +4152,7 @@ var Bn = class extends Ye {
 	}
 	calendarWindows() {
 		let e = new Set(this.filteredPlants(!0).map((e) => e.id));
-		return this.tables.growing_windows.filter((n) => e.has(t(n, "plant_id")) && (!this.activity || this.activity === t(n, "activity"))).sort((e, n) => this.nameFor(t(e, "plant_id"), "plants").localeCompare(this.nameFor(t(n, "plant_id"), "plants"), this.language));
+		return this.tables.growing_windows.filter((n) => e.has(t(n, "plant_id")) && (!this.activity || this.activity === t(n, "activity"))).sort((e, t) => this.compareWindows(e, t));
 	}
 	shiftCalendar(e) {
 		if (this.calendarMode === "week") this.anchor = s(this.anchor || this.today, e * 7);
@@ -4201,7 +4270,9 @@ var Bn = class extends Ye {
                 </div>
                 <p class="muted">${this.tr("recommendation")}</p>
                 <div class="month-list">
-                  ${e.filter((e) => f(e, this.year, this.month)).map((e) => H`<article class="plant">
+                  ${e.filter((e) => f(e, this.year, this.month)).map((e) => H`<article
+                          class=${`plant activity ${t(e, "activity")}`}
+                        >
                           <h3>
                             <button
                               class="link"
@@ -4268,7 +4339,17 @@ var Bn = class extends Ye {
       <div class="scroll" tabindex="0" aria-label=${this.tr("week")}>
         <div class="week-grid">
           ${e.map((e) => {
-			let r = this.tables.tasks.filter((r) => t(r, "date") === e && (!this.activity || t(r, "activity") === this.activity) && (!t(r, "plant_id") || n.has(t(r, "plant_id")))), i = this.tables.cultivation_events.filter((r) => t(r, "date") === e && this.tables.cultivations.some((e) => e.id === t(r, "cultivation_id") && n.has(t(e, "plant_id")) && (!this.activity || this.eventActivity(r, e) === this.activity)));
+			let r = this.tables.tasks.filter((r) => t(r, "date") === e && (!this.activity || t(r, "activity") === this.activity) && (!t(r, "plant_id") || n.has(t(r, "plant_id"))));
+			r.sort((e, n) => Ln.indexOf(t(e, "activity")) - Ln.indexOf(t(n, "activity")));
+			let i = this.tables.cultivation_events.filter((r) => t(r, "date") === e && this.tables.cultivations.some((e) => e.id === t(r, "cultivation_id") && n.has(t(e, "plant_id")) && (!this.activity || this.eventActivity(r, e) === this.activity))), a = [...r.map((e) => ({
+				kind: "task",
+				record: e,
+				activity: t(e, "activity")
+			})), ...i.map((e) => ({
+				kind: "event",
+				record: e,
+				activity: this.eventActivity(e, this.tables.cultivations.find((n) => n.id === t(e, "cultivation_id")))
+			}))].sort((e, t) => Ln.indexOf(e.activity) - Ln.indexOf(t.activity) || e.record.id.localeCompare(t.record.id));
 			return H`<section
               class=${`week-day ${e === this.today ? "today" : ""}`}
             >
@@ -4279,20 +4360,27 @@ var Bn = class extends Ye {
 			}).format(/* @__PURE__ */ new Date(`${e}T12:00:00Z`))}<br />${h(e, this.language)}
               </h3>
               ${!r.length && !i.length ? H`<p class="muted week-empty">${this.tr("noAppointments")}</p>` : U}
-              ${r.map((e) => H`<button class=${`week-event ${t(e, "activity")}`} ?disabled=${!this.editable} @click=${() => this.startEditor("tasks", e)}>${t(e, "title")}${e.data.completed ? " ✓" : ""}</button>`)}${i.map((e) => {
-				let n = this.tables.cultivations.find((n) => n.id === t(e, "cultivation_id"));
+              ${a.map((e) => {
+				if (e.kind === "task") return H`<button
+                    class=${`week-event ${e.activity}`}
+                    ?disabled=${!this.editable}
+                    @click=${() => this.startEditor("tasks", e.record)}
+                  >
+                    ${t(e.record, "title")}${e.record.data.completed ? " ✓" : ""}
+                  </button>`;
+				let n = this.tables.cultivations.find((n) => n.id === t(e.record, "cultivation_id"));
 				return H`<button
-                    class="week-event"
-                    @click=${() => {
+                  class=${`week-event ${e.activity}`}
+                  @click=${() => {
 					this.selected = {
 						kind: "culture",
 						id: n.id
 					};
 				}}
-                  >
-                    ${this.plantName(n)} ·
-                    ${this.lab(t(e, "status"))}
-                  </button>`;
+                >
+                  ${this.plantName(n)} ·
+                  ${this.lab(t(e.record, "status"))}
+                </button>`;
 			})}
             </section>`;
 		})}
@@ -4842,6 +4930,130 @@ var Bn = class extends Ye {
       ${r.state === "outside" ? H`<p>${this.tr("outsideRange")}</p>` : r.state === "information" && t(e, "measurement_kind") !== "substrate" ? H`<small>${this.tr("notComparable")}</small>` : U}
     </div>`;
 	}
+	setUserPermission(e, t, n) {
+		let r = this.hostDraft, i = new Set(r.readers ?? this.hostSettings.users.map((e) => e.id)), a = new Set(r.writers), o = t === "readers" ? i : a;
+		n ? o.add(e) : o.delete(e), t === "writers" && n && i.add(e), t === "readers" && !n && a.delete(e), this.hostDraft = {
+			...r,
+			readers: [...i],
+			writers: [...a],
+			notification_routes: r.notification_routes.map((r) => r.user_id === e && t === "readers" && !n ? {
+				...r,
+				enabled: !1
+			} : r)
+		};
+	}
+	updateRoute(e, t, n) {
+		let r = this.hostDraft, i = r.notification_routes.find((n) => n.user_id === e && n.kind === t) ?? {
+			user_id: e,
+			kind: t,
+			enabled: !1,
+			service: "",
+			entity: "",
+			target: ""
+		};
+		this.hostDraft = {
+			...r,
+			notification_routes: [...r.notification_routes.filter((n) => n.user_id !== e || n.kind !== t), {
+				...i,
+				...n
+			}]
+		};
+	}
+	renderRoute(e, t, n) {
+		let r = this.hostSettings, i = this.hostDraft.notification_routes.find((n) => n.user_id === e.id && n.kind === t), a = `${e.name}: ${this.tr(t)}`, o = i?.service === "notify.send_message" ? `entity:${i.entity}` : i?.service || "";
+		return H`<td>
+      <label class="check"
+        ><input
+          type="checkbox"
+          aria-label=${a}
+          .checked=${i?.enabled ?? !1}
+          ?disabled=${!n}
+          @change=${(n) => this.updateRoute(e.id, t, { enabled: n.target.checked })}
+        />${this.tr(t)}</label
+      >
+      ${i?.enabled ? H`<label
+                >${this.tr("routeDestination")}<select
+                  aria-label=${`${a}: ${this.tr("routeDestination")}`}
+                  required
+                  @change=${(n) => {
+			let r = n.target.value;
+			this.updateRoute(e.id, t, r.startsWith("entity:") ? {
+				service: "notify.send_message",
+				entity: r.slice(7),
+				target: ""
+			} : {
+				service: r,
+				entity: "",
+				target: ""
+			});
+		}}
+                >
+                  <option value="" .selected=${!o}>
+                    ${this.tr("noChannel")}
+                  </option>
+                  ${r.channels.filter((e) => e !== "notify.send_message").map((e) => H`<option value=${e} .selected=${o === e}>${e}</option>`)}
+                  ${(r.notify_entities ?? []).map((e) => H`<option value=${`entity:${e.id}`} .selected=${o === `entity:${e.id}`}>${e.name} (${e.id})</option>`)}
+                  ${o && !r.channels.includes(o) && !(r.notify_entities ?? []).some((e) => o === `entity:${e.id}`) ? H`<option value=${o} selected>${o} · ${this.tr("missingDestination")}</option>` : U}
+                </select></label
+              >
+              ${t === "email" && i.service && i.service !== "notify.send_message" ? H`<label
+                      >${this.tr("emailRecipient")}<input
+                        type="email"
+                        required
+                        autocomplete="off"
+                        aria-label=${`${e.name}: ${this.tr("emailRecipient")}`}
+                        .value=${i.target}
+                        @input=${(n) => this.updateRoute(e.id, t, { target: n.target.value })}
+                    /></label>` : U}` : U}
+    </td>`;
+	}
+	renderUserRoles(e, t) {
+		return H`<h3>${this.tr("userRoles")}</h3>
+      <p class="muted">${this.tr("rolesHint")}</p>
+      <div class="roles-scroll" tabindex="0" aria-label=${this.tr("userRoles")}>
+        <table class="roles-table">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("haUser")}</th>
+              <th scope="col">${this.tr("canView")}</th>
+              <th scope="col">${this.tr("canEdit")}</th>
+              <th scope="col">${this.tr("push")}</th>
+              <th scope="col">${this.tr("email")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${e.users.map((e) => {
+			let n = !!e.is_admin || t.readers === null || t.readers.includes(e.id);
+			return H`<tr>
+                <th scope="row">
+                  ${e.name}${e.is_admin ? H`<small>${this.tr("administrator")}</small>` : U}
+                </th>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label=${`${e.name}: ${this.tr("canView")}`}
+                    .checked=${n}
+                    ?disabled=${e.is_admin ?? !1}
+                    @change=${(t) => this.setUserPermission(e.id, "readers", t.target.checked)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label=${`${e.name}: ${this.tr("canEdit")}`}
+                    .checked=${!!e.is_admin || t.writers.includes(e.id)}
+                    ?disabled=${e.is_admin ?? !1}
+                    @change=${(t) => this.setUserPermission(e.id, "writers", t.target.checked)}
+                  />
+                </td>
+                ${this.renderRoute(e, "push", n)}${this.renderRoute(e, "email", n)}
+              </tr>`;
+		})}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">${this.tr("routeHint")}</p>`;
+	}
 	renderHostSettings() {
 		if (!this.capabilities?.reminders || !this.admin) return U;
 		let e = this.hostSettings, t = this.hostDraft;
@@ -4867,15 +5079,7 @@ var Bn = class extends Ye {
 		}}
       >
         <div class="form-grid" style="margin-top:18px">
-          <label class="wide"
-            >${this.tr("writers")}<select
-              multiple
-              aria-label=${this.tr("writers")}
-              @change=${(e) => n("writers", [...e.target.selectedOptions].map((e) => e.value))}
-            >
-              ${e.users.map((e) => H`<option value=${e.id} .selected=${t.writers.includes(e.id)}>${e.name}</option>`)}
-            </select></label
-          >
+          <div class="wide">${this.renderUserRoles(e, t)}</div>
           <label class="check wide"
             ><input
               type="checkbox"
@@ -4904,8 +5108,12 @@ var Bn = class extends Ye {
           <label
             >${this.tr("notify_service")}<select
               aria-label=${this.tr("notify_service")}
-              ?required=${t.reminders_enabled}
-              @change=${(e) => n("notify_service", e.target.value)}
+              @change=${(e) => {
+			n("notify_service", e.target.value), this.hostDraft = {
+				...this.hostDraft,
+				notify_entity: ""
+			};
+		}}
             >
               <option value="" .selected=${!t.notify_service}>
                 ${this.tr("noChannel")}
@@ -4915,6 +5123,9 @@ var Bn = class extends Ye {
           >
           <label
             >${this.tr("notify_entity")}<input
+              aria-describedby="notify-entity-help"
+              placeholder="notify.…"
+              ?disabled=${t.notify_service !== "notify.send_message"}
               .value=${t.notify_entity}
               ?required=${t.notify_service === "notify.send_message"}
               @input=${(e) => n("notify_entity", e.target.value)}
@@ -4936,7 +5147,9 @@ var Bn = class extends Ye {
         <p class="notice">
           ${this.tr("reminderInfo")} ${this.tr("reminderCatchup")}
         </p>
-        <p class="muted">${this.tr("notifyEntityHint")}</p>
+        <p class="muted" id="notify-entity-help">
+          ${this.tr("notifyEntityHint")}
+        </p>
         <button class="primary" type="submit" ?disabled=${this.busy}>
           ${this.tr("save")}
         </button>

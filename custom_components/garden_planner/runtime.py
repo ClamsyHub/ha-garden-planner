@@ -11,7 +11,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .coordinator import GardenCoordinator
 from .models import ValidationError
-from .options import validate_options
+from .options import notification_destinations, validate_options
 from .reminders import Reminders
 from .service import Actor, PlannerService
 from .websocket_api import SIGNAL_CHANGED
@@ -40,14 +40,28 @@ class Runtime:
                 f"notify.{name}"
                 for name in self.hass.services.async_services().get("notify", {})
             ]
+            settings = validate_options(dict(self.entry.options))
+            active_ids = {u.id for u in users if u.is_active and not u.system_generated}
+            settings["writers"] = [u for u in settings["writers"] if u in active_ids]
+            if settings["readers"] is not None:
+                settings["readers"] = [
+                    u for u in settings["readers"] if u in active_ids
+                ]
+            settings["notification_routes"] = [
+                r for r in settings["notification_routes"] if r["user_id"] in active_ids
+            ]
             return {
-                "settings": validate_options(dict(self.entry.options)),
+                "settings": settings,
                 "users": [
-                    {"id": u.id, "name": u.name or u.id}
+                    {"id": u.id, "name": u.name or u.id, "is_admin": u.is_admin}
                     for u in users
                     if u.is_active and not u.system_generated
                 ],
                 "channels": sorted(channels),
+                "notify_entities": [
+                    {"id": state.entity_id, "name": state.name}
+                    for state in self.hass.states.async_all("notify")
+                ],
             }
         if operation != "set_settings" or params.get("confirm") is not True:
             raise ValidationError("Settings require explicit confirmation.")
@@ -55,6 +69,9 @@ class Runtime:
         await validate_host_options(self.hass, settings)
         self.hass.config_entries.async_update_entry(self.entry, options=settings)
         self.service.writers = frozenset(settings["writers"])
+        self.service.readers = (
+            None if settings["readers"] is None else frozenset(settings["readers"])
+        )
         async_dispatcher_send(self.hass, SIGNAL_CHANGED)
         return settings
 
@@ -74,14 +91,30 @@ class Runtime:
 async def validate_host_options(hass: HomeAssistant, settings: dict[str, Any]) -> None:
     users: list[User] = await hass.auth.async_get_users()
     allowed = {u.id for u in users if u.is_active and not u.system_generated}
-    if set(settings["writers"]) - allowed:
-        raise ValidationError("Editing grants must refer to active HA users.")
-    if settings["reminders_enabled"]:
-        domain, action = settings["notify_service"].split(".", 1)
-        if not hass.services.has_service(domain, action):
-            raise ValidationError("The selected notification channel is unavailable.")
+    if set(settings["writers"]) - allowed or (
+        settings["readers"] is not None and set(settings["readers"]) - allowed
+    ):
+        raise ValidationError("Permissions must refer to active HA users.")
+    for route in settings["notification_routes"]:
+        if route["enabled"] and route["user_id"] not in allowed:
+            raise ValidationError("Notification recipients must be active HA users.")
         if (
-            settings["notify_entity"]
-            and hass.states.get(settings["notify_entity"]) is None
+            route["enabled"]
+            and settings["readers"] is not None
+            and route["user_id"] not in settings["readers"]
+            and not any(u.id == route["user_id"] and u.is_admin for u in users)
         ):
-            raise ValidationError("The selected notification entity is unavailable.")
+            raise ValidationError(
+                "Notification recipients need garden viewing permission."
+            )
+    if settings["reminders_enabled"]:
+        for destination in notification_destinations(settings):
+            domain, action = destination["service"].split(".", 1)
+            if not hass.services.has_service(domain, action):
+                raise ValidationError(
+                    "The selected notification channel is unavailable."
+                )
+            if destination["entity"] and hass.states.get(destination["entity"]) is None:
+                raise ValidationError(
+                    "The selected notification entity is unavailable."
+                )

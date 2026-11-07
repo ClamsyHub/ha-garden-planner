@@ -1,12 +1,27 @@
 import type { Language } from "./types";
 const de = {
+  userRoles: "Benutzer und Benachrichtigungen",
+  haUser: "Home-Assistant-Benutzer",
+  canView: "Garden Planner sehen",
+  canEdit: "Garden Planner bearbeiten",
+  administrator: "Administrator · volle Rechte",
+  push: "Push erhalten",
+  email: "E-Mail erhalten",
+  routeDestination: "Gerät / Versandziel",
+  missingDestination: "nicht verfügbar",
+  emailRecipient: "Empfänger-E-Mail-Adresse",
+  rolesHint:
+    "Administratoren haben immer volle Rechte. Bearbeiten schließt Sehen ein. Diese Rechte schützen die Garden-Planner-Oberfläche und ihre Datenzugriffe; native HA-Entitäten unterliegen zusätzlich den Home-Assistant-Rechten.",
+  routeHint:
+    "Push und E-Mail lassen sich je Benutzer getrennt aktivieren. Wähle das tatsächliche Gerät oder die E-Mail-Entität; Home Assistant ordnet diese Ziele nicht automatisch einem Benutzer zu. Es werden keine Testnachrichten gesendet. Identische Versandziele werden pro Termin nur einmal angesprochen.",
+
   integrationSettings: "Home-Assistant-Einstellungen",
   writers: "Bearbeiten erlauben",
   settingsSaved: "Einstellungen gespeichert.",
   reminders_enabled: "Erinnerungen ausdrücklich aktivieren",
   lead_days: "Vorlaufzeit (Tage)",
   reminder_hour: "Versand ab Stunde (HA-Zeitzone)",
-  notify_service: "Benachrichtigungskanal",
+  notify_service: "Bisheriger gemeinsamer Kanal (optional)",
   notify_entity: "Benachrichtigungs-Entität",
   reminderLanguage: "Sprache der Erinnerungen",
   reminderInfo:
@@ -28,16 +43,31 @@ const de = {
   noDeliveries: "Noch keine Versandversuche.",
   grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
   notifyEntityHint:
-    "Für notify.send_message eine vorhandene notify-Entität wählen. Andere notify-Dienste benötigen gewöhnlich keine zusätzliche Entität.",
+    "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Der bisherige gemeinsame Kanal sendet zusätzlich an seine konfigurierten Standardempfänger; leere ihn, wenn nur die Tabelle verwendet werden soll.",
 };
 const en: Record<keyof typeof de, string> = {
+  userRoles: "Users and notifications",
+  haUser: "Home Assistant user",
+  canView: "View Garden Planner",
+  canEdit: "Edit Garden Planner",
+  administrator: "Administrator · full access",
+  push: "Receive push",
+  email: "Receive email",
+  routeDestination: "Device / destination",
+  missingDestination: "unavailable",
+  emailRecipient: "Recipient email address",
+  rolesHint:
+    "Administrators always have full access. Editing includes viewing. These permissions protect the Garden Planner panel and its data API; native HA entities also follow Home Assistant permissions.",
+  routeHint:
+    "Enable push and email independently for each user. Select the actual device or email entity; Home Assistant does not automatically assign destinations to users. No test messages are sent. Identical destinations receive at most one attempt per date.",
+
   integrationSettings: "Home Assistant settings",
   writers: "Allow editing",
   settingsSaved: "Settings saved.",
   reminders_enabled: "Explicitly enable reminders",
   lead_days: "Lead time (days)",
   reminder_hour: "Send from hour (HA timezone)",
-  notify_service: "Notification channel",
+  notify_service: "Existing shared channel (optional)",
   notify_entity: "Notification entity",
   reminderLanguage: "Reminder language",
   reminderInfo:
@@ -59,7 +89,7 @@ const en: Record<keyof typeof de, string> = {
   noDeliveries: "No delivery attempts yet.",
   grantedEditor: "You have permission to edit this shared garden.",
   notifyEntityHint:
-    "For notify.send_message choose an existing notify entity. Other notify services usually do not need an extra entity.",
+    "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. The existing shared channel also sends to its configured defaults; clear it to use only the table.",
 };
 export function hostText(language: Language, key: string): string | undefined {
   return (language === "de" ? de : en)[key as keyof typeof de];

@@ -53,7 +53,7 @@ Reminders default **off**. Explicit activation requires an existing HA notificat
 channel, lead time (0–30 days), start hour (HA timezone) and language. The modern
 `notify.send_message` service also requires a `notify.*` entity. A 15-minute check
 processes stored window openings and open tasks, with up to seven days of catch-up.
-No crop-specific care schedule is invented. At most one attempt per task/window/date
+No crop-specific care schedule is invented. At most one attempt per destination/task/window/date
 is durably reserved before calling the channel. Failed/uncertain attempts are never
 automatically retried; this avoids duplicates but may miss a notification. “Sent”
 means the HA service call succeeded, not that a device acknowledged delivery.
@@ -90,3 +90,5 @@ exercise host integration. No production files are used.
 
 Project code: [MIT](../../LICENSE). Dependencies retain their
 [license notices](../THIRD_PARTY_NOTICES.txt), included with the frontend.
+
+[Rollen und Benachrichtigungen / Users and notifications](../notifications.md)

@@ -53,6 +53,19 @@ class ServiceTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(AuthorizationError):
                 await self.call("summary", actor=actor)
 
+    async def test_view_revocation_is_enforced_on_every_data_request(self) -> None:
+        self.service.readers = frozenset({"reader", "editor"})
+        self.assertEqual((await self.call("summary", actor=self.reader))["plants"], 0)
+        self.service.readers = frozenset({"editor"})
+        for operation, params in (
+            ("summary", {}),
+            ("list", {"table": "plants"}),
+            ("capabilities", {}),
+        ):
+            with self.assertRaises(AuthorizationError):
+                await self.call(operation, params, self.reader)
+        self.assertEqual((await self.call("summary", actor=self.admin))["plants"], 0)
+
     async def test_payload_cannot_override_actor(self) -> None:
         with self.assertRaises(ValidationError):
             await self.call("summary", {"actor": {"is_admin": True}}, self.reader)

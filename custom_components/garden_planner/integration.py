@@ -42,7 +42,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     panel_added = False
     try:
         await worker.async_open()
-        service = PlannerService(worker, frozenset(settings["writers"]))
+        service = PlannerService(
+            worker,
+            frozenset(settings["writers"]),
+            None if settings["readers"] is None else frozenset(settings["readers"]),
+        )
         coordinator = GardenCoordinator(hass, service, entry)
         reminders = Reminders(hass, entry, service)
         runtime = Runtime(hass, entry, service, coordinator, reminders)
@@ -76,8 +80,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await runtime.close()
 
         async def options_changed(host: HomeAssistant, config: ConfigEntry) -> None:
-            service.writers = frozenset(
-                validate_options(dict(config.options))["writers"]
+            options = validate_options(dict(config.options))
+            service.writers = frozenset(options["writers"])
+            service.readers = (
+                None if options["readers"] is None else frozenset(options["readers"])
             )
             async_dispatcher_send(hass, SIGNAL_CHANGED)
 

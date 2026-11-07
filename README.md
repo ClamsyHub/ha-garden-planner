@@ -132,3 +132,5 @@ Details zu Versandversuchen, Sensoren und Datensicherung: [Betrieb](docs/de/READ
 Projektcode: [MIT](LICENSE). Mitgelieferte Bibliotheken behalten ihre eigenen
 Lizenzen; [vollständige Laufzeit-Lizenzhinweise](docs/THIRD_PARTY_NOTICES.txt) werden
 zusammen mit dem JavaScript-Paket ausgeliefert.
+
+[Rollen und Benachrichtigungen](docs/notifications.md)

@@ -53,6 +53,34 @@ class OptionTests(unittest.TestCase):
         self.assertTrue(result["reminders_enabled"])
         self.assertEqual(result["lead_days"], 0)
 
+    def test_routes_are_explicit_and_legacy_options_are_preserved(self) -> None:
+        route = {
+            "user_id": "reader",
+            "kind": "email",
+            "enabled": True,
+            "service": "notify.email",
+            "entity": "",
+            "target": "reader@example.invalid",
+        }
+        result = validate_options(
+            {"reminders_enabled": True, "notification_routes": [route]}
+        )
+        self.assertEqual(result["notification_routes"], [route])
+        self.assertIsNone(validate_options({})["readers"])
+        for patch in (
+            {"target": ""},
+            {"target": "notify.mail"},
+            {"entity": "notify.mail"},
+            {"enabled": "yes"},
+            {"service": "shell_command.run"},
+        ):
+            with self.subTest(patch=patch), self.assertRaises(ValidationError):
+                validate_options({"notification_routes": [{**route, **patch}]})
+        with self.assertRaises(ValidationError):
+            validate_options({"notification_routes": [route, route]})
+        with self.assertRaises(ValidationError):
+            validate_options({"readers": [], "writers": ["reader"]})
+
     def test_import_and_restart_never_rewind_delivery_reservations(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
             db = Database(Path(folder))

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3 — 2026-11-07
+
+- Add distinct colors, filters and year bars for all seven activities. Order calendar and plant-detail windows by cultivation phase, then start date.
+- Replace editor multiselect with a per-user viewing/editing matrix; administrators retain access and existing users keep viewing access until explicitly changed.
+- Add separately enabled push/email destinations per user, modern notify-entity selection and explicit legacy email recipients.
+- Preserve the existing shared channel and opt-in reminder activation. Dedupe destinations, isolate delivery failures and persist per-destination reservations.
+- Clarify notification entities, email addressing and native Home Assistant entity permissions.
+
 ## 0.1.2 — 2026-11-07
 
 - Allow adding, changing and clearing a growing window’s variety within its plant; preserve cultivation history.
