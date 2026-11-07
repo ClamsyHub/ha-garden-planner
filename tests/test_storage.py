@@ -124,6 +124,46 @@ class StorageTests(unittest.TestCase):
                 event["revision"],
             )
 
+    def test_window_variety_can_change_without_rewriting_history(self) -> None:
+        first = self.db.create(
+            "varieties", {"plant_id": self.plant["id"], "name": "First"}
+        )
+        second = self.db.create(
+            "varieties", {"plant_id": self.plant["id"], "name": "Second"}
+        )
+        window = self.db.create(
+            "growing_windows",
+            {
+                "plant_id": self.plant["id"],
+                "activity": "direct",
+                "environment": "outdoors",
+                "start_month": 9,
+                "start_day": 1,
+                "end_month": 10,
+                "end_day": 31,
+            },
+        )
+        culture = self.culture()
+        for variety_id in (first["id"], second["id"], None):
+            window = self.db.update(
+                "growing_windows",
+                window["id"],
+                {"variety_id": variety_id},
+                window["revision"],
+            )
+            self.assertEqual(window["data"].get("variety_id"), variety_id)
+            self.assertEqual(self.db.get("cultivations", culture["id"]), culture)
+        other = self.db.create("plants", {"name": "Other"})
+        foreign = self.db.create(
+            "varieties", {"plant_id": other["id"], "name": "Foreign"}
+        )
+        for changes in ({"variety_id": foreign["id"]}, {"plant_id": other["id"]}):
+            with self.assertRaises(ValidationError):
+                self.db.update(
+                    "growing_windows", window["id"], changes, window["revision"]
+                )
+            self.assertEqual(self.db.get("growing_windows", window["id"]), window)
+
     def test_stale_edits_and_deletes_rejected(self) -> None:
         self.db.update("plants", self.plant["id"], {"notes": "First edit"}, 1)
         with self.assertRaises(ConflictError):

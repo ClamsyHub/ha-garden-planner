@@ -375,6 +375,8 @@ class Database:
                 immutable = {"plant_id", "variety_id", "cultivation_id"} & set(
                     PARENTS[table]
                 )
+                if table == "growing_windows":
+                    immutable.discard("variety_id")
                 if any(clean.get(k) != record["data"].get(k) for k in immutable):
                     raise ValidationError(
                         "Historical parent references cannot be reassigned."

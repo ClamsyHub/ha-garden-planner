@@ -105,7 +105,7 @@ export function fieldsFor(
       String(data.variety_id ?? ""),
     ),
     false,
-    editing && ["growing_windows", "cultivations"].includes(table),
+    editing && table === "cultivations",
   );
   const bedField = relation(
     "location_id",

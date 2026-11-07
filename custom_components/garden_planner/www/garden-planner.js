@@ -1439,7 +1439,7 @@ function wt(e, n, r, i, a) {
 		"varieties",
 		"growing_windows",
 		"cultivations"
-	].includes(e)), d = s("variety_id", c(r.varieties.filter((e) => t(e, "plant_id") === l), String(n.variety_id ?? "")), !1, a && ["growing_windows", "cultivations"].includes(e)), f = s("location_id", c(r.locations, String(n.location_id ?? ""))), p = [W("temperature_c"), o("measurement_kind", [
+	].includes(e)), d = s("variety_id", c(r.varieties.filter((e) => t(e, "plant_id") === l), String(n.variety_id ?? "")), !1, a && e === "cultivations"), f = s("location_id", c(r.locations, String(n.location_id ?? ""))), p = [W("temperature_c"), o("measurement_kind", [
 		"substrate",
 		"soil",
 		"air"
