@@ -6,7 +6,10 @@ from pathlib import Path
 from typing import Any
 
 from custom_components.garden_planner.models import ValidationError
-from custom_components.garden_planner.options import validate_options
+from custom_components.garden_planner.options import (
+    notification_destinations,
+    validate_options,
+)
 from custom_components.garden_planner.storage import Database
 
 
@@ -80,6 +83,30 @@ class OptionTests(unittest.TestCase):
             validate_options({"notification_routes": [route, route]})
         with self.assertRaises(ValidationError):
             validate_options({"readers": [], "writers": ["reader"]})
+
+    def test_shared_channel_can_be_explicitly_excluded(self) -> None:
+        route = {
+            "user_id": "reader",
+            "kind": "push",
+            "enabled": True,
+            "service": "notify.device",
+            "entity": "",
+            "target": "",
+        }
+        settings = validate_options(
+            {
+                "notify_service": "notify.old_group",
+                "notification_routes": [route],
+                "shared_channel_enabled": False,
+                "reminders_enabled": True,
+            }
+        )
+        self.assertEqual(
+            [d["service"] for d in notification_destinations(settings)],
+            ["notify.device"],
+        )
+        settings["shared_channel_enabled"] = True
+        self.assertEqual(len(notification_destinations(settings)), 2)
 
     def test_import_and_restart_never_rewind_delivery_reservations(self) -> None:
         with tempfile.TemporaryDirectory() as folder:

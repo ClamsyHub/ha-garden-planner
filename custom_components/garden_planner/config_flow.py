@@ -88,6 +88,9 @@ class GardenOptionsFlow(config_entries.OptionsFlow):
                 vol.Required(
                     "reminder_hour", default=settings["reminder_hour"]
                 ): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
+                vol.Required(
+                    "shared_channel_enabled", default=settings["shared_channel_enabled"]
+                ): bool,
                 vol.Optional(
                     "notify_service", default=settings["notify_service"]
                 ): selector.SelectSelector(

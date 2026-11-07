@@ -14,7 +14,7 @@
     "step": {
       "init": {
         "title": "Garden Planner",
-        "description": "No messages are sent unless enabled.",
+        "description": "No messages are sent without activation. Manage user roles and individual push/email recipients in Garden Planner → Settings. A notify entity is not an email address.",
         "data": {
           "writers": "Editing grants",
           "reminders_enabled": "Explicitly enable reminders",
@@ -22,7 +22,8 @@
           "reminder_hour": "Send from hour (HA timezone)",
           "notify_service": "Notification channel",
           "notify_entity": "Notification entity (required for notify.send_message)",
-          "language": "Reminder language"
+          "language": "Reminder language",
+          "shared_channel_enabled": "Use existing shared channel"
         }
       }
     },

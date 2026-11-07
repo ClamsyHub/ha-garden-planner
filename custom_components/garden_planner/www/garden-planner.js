@@ -833,6 +833,7 @@ var Ze = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, ft = {
+	sharedChannelEnabled: "An bisherigen gemeinsamen Kanal senden (ggf. zusätzliche Empfänger)",
 	userRoles: "Benutzer und Benachrichtigungen",
 	haUser: "Home-Assistant-Benutzer",
 	canView: "Garden Planner sehen",
@@ -868,8 +869,9 @@ var Ze = {
 	uncertain: "Ergebnis unklar, keine automatische Wiederholung",
 	noDeliveries: "Noch keine Versandversuche.",
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
-	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Der bisherige gemeinsame Kanal sendet zusätzlich an seine konfigurierten Standardempfänger; leere ihn, wenn nur die Tabelle verwendet werden soll."
+	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, pt = {
+	sharedChannelEnabled: "Send to existing shared channel (may include additional recipients)",
 	userRoles: "Users and notifications",
 	haUser: "Home Assistant user",
 	canView: "View Garden Planner",
@@ -905,7 +907,7 @@ var Ze = {
 	uncertain: "Result uncertain, no automatic retry",
 	noDeliveries: "No delivery attempts yet.",
 	grantedEditor: "You have permission to edit this shared garden.",
-	notifyEntityHint: "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. The existing shared channel also sends to its configured defaults; clear it to use only the table."
+	notifyEntityHint: "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. Enabling a user destination switches off the existing shared channel. It sends additionally to its configured defaults only if explicitly switched back on."
 };
 function mt(e, t) {
 	return (e === "de" ? ft : pt)[t];
@@ -3486,7 +3488,7 @@ function zn() {
 }
 var Bn = class extends Ye {
 	constructor(...e) {
-		super(...e), this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = zn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.activity = "", this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = zn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.activity = "", this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -4905,11 +4907,11 @@ var Bn = class extends Ye {
     </dialog>`;
 	}
 	async loadHostSettings() {
-		let e = this.api, t = this.connectionGeneration;
+		let e = this.api, t = this.connectionGeneration, n = this.hostDraftRevision;
 		if (e && this.admin && this.capabilities?.reminders) try {
-			let [n, r] = await Promise.all([e.command("get_settings"), e.command("reminder_log")]);
+			let [r, i] = await Promise.all([e.command("get_settings"), e.command("reminder_log")]);
 			if (t !== this.connectionGeneration) return;
-			this.hostSettings = n, this.hostDraft = structuredClone(n.settings), this.deliveries = r;
+			this.hostSettings = r, n === this.hostDraftRevision && (this.hostDraft = structuredClone(r.settings)), this.deliveries = i;
 		} catch (e) {
 			t === this.connectionGeneration && (this.error = yt(this.language, e));
 		}
@@ -4931,6 +4933,7 @@ var Bn = class extends Ye {
     </div>`;
 	}
 	setUserPermission(e, t, n) {
+		this.hostDraftRevision++;
 		let r = this.hostDraft, i = new Set(r.readers ?? this.hostSettings.users.map((e) => e.id)), a = new Set(r.writers), o = t === "readers" ? i : a;
 		n ? o.add(e) : o.delete(e), t === "writers" && n && i.add(e), t === "readers" && !n && a.delete(e), this.hostDraft = {
 			...r,
@@ -4940,9 +4943,10 @@ var Bn = class extends Ye {
 				...r,
 				enabled: !1
 			} : r)
-		};
+		}, this.reconcileReminderActivation();
 	}
 	updateRoute(e, t, n) {
+		this.hostDraftRevision++;
 		let r = this.hostDraft, i = r.notification_routes.find((n) => n.user_id === e && n.kind === t) ?? {
 			user_id: e,
 			kind: t,
@@ -4953,11 +4957,19 @@ var Bn = class extends Ye {
 		};
 		this.hostDraft = {
 			...r,
+			shared_channel_enabled: n.enabled !== !0 && r.shared_channel_enabled,
 			notification_routes: [...r.notification_routes.filter((n) => n.user_id !== e || n.kind !== t), {
 				...i,
 				...n
 			}]
-		};
+		}, this.reconcileReminderActivation();
+	}
+	reconcileReminderActivation() {
+		let e = this.hostDraft;
+		!e.notification_routes.some((e) => e.enabled) && !(e.shared_channel_enabled && e.notify_service) && (this.hostDraft = {
+			...e,
+			reminders_enabled: !1
+		});
 	}
 	renderRoute(e, t, n) {
 		let r = this.hostSettings, i = this.hostDraft.notification_routes.find((n) => n.user_id === e.id && n.kind === t), a = `${e.name}: ${this.tr(t)}`, o = i?.service === "notify.send_message" ? `entity:${i.entity}` : i?.service || "";
@@ -5062,20 +5074,25 @@ var Bn = class extends Ye {
           ${this.tr("integrationSettings")}
         </button>
       </section>`;
-		let n = (e, n) => {
-			this.hostDraft = {
-				...t,
-				[e]: n
+		let n = (e, t) => {
+			this.hostDraftRevision++, this.hostDraft = {
+				...this.hostDraft,
+				[e]: t
 			};
 		};
 		return H`<section class="panel">
       <h2>${this.tr("integrationSettings")}</h2>
       <form
         @submit=${async (e) => {
-			e.preventDefault(), await this.action("set_settings", {
+			e.preventDefault();
+			let t = this.hostDraftRevision, n = await this.action("set_settings", {
 				settings: this.hostDraft,
 				confirm: !0
-			}, "settingsSaved") && await this.loadHostSettings();
+			}, "");
+			n && (this.hostSettings = {
+				...this.hostSettings,
+				settings: n
+			}, t === this.hostDraftRevision && (this.hostDraft = structuredClone(n)), this.announce("settingsSaved"));
 		}}
       >
         <div class="form-grid" style="margin-top:18px">
@@ -5105,9 +5122,17 @@ var Bn = class extends Ye {
               .value=${String(t.reminder_hour)}
               @input=${(e) => n("reminder_hour", Number(e.target.value))}
           /></label>
+          <label class="check wide"
+            ><input
+              type="checkbox"
+              .checked=${t.shared_channel_enabled}
+              @change=${(e) => n("shared_channel_enabled", e.target.checked)}
+            />${this.tr("sharedChannelEnabled")}</label
+          >
           <label
             >${this.tr("notify_service")}<select
               aria-label=${this.tr("notify_service")}
+              ?disabled=${!t.shared_channel_enabled}
               @change=${(e) => {
 			n("notify_service", e.target.value), this.hostDraft = {
 				...this.hostDraft,
@@ -5125,9 +5150,9 @@ var Bn = class extends Ye {
             >${this.tr("notify_entity")}<input
               aria-describedby="notify-entity-help"
               placeholder="notify.…"
-              ?disabled=${t.notify_service !== "notify.send_message"}
+              ?disabled=${!t.shared_channel_enabled || t.notify_service !== "notify.send_message"}
               .value=${t.notify_entity}
-              ?required=${t.notify_service === "notify.send_message"}
+              ?required=${t.shared_channel_enabled && t.notify_service === "notify.send_message"}
               @input=${(e) => n("notify_entity", e.target.value)}
           /></label>
           <label

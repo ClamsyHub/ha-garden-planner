@@ -1,5 +1,7 @@
 import type { Language } from "./types";
 const de = {
+  sharedChannelEnabled:
+    "An bisherigen gemeinsamen Kanal senden (ggf. zusätzliche Empfänger)",
   userRoles: "Benutzer und Benachrichtigungen",
   haUser: "Home-Assistant-Benutzer",
   canView: "Garden Planner sehen",
@@ -43,9 +45,11 @@ const de = {
   noDeliveries: "Noch keine Versandversuche.",
   grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
   notifyEntityHint:
-    "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Der bisherige gemeinsame Kanal sendet zusätzlich an seine konfigurierten Standardempfänger; leere ihn, wenn nur die Tabelle verwendet werden soll.",
+    "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  sharedChannelEnabled:
+    "Send to existing shared channel (may include additional recipients)",
   userRoles: "Users and notifications",
   haUser: "Home Assistant user",
   canView: "View Garden Planner",
@@ -89,7 +93,7 @@ const en: Record<keyof typeof de, string> = {
   noDeliveries: "No delivery attempts yet.",
   grantedEditor: "You have permission to edit this shared garden.",
   notifyEntityHint:
-    "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. The existing shared channel also sends to its configured defaults; clear it to use only the table.",
+    "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. Enabling a user destination switches off the existing shared channel. It sends additionally to its configured defaults only if explicitly switched back on.",
 };
 export function hostText(language: Language, key: string): string | undefined {
   return (language === "de" ? de : en)[key as keyof typeof de];

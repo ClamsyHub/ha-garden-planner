@@ -110,6 +110,7 @@ export interface NotificationRoute {
 export interface HostSettings {
   readers: string[] | null;
   notification_routes: NotificationRoute[];
+  shared_channel_enabled: boolean;
   writers: string[];
   reminders_enabled: boolean;
   lead_days: number;

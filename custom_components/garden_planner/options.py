@@ -9,6 +9,7 @@ DEFAULT_OPTIONS: dict[str, Any] = {
     "writers": [],
     "readers": None,
     "notification_routes": [],
+    "shared_channel_enabled": True,
     "reminders_enabled": False,
     "lead_days": 3,
     "reminder_hour": 9,
@@ -23,6 +24,8 @@ def validate_options(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict) or set(value) - set(DEFAULT_OPTIONS):
         raise ValidationError("Unknown settings.")
     result = {**DEFAULT_OPTIONS, **value}
+    if type(result["shared_channel_enabled"]) is not bool:
+        raise ValidationError("Shared channel activation must be explicit.")
     if type(result["reminders_enabled"]) is not bool:
         raise ValidationError("Reminder activation must be explicit.")
     if type(result["lead_days"]) is not int or not 0 <= result["lead_days"] <= 30:
@@ -114,14 +117,15 @@ def validate_options(value: Any) -> dict[str, Any]:
                 raise ValidationError("Choose an explicit recipient for legacy email.")
     if (
         result["reminders_enabled"]
-        and not result["notify_service"]
+        and not (result["shared_channel_enabled"] and result["notify_service"])
         and not any(r["enabled"] for r in routes)
     ):
         raise ValidationError(
             "Choose a notification channel before enabling reminders."
         )
     if (
-        result["notify_service"] == "notify.send_message"
+        result["shared_channel_enabled"]
+        and result["notify_service"] == "notify.send_message"
         and not result["notify_entity"]
     ):
         raise ValidationError("notify.send_message requires a notification entity.")
@@ -131,7 +135,7 @@ def validate_options(value: Any) -> dict[str, Any]:
 def notification_destinations(settings: dict[str, Any]) -> list[dict[str, Any]]:
     """Keep the old shared channel while adding explicitly enabled user routes."""
     result = []
-    if settings["notify_service"]:
+    if settings["shared_channel_enabled"] and settings["notify_service"]:
         result.append(
             {
                 "service": settings["notify_service"],

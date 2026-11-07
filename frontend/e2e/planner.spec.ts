@@ -1018,6 +1018,12 @@ test("user matrix persists separate push and email selections and viewing grants
       })
       .selectOption(service!);
   }
+  await expect(
+    page.getByLabel(
+      "An bisherigen gemeinsamen Kanal senden (ggf. zusätzliche Empfänger)",
+      { exact: true },
+    ),
+  ).not.toBeChecked();
   await page
     .getByLabel("Test reader: E-Mail erhalten", { exact: true })
     .check();
@@ -1067,6 +1073,19 @@ test("user matrix persists separate push and email selections and viewing grants
   await expect(
     page.getByLabel("Test two: Push erhalten", { exact: true }),
   ).toBeDisabled();
+  await page.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(
+    page.getByText("Einstellungen gespeichert.", { exact: true }),
+  ).toBeVisible();
+  for (const user of ["Test reader", "Test three"]) {
+    await page.getByLabel(`${user}: Push erhalten`, { exact: true }).uncheck();
+    await page
+      .getByLabel(`${user}: E-Mail erhalten`, { exact: true })
+      .uncheck();
+  }
+  await expect(
+    page.getByLabel("Erinnerungen ausdrücklich aktivieren", { exact: true }),
+  ).not.toBeChecked();
   await page.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(
     page.getByText("Einstellungen gespeichert.", { exact: true }),

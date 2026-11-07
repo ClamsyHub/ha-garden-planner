@@ -148,6 +148,7 @@ export class GardenPlannerPanel extends LitElement {
   declare narrow: boolean;
   private capabilities: Capabilities | null = null;
   private hostSettings: SettingsResponse | null = null;
+  private hostDraftRevision = 0;
   private hostDraft: HostSettings | null = null;
   private deliveries: { state: string; description: string; at: string }[] = [];
   private page: Page = "overview";
@@ -2180,6 +2181,7 @@ export class GardenPlannerPanel extends LitElement {
   private async loadHostSettings(): Promise<void> {
     const api = this.api;
     const generation = this.connectionGeneration;
+    const draftRevision = this.hostDraftRevision;
     if (!api || !this.admin || !this.capabilities?.reminders) return;
     try {
       const [settings, log] = await Promise.all([
@@ -2190,7 +2192,8 @@ export class GardenPlannerPanel extends LitElement {
       ]);
       if (generation !== this.connectionGeneration) return;
       this.hostSettings = settings;
-      this.hostDraft = structuredClone(settings.settings);
+      if (draftRevision === this.hostDraftRevision)
+        this.hostDraft = structuredClone(settings.settings);
       this.deliveries = log;
     } catch (error) {
       if (generation === this.connectionGeneration)
@@ -2225,6 +2228,7 @@ export class GardenPlannerPanel extends LitElement {
     key: "readers" | "writers",
     enabled: boolean,
   ): void {
+    this.hostDraftRevision++;
     const draft = this.hostDraft!;
     const readers = new Set(
       draft.readers ?? this.hostSettings!.users.map((u) => u.id),
@@ -2245,12 +2249,14 @@ export class GardenPlannerPanel extends LitElement {
           : r,
       ),
     };
+    this.reconcileReminderActivation();
   }
   private updateRoute(
     id: string,
     kind: "push" | "email",
     patch: Partial<NotificationRoute>,
   ): void {
+    this.hostDraftRevision++;
     const draft = this.hostDraft!;
     const route = draft.notification_routes.find(
       (r) => r.user_id === id && r.kind === kind,
@@ -2264,6 +2270,8 @@ export class GardenPlannerPanel extends LitElement {
     };
     this.hostDraft = {
       ...draft,
+      shared_channel_enabled:
+        patch.enabled === true ? false : draft.shared_channel_enabled,
       notification_routes: [
         ...draft.notification_routes.filter(
           (r) => !(r.user_id === id && r.kind === kind),
@@ -2271,6 +2279,16 @@ export class GardenPlannerPanel extends LitElement {
         { ...route, ...patch },
       ],
     };
+    this.reconcileReminderActivation();
+  }
+  private reconcileReminderActivation(): void {
+    const draft = this.hostDraft!;
+    if (
+      !draft.notification_routes.some((r) => r.enabled) &&
+      !(draft.shared_channel_enabled && draft.notify_service)
+    ) {
+      this.hostDraft = { ...draft, reminders_enabled: false };
+    }
   }
   private renderRoute(
     user: SettingsResponse["users"][number],
@@ -2411,19 +2429,26 @@ export class GardenPlannerPanel extends LitElement {
       key: keyof HostSettings,
       value: HostSettings[keyof HostSettings],
     ) => {
-      this.hostDraft = { ...draft, [key]: value };
+      this.hostDraftRevision++;
+      this.hostDraft = { ...this.hostDraft!, [key]: value };
     };
     return html`<section class="panel">
       <h2>${this.tr("integrationSettings")}</h2>
       <form
         @submit=${async (event: SubmitEvent) => {
           event.preventDefault();
+          const revision = this.hostDraftRevision;
           const value = await this.action<HostSettings>(
             "set_settings",
             { settings: this.hostDraft, confirm: true },
-            "settingsSaved",
+            "",
           );
-          if (value) await this.loadHostSettings();
+          if (value) {
+            this.hostSettings = { ...this.hostSettings!, settings: value };
+            if (revision === this.hostDraftRevision)
+              this.hostDraft = structuredClone(value);
+            this.announce("settingsSaved");
+          }
         }}
       >
         <div class="form-grid" style="margin-top:18px">
@@ -2453,9 +2478,17 @@ export class GardenPlannerPanel extends LitElement {
               .value=${String(draft.reminder_hour)}
               @input=${(e: Event) => set("reminder_hour", Number((e.target as HTMLInputElement).value))}
           /></label>
+          <label class="check wide"
+            ><input
+              type="checkbox"
+              .checked=${draft.shared_channel_enabled}
+              @change=${(e: Event) => set("shared_channel_enabled", (e.target as HTMLInputElement).checked)}
+            />${this.tr("sharedChannelEnabled")}</label
+          >
           <label
             >${this.tr("notify_service")}<select
               aria-label=${this.tr("notify_service")}
+              ?disabled=${!draft.shared_channel_enabled}
               @change=${(e: Event) => {
                 set("notify_service", (e.target as HTMLSelectElement).value);
                 this.hostDraft = { ...this.hostDraft!, notify_entity: "" };
@@ -2471,9 +2504,9 @@ export class GardenPlannerPanel extends LitElement {
             >${this.tr("notify_entity")}<input
               aria-describedby="notify-entity-help"
               placeholder="notify.…"
-              ?disabled=${draft.notify_service !== "notify.send_message"}
+              ?disabled=${!draft.shared_channel_enabled || draft.notify_service !== "notify.send_message"}
               .value=${draft.notify_entity}
-              ?required=${draft.notify_service === "notify.send_message"}
+              ?required=${draft.shared_channel_enabled && draft.notify_service === "notify.send_message"}
               @input=${(e: Event) => set("notify_entity", (e.target as HTMLInputElement).value)}
           /></label>
           <label

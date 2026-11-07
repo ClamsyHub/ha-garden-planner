@@ -14,7 +14,7 @@
     "step": {
       "init": {
         "title": "Garden Planner",
-        "description": "Ohne Aktivierung werden keine Nachrichten versendet.",
+        "description": "Ohne Aktivierung werden keine Nachrichten versendet. Benutzerrollen und einzelne Push-/E-Mail-Empfänger verwaltest du in Garden Planner → Einstellungen. Eine notify-Entität ist keine E-Mail-Adresse.",
         "data": {
           "writers": "Bearbeitungsfreigaben",
           "reminders_enabled": "Erinnerungen ausdrücklich aktivieren",
@@ -22,7 +22,8 @@
           "reminder_hour": "Versand ab Stunde (HA-Zeitzone)",
           "notify_service": "Benachrichtigungskanal",
           "notify_entity": "Benachrichtigungs-Entität (bei notify.send_message erforderlich)",
-          "language": "Sprache der Erinnerungen"
+          "language": "Sprache der Erinnerungen",
+          "shared_channel_enabled": "Bisherigen gemeinsamen Kanal verwenden"
         }
       }
     },
