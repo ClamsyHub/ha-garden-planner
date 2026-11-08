@@ -6,7 +6,7 @@
 
 Lokaler Aussaat-, Pflanz-, Pflege- und Erntekalender für Home Assistant.
 
-**Öffentliche Entwicklungsversion: [v0.1.3](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.3).**
+**Öffentliche Entwicklungsversion: [v0.1.4](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.4).**
 Automatisches Seitenleisten-Panel, Live-Temperaturen, Sensor-/Kalender-Entitäten,
 Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Dies ist eine
 frühe Version 0.x, noch keine stabile Version 1.0.
@@ -18,8 +18,8 @@ offiziellen Katalog. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Veröffentlicht:** v0.1.3 mit Farben für alle Tätigkeiten, Anbaureihenfolge
-und einer Benutzertabelle für Rollen sowie getrennte Push-/E-Mail-Ziele. [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
+**Veröffentlicht:** v0.1.4 mit Smartphone-Menü, Anbauwerten nur an der Pflanze
+und kompakten Pflanzendetails. [Datenmigration und Updatehinweise](docs/releases/v0.1.4.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
 ist eingereicht und wartet auf die Maintainer. [Status](docs/catalog/README.md).
 
 ## Oberfläche
@@ -134,3 +134,5 @@ Lizenzen; [vollständige Laufzeit-Lizenzhinweise](docs/THIRD_PARTY_NOTICES.txt) 
 zusammen mit dem JavaScript-Paket ausgeliefert.
 
 [Rollen und Benachrichtigungen](docs/notifications.md)
+
+[Neue kompakte Smartphone-Pflanzendetails (synthetisches Beispiel)](docs/screenshots/plant-summary-mobile.png)

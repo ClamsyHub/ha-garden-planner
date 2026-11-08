@@ -4,7 +4,7 @@
 
 Local sowing, planting, care and harvest planning for Home Assistant.
 
-**Public development release: [v0.1.3](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.3).**
+**Public development release: [v0.1.4](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.4).**
 [Source](https://github.com/ClamsyHub/ha-garden-planner) is public. Not a stable 1.0
 release and not included in the official catalog. [Publication evidence](../publication.md).
 
@@ -29,7 +29,7 @@ Planner in Settings → Devices & services. One shared garden is supported.
 
 Add `https://github.com/ClamsyHub/ha-garden-planner` as an **Integration** custom
 repository in HACS/Marketplace (connect GitHub first in Marketplace). Install
-v0.1.3 (no pre-release setting required), restart when requested and add Garden Planner
+v0.1.4 (no pre-release setting required), restart when requested and add Garden Planner
 under Settings → Devices & services. Direct catalog search requires an accepted
 catalog submission.
 GitHub publication, custom-repository installation and official catalog membership

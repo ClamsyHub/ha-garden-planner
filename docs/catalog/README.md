@@ -1,4 +1,4 @@
-> Current release: [v0.1.3](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.3), published 2026-11-07. The original submission evidence below documents v0.1.1. Catalog acceptance remains a separate maintainer decision.
+> Current release: [v0.1.4](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.4), published 2026-11-08. The original submission evidence below documents v0.1.1. Catalog acceptance remains a separate maintainer decision.
 
 # Phase 7 — submitted, awaiting maintainer acceptance
 

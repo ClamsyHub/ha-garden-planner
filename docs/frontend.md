@@ -144,3 +144,9 @@ bridge, on desktop Chromium, mobile Chromium and WebKit. Axe checks both themes
 and open forms without disabling rules. Screenshots document actual rendering.
 These harness checks are not physical-device or Companion App tests. Actual
 public-package HA installation evidence is in [publication](publication.md).
+
+## Smartphone und Pflanzendetails ab v0.1.4
+
+Der Menüknopf oben öffnet die Home-Assistant-Seitenleiste über das native Menü-Ereignis. Pflanzen zeigen kompakte Kennwerte und aufklappbare vollständige Informationen; die Knöpfe Sorten, Zeiträume und Beobachtungen springen direkt zum jeweiligen Bereich. Messwerte werden an Pflanzen gepflegt, nicht an Sorten. Zeiträume gelten für die Pflanze; eine Sortenwahl ist weiterhin bei tatsächlichen Aussaaten möglich.
+
+![Kompakte Pflanzendetails – synthetisches iPhone-WebKit-Beispiel](screenshots/plant-summary-mobile.png)

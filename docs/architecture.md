@@ -20,7 +20,7 @@ serialized writes and optimistic record revisions. Store dates as ISO calendar
 dates; event instants as UTC with explicit display timezone. Growing windows
 use month/day boundaries and handle year wrap and leap years explicitly.
 
-Implemented schema v2: plants, varieties, growing_windows, locations, cultivations,
+Implemented schema v3: plants, varieties, growing_windows, locations, cultivations,
 cultivation_events, tasks, settings and schema_migrations. Operational delivery
 reservations use namespaced settings rows; notification options live in the HA
 config entry. No speculative reminder_rules table is required. Stable IDs preserve relationships. Cultivation snapshots
@@ -73,3 +73,7 @@ and axe. The panel is registered through panel_custom; static code is exposed wi
 HA static-path registration and a content-hash URL. Private data is never static.
 File operations use a bounded authenticated HomeAssistantView and fetchWithAuth;
 small commands and subscriptions use the native HA WebSocket connection.
+
+## Plant-level traits (v0.1.4)
+
+Schema 3 removes retired numeric traits from live varieties and nulls variety links on growing windows. Plant traits and frozen cultivation snapshots are preserved. Legacy import/restore normalizes live masters; old numeric keys remain recognized only to validate historical snapshots and older exchange headers. New snapshots use plant traits across all varieties. Migration is transactional with a pre-migration backup; code-only downgrade to schema-2 releases is refused.
