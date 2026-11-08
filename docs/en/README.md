@@ -92,3 +92,5 @@ Project code: [MIT](../../LICENSE). Dependencies retain their
 [license notices](../THIRD_PARTY_NOTICES.txt), included with the frontend.
 
 [Rollen und Benachrichtigungen / Users and notifications](../notifications.md)
+
+From v0.1.4, cultivation traits belong to plants and windows apply to all varieties. Schema-3 migration removes retired variety values after taking a database backup; historical snapshots remain intact. [Migration and rollback](../releases/v0.1.4.md).

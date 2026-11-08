@@ -574,7 +574,7 @@ test("growing-window date pairs share rows on wide displays", async ({
   const startDay = dialog.getByLabel("Starttag *", { exact: true });
   const endMonth = dialog.getByLabel("Endmonat *", { exact: true });
   const endDay = dialog.getByLabel("Endtag *", { exact: true });
-  if (testInfo.project.name !== "mobile-chromium") {
+  if (!testInfo.project.name.startsWith("mobile-")) {
     const [sm, sd, em, ed] = await Promise.all([
       startMonth.boundingBox(),
       startDay.boundingBox(),
@@ -749,7 +749,7 @@ test("sensor suggestions stay anchored in the form and support keyboard and touc
   await expect(dialog).toBeVisible();
   await input.fill("Boden");
   const option = list.getByRole("option", { name: /Boden Temperatur/ });
-  if (testInfo.project.name === "mobile-chromium") await option.tap();
+  if (testInfo.project.name.startsWith("mobile-")) await option.tap();
   else await option.click();
   await expect(input).toHaveValue("sensor.soil_temperature");
   await page.evaluate(() => {
@@ -781,7 +781,7 @@ test("sensor suggestions stay anchored in the form and support keyboard and touc
   );
   await input.press("ArrowUp");
   const last = list.getByRole("option", { name: /Many Test 39/ });
-  if (testInfo.project.name === "mobile-chromium") await last.tap();
+  if (testInfo.project.name.startsWith("mobile-")) await last.tap();
   else await last.click();
   await expect(input).toHaveValue("sensor.many_39");
   await input.fill("sensor.manual_temperature");
@@ -848,9 +848,9 @@ test("plant details keep varieties and chronological windows compact", async ({
     await editor
       .getByLabel("Tätigkeit *", { exact: true })
       .selectOption(activity!);
-    await editor
-      .getByLabel("Sorte (optional)", { exact: true })
-      .selectOption({ label: "Compact variety" });
+    await expect(
+      editor.getByLabel("Sorte (optional)", { exact: true }),
+    ).toHaveCount(0);
     await editor
       .getByLabel("Startmonat *", { exact: true })
       .selectOption(month!);
@@ -870,7 +870,7 @@ test("plant details keep varieties and chronological windows compact", async ({
   }
   const windows = detail.locator("article").filter({
     has: page.getByRole("heading", {
-      name: /^(Vorziehen|Pikieren) \(Compact variety\)/,
+      name: /^(Vorziehen|Pikieren) ·/,
     }),
   });
   await expect(windows).toHaveCount(2);
@@ -1071,7 +1071,7 @@ test("user matrix persists separate push and email selections and viewing grants
   ).toBe(true);
 });
 
-test("growing-window variety can be added and cleared after creation", async ({
+test("growing windows are plant-wide and variety forms have no plant measurements", async ({
   page,
 }) => {
   await open(page, { demo: "1" });
@@ -1086,38 +1086,162 @@ test("growing-window variety can be added and cleared after creation", async ({
   await detail
     .getByRole("button", { name: "Sorte hinzufügen", exact: true })
     .click();
-  const variety = page.locator("#editor-dialog");
-  await variety.getByLabel("Name *", { exact: true }).fill("Testsorte");
-  await variety.getByRole("button", { name: "Speichern", exact: true }).click();
-  await expect(variety).not.toBeVisible();
-  const windowItem = detail.locator("article").filter({
-    has: page.getByRole("heading", { name: /^Direktsaat/ }),
-  });
-  await windowItem
+  const editor = page.locator("#editor-dialog");
+  await expect(
+    editor.getByLabel(
+      /Keimtemperatur|Keimdauer|Kulturdauer|Saattiefe|Pflanzabstand|Reihenabstand/,
+    ),
+  ).toHaveCount(0);
+  await editor.getByLabel("Name *", { exact: true }).fill("Thai example");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await detail
+    .locator("article")
+    .filter({ has: page.getByRole("heading", { name: /^Direktsaat/ }) })
     .getByRole("button", { name: "Bearbeiten", exact: true })
     .click();
-  const windowEditor = page.locator("#editor-dialog");
   await expect(
-    windowEditor.getByLabel("Pflanze *", { exact: true }),
-  ).toBeDisabled();
-  const varietySelect = windowEditor.getByLabel("Sorte (optional)", {
+    editor.getByLabel("Sorte (optional)", { exact: true }),
+  ).toHaveCount(0);
+  await editor.getByLabel("Notizen", { exact: true }).fill("For every variety");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(
+    detail.getByText("For every variety", { exact: true }),
+  ).toBeVisible();
+});
+
+test("Home Assistant menu is reachable without rotating the phone", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await page.evaluate(() => {
+    document.documentElement.dataset.menuCount = "0";
+    document.addEventListener("hass-toggle-menu", (event) => {
+      document.documentElement.dataset.menuCount = String(
+        Number(document.documentElement.dataset.menuCount) + 1,
+      );
+      document.documentElement.dataset.menuContract = String(
+        event.bubbles && event.composed,
+      );
+    });
+  });
+  const menu = page.getByRole("button", {
+    name: "Home-Assistant-Menü öffnen",
     exact: true,
   });
-  await expect(varietySelect).toBeEnabled();
-  await varietySelect.selectOption({ label: "Testsorte" });
-  await windowEditor
-    .getByRole("button", { name: "Speichern", exact: true })
+  await expect(menu).toBeVisible();
+  if (testInfo.project.name.startsWith("mobile-")) await menu.tap();
+  else await menu.click();
+  await expect(page.locator("html")).toHaveAttribute("data-menu-count", "1");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(menu).toBeInViewport();
+  if (testInfo.project.name.startsWith("mobile-")) await menu.tap();
+  else await menu.click();
+  await expect(page.locator("html")).toHaveAttribute("data-menu-count", "2");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-menu-contract",
+    "true",
+  );
+});
+
+test("plant form keeps sowing depth separate and both spacing fields together", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await navigate(page, "Meine Pflanzen");
+  await page
+    .getByRole("button", { name: "Pflanze anlegen", exact: true })
+    .first()
     .click();
-  await expect(windowEditor).not.toBeVisible();
-  await expect(windowItem.getByRole("heading")).toContainText("Testsorte");
-  await windowItem
-    .getByRole("button", { name: "Bearbeiten", exact: true })
+  const editor = page.locator("#editor-dialog");
+  const depth = editor.getByLabel("Saattiefe (cm)", { exact: true });
+  await depth.scrollIntoViewIfNeeded();
+  const [d, p, r] = await Promise.all([
+    depth.boundingBox(),
+    editor.getByLabel("Pflanzabstand (cm)", { exact: true }).boundingBox(),
+    editor.getByLabel("Reihenabstand (cm)", { exact: true }).boundingBox(),
+  ]);
+  expect(d!.y).toBeLessThan(p!.y);
+  if (!testInfo.project.name.startsWith("mobile-")) {
+    expect(p!.y).toBe(r!.y);
+    expect(p!.x).toBe(d!.x);
+    expect(p!.x).toBeLessThan(r!.x);
+  } else expect(p!.y).toBeLessThan(r!.y);
+});
+
+test("plant summary is compact and full information remains available", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await navigate(page, "Meine Pflanzen");
+  await page
+    .getByRole("button", { name: "Pflanze anlegen", exact: true })
+    .first()
     .click();
-  await expect(varietySelect.locator("option:checked")).toHaveText("Testsorte");
-  await varietySelect.selectOption("");
-  await windowEditor
-    .getByRole("button", { name: "Speichern", exact: true })
+  const editor = page.locator("#editor-dialog");
+  const note = "Lange eigene Beobachtung. ".repeat(160);
+  await editor.getByLabel("Name *", { exact: true }).fill("Chili Übersicht");
+  await editor
+    .getByLabel("Botanischer Name", { exact: true })
+    .fill("Capsicum annuum");
+  await editor.getByLabel("Notizen", { exact: true }).fill(note);
+  await editor
+    .getByLabel("Keimtemperatur: optimal ab (°C)", { exact: true })
+    .fill("22");
+  await editor
+    .getByLabel("Keimtemperatur: optimal bis (°C)", { exact: true })
+    .fill("28");
+  await editor
+    .getByLabel("Keimdauer: mindestens (Tage)", { exact: true })
+    .fill("8");
+  await editor
+    .getByLabel("Keimdauer: höchstens (Tage)", { exact: true })
+    .fill("14");
+  await editor.getByLabel("Saattiefe (cm)", { exact: true }).fill("0.5");
+  await editor.getByLabel("Pflanzabstand (cm)", { exact: true }).fill("40");
+  await editor.getByLabel("Reihenabstand (cm)", { exact: true }).fill("60");
+  await editor
+    .getByLabel("Kulturdauer: mindestens (Tage)", { exact: true })
+    .fill("90");
+  await editor
+    .getByLabel("Kulturdauer: höchstens (Tage)", { exact: true })
+    .fill("120");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await page
+    .getByRole("button", { name: "Chili Übersicht", exact: true })
     .click();
-  await expect(windowEditor).not.toBeVisible();
-  await expect(windowItem.getByRole("heading")).not.toContainText("Testsorte");
+  const detail = page.locator("#detail-dialog");
+  const full = detail.locator(".plant-full-information");
+  await expect(full).toHaveJSProperty("open", false);
+  await expect(detail.locator(".plant-quick-facts")).toContainText(
+    "22 – 28 °C",
+  );
+  await expect(detail.locator(".plant-quick-facts")).toContainText(
+    "40 / 60 cm",
+  );
+  await expect(detail.getByText(note, { exact: true })).not.toBeVisible();
+  await detail
+    .getByText("Alle Pflanzeninformationen anzeigen", { exact: true })
+    .click();
+  await expect(full).toHaveJSProperty("open", true);
+  await expect(detail.getByText(note, { exact: true })).toBeVisible();
+  await detail
+    .getByText("Alle Pflanzeninformationen anzeigen", { exact: true })
+    .click();
+  await detail
+    .getByRole("group", { name: "Pflanzenbereiche", exact: true })
+    .getByRole("button", { name: "Beobachtungen", exact: true })
+    .click();
+  await expect(detail.locator("#plant-observations")).toBeFocused();
+  await detail.evaluate((n) => (n.scrollTop = 0));
+  await detail.screenshot({
+    path: testInfo.outputPath("plant-summary.png"),
+    scale: "css",
+  });
+  const accessibility = await new AxeBuilder({ page })
+    .include("garden-planner-panel")
+    .analyze();
+  expect(accessibility.violations).toEqual([]);
 });

@@ -1,5 +1,16 @@
 import type { Language } from "./types";
 const de = {
+  jumpWindows: "Zeiträume",
+  jumpObservations: "Beobachtungen",
+  haMenu: "Home-Assistant-Menü öffnen",
+  plantSections: "Pflanzenbereiche",
+  allPlantInformation: "Alle Pflanzeninformationen anzeigen",
+  optimalGermination: "Keimtemperatur (optimal)",
+  germinationLimits: "Keimtemperatur (Grenzen)",
+  germinationDuration: "Keimdauer",
+  cultivationDuration: "Kulturdauer",
+  plantRowSpacing: "Pflanz- / Reihenabstand",
+
   sharedChannelEnabled:
     "An bisherigen gemeinsamen Kanal senden (ggf. zusätzliche Empfänger)",
   userRoles: "Benutzer und Benachrichtigungen",
@@ -48,6 +59,17 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  jumpWindows: "Windows",
+  jumpObservations: "Observations",
+  haMenu: "Open Home Assistant menu",
+  plantSections: "Plant sections",
+  allPlantInformation: "Show all plant information",
+  optimalGermination: "Germination temperature (optimal)",
+  germinationLimits: "Germination temperature (limits)",
+  germinationDuration: "Germination days",
+  cultivationDuration: "Cultivation days",
+  plantRowSpacing: "Plant / row spacing",
+
   sharedChannelEnabled:
     "Send to existing shared channel (may include additional recipients)",
   userRoles: "Users and notifications",

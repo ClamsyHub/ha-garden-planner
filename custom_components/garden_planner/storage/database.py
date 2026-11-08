@@ -17,12 +17,14 @@ from ..models import (
     MAX_IMPORT_BYTES,
     MAX_RECORDS,
     PARENTS,
+    PLANT_MEASURE_FIELDS,
     SCHEMA_VERSION,
     TABLES,
     ConflictError,
     NotFoundError,
     StorageError,
     ValidationError,
+    clean_master_data,
     identifier,
     positive_revision,
     timestamp,
@@ -262,12 +264,14 @@ class Database:
         ):
             raise ValidationError("Cannot start a culture with archived master data.")
         windows = [
-            r["data"]
+            {
+                key: value
+                for key, value in r["data"].items()
+                if key not in PLANT_MEASURE_FIELDS
+            }
             for r in self.list_records(
                 "growing_windows", {"plant_id": data["plant_id"]}
             )
-            if not r["data"].get("variety_id")
-            or r["data"]["variety_id"] == data.get("variety_id")
         ]
         return {
             "plant": plant,
@@ -319,7 +323,7 @@ class Database:
 
     def create(self, table: str, data: dict[str, Any]) -> dict[str, Any]:
         """Create validated records and an initial lifecycle event atomically."""
-        clean = validate_data(table, data)
+        clean = validate_data(table, clean_master_data(table, data))
         with self.transaction():
             self._references(table, clean)
             if table == "cultivations":
@@ -365,7 +369,11 @@ class Database:
             record = self.get(table, record_id)
             if record["revision"] != revision:
                 raise ConflictError("Record was changed; reload before editing.")
-            clean = validate_data(table, {**record["data"], **patch}, internal=True)
+            clean = validate_data(
+                table,
+                clean_master_data(table, {**record["data"], **patch}),
+                internal=True,
+            )
             if table in (
                 "varieties",
                 "cultivations",
@@ -543,7 +551,7 @@ class Database:
             raise ValidationError("Unsupported exchange format version.")
         if (
             type(payload["schema_version"]) is not int
-            or payload["schema_version"] != SCHEMA_VERSION
+            or not 1 <= payload["schema_version"] <= SCHEMA_VERSION
         ):
             raise ValidationError("Unsupported exchange schema version.")
         timestamp(payload["exported_at"])
@@ -574,7 +582,9 @@ class Database:
                 positive_revision(record["revision"])
                 timestamp(record["created_at"])
                 timestamp(record["updated_at"])
-                clean = validate_data(table, record["data"], internal=True)
+                clean = validate_data(
+                    table, clean_master_data(table, record["data"]), internal=True
+                )
                 if table == "cultivations" and "snapshot" not in clean:
                     raise ValidationError(
                         "Imported culture lacks its historical snapshot."

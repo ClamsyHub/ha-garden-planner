@@ -127,3 +127,5 @@ steht beim ersten Release noch aus. Katalogaufnahme und physische Geräte sind
 weiterhin offen. [Prüfergebnisse und offene Punkte](../validation.md).
 
 [Rollen und Benachrichtigungen / Users and notifications](../notifications.md)
+
+Ab v0.1.4 liegen Anbau-Messwerte nur an der Pflanze, Zeiträume gelten für alle Sorten. Die Datenmigration entfernt alte Sortenwerte und erstellt vorher eine Datenbanksicherung. Historische Momentaufnahmen bleiben erhalten. [Migration und Rollback](../releases/v0.1.4.md).

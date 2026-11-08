@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.4 — 2026-11-08
+
+- Add a persistent Home Assistant sidebar menu button, including narrow/iPhone layouts.
+- Keep cultivation measurements on plants; remove retired variety values through backed-up schema-3 migration and normalize old imports.
+- Make growing windows plant-wide by removing variety assignments; preserve windows, notes and historical cultivation snapshots.
+- Group sowing depth and spacing form rows as requested.
+- Show compact plant facts, collapsible full information and direct section shortcuts.
+- Add mobile WebKit coverage, migration/rollback/old-release upgrade checks and accessibility fixes.
+
 ## 0.1.3 — 2026-11-07
 
 - Add distinct colors, filters and year bars for all seven activities. Order calendar and plant-detail windows by cultivation phase, then start date.

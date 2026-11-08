@@ -138,7 +138,15 @@ function C(e) {
 			data: r
 		}, t(e, "date"));
 	}) : [];
-	if (i.length > 1) return;
+	if (i.length > 1 && i.some((e) => {
+		let t = S(e);
+		return t && [
+			"germination_min_c",
+			"germination_optimal_min_c",
+			"germination_optimal_max_c",
+			"germination_max_c"
+		].some((e) => e in t);
+	})) return;
 	i.length === 1 && (r = {
 		...r,
 		...S(i[0])
@@ -833,6 +841,16 @@ var Ze = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, ft = {
+	jumpWindows: "Zeiträume",
+	jumpObservations: "Beobachtungen",
+	haMenu: "Home-Assistant-Menü öffnen",
+	plantSections: "Pflanzenbereiche",
+	allPlantInformation: "Alle Pflanzeninformationen anzeigen",
+	optimalGermination: "Keimtemperatur (optimal)",
+	germinationLimits: "Keimtemperatur (Grenzen)",
+	germinationDuration: "Keimdauer",
+	cultivationDuration: "Kulturdauer",
+	plantRowSpacing: "Pflanz- / Reihenabstand",
 	sharedChannelEnabled: "An bisherigen gemeinsamen Kanal senden (ggf. zusätzliche Empfänger)",
 	userRoles: "Benutzer und Benachrichtigungen",
 	haUser: "Home-Assistant-Benutzer",
@@ -871,6 +889,16 @@ var Ze = {
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, pt = {
+	jumpWindows: "Windows",
+	jumpObservations: "Observations",
+	haMenu: "Open Home Assistant menu",
+	plantSections: "Plant sections",
+	allPlantInformation: "Show all plant information",
+	optimalGermination: "Germination temperature (optimal)",
+	germinationLimits: "Germination temperature (limits)",
+	germinationDuration: "Germination days",
+	cultivationDuration: "Cultivation days",
+	plantRowSpacing: "Plant / row spacing",
 	sharedChannelEnabled: "Send to existing shared channel (may include additional recipients)",
 	userRoles: "Users and notifications",
 	haUser: "Home Assistant user",
@@ -1484,10 +1512,15 @@ function wt(e, n, r, i, a) {
 				...r.plants.map((e) => t(e, "category")).filter(Boolean)
 			])], i)
 		} : W(e)),
-		...xt.map(W)
+		...e === "plants" ? xt.map((e) => ({
+			...W(e),
+			rowStart: ["depth_cm", "spacing_cm"].includes(e)
+		})) : []
 	] : e === "growing_windows" ? [
-		u,
-		d,
+		{
+			...u,
+			wide: !0
+		},
 		o("activity", [
 			"indoors",
 			"direct",
@@ -2476,15 +2509,15 @@ var Fn = j`
   .app {
     display: grid;
     grid-template-columns: 236px minmax(0, 1fr);
-    min-height: 100vh;
+    min-height: calc(100dvh - 56px);
   }
   aside {
     background: var(--gp-card);
     border-right: 1px solid var(--gp-border);
     padding: 30px 18px;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: 56px;
+    height: calc(100dvh - 56px);
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -3229,6 +3262,10 @@ var Fn = j`
     background: #10291f88;
     backdrop-filter: blur(3px);
   }
+  #editor-dialog {
+    scroll-padding-top: 90px;
+    scroll-padding-bottom: 80px;
+  }
   .dialog-head {
     position: sticky;
     top: 0;
@@ -3258,6 +3295,77 @@ var Fn = j`
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 17px;
+  }
+  .form-grid .row-start {
+    grid-column-start: 1;
+  }
+  .ha-navigation {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 4px 12px;
+    background: var(--gp-card);
+    border-bottom: 1px solid var(--gp-border);
+  }
+  .ha-navigation span {
+    font-weight: 600;
+  }
+  .plant-detail-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .detail-jumps button {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+  .plant-title h2 {
+    font-size: 16px;
+    letter-spacing: normal;
+    margin: 0 0 7px;
+  }
+  .plant-summary-heading {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .plant-summary-heading p {
+    margin: 0;
+  }
+  .plant-quick-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .plant-quick-facts > div {
+    padding: 10px 12px;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    min-width: 0;
+  }
+  .plant-quick-facts dt {
+    font-size: 12px;
+    color: var(--gp-muted);
+  }
+  .plant-quick-facts dd {
+    margin: 3px 0 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .detail-jumps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .plant-full-information {
+    margin: 12px 0;
   }
   .form-grid .wide {
     min-width: 0;
@@ -3324,9 +3432,9 @@ var Fn = j`
     }
     aside {
       position: sticky;
-      top: 0;
+      top: 56px;
       height: auto;
-      z-index: 5;
+      z-index: 1;
       padding: 10px 12px 0;
       border-right: 0;
       border-bottom: 1px solid var(--gp-border);
@@ -3417,6 +3525,40 @@ var Fn = j`
     .item-content {
       min-width: 180px;
     }
+    .plant-detail-actions button {
+      font-size: 12px;
+      padding: 7px 4px;
+      min-width: 0;
+    }
+    .plant-quick-facts {
+      grid-template-columns: 1fr;
+      gap: 0;
+      border: 1px solid var(--gp-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .plant-quick-facts > div {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      border: 0;
+      border-bottom: 1px solid var(--gp-border);
+      border-radius: 0;
+      padding: 7px 10px;
+    }
+    .plant-quick-facts > div:last-child {
+      border-bottom: 0;
+    }
+    .plant-quick-facts dt {
+      max-width: 62%;
+    }
+    .plant-quick-facts dd {
+      margin: 0;
+      text-align: right;
+      font-size: 13px;
+    }
+
     .form-grid {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -3463,6 +3605,7 @@ var Fn = j`
 	"harvest",
 	"other"
 ], Rn = {
+	menu: "M3 6h18M3 12h18M3 18h18",
 	overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
 	calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
 	plants: "M12 21V10M12 15C3 15 3 6 3 6s9-1 9 9zm0-5c0-8 9-8 9-8s1 9-9 8z",
@@ -3506,7 +3649,7 @@ var Bn = class extends Ye {
 			if (!e) return;
 			let t = e.getBoundingClientRect(), n = e.closest("dialog")?.getBoundingClientRect(), r = window.visualViewport, i = Math.max((r?.offsetTop ?? 0) + 8, (n?.top ?? 0) + 8), a = Math.min((r?.offsetTop ?? 0) + (r?.height ?? window.innerHeight) - 8, (n?.bottom ?? window.innerHeight) - 8);
 			if (t.bottom < i || t.top > a) {
-				this.sensorOpen = !1;
+				this.sensorMaxHeight = 0;
 				return;
 			}
 			let o = Math.max(0, t.top - i - 4), s = Math.max(0, a - t.bottom - 4);
@@ -3758,7 +3901,7 @@ var Bn = class extends Ye {
 		}, this.startEditor("plants", n));
 	}
 	openSensorOptions() {
-		this.sensorOpen = !0, this.positionSensorOptions();
+		this.renderRoot.querySelector("#field-sensor_entity_id")?.scrollIntoView({ block: "nearest" }), this.sensorOpen = !0, this.positionSensorOptions();
 	}
 	chooseSensor(e) {
 		this.changeField("sensor_entity_id", e), this.renderRoot.querySelector("#field-sensor_entity_id")?.focus(), this.sensorOpen = !1, this.sensorIndex = -1;
@@ -3826,7 +3969,7 @@ var Bn = class extends Ye {
 		if (e.key === "sensor_entity_id") return this.renderSensorField(e);
 		let t = this.editor.draft[e.key], n = (t) => this.changeField(e.key, t.target.value), r = `field-${e.key}`;
 		return H`<label
-      class=${e.type === "textarea" || e.wide ? "wide" : ""}
+      class=${[e.type === "textarea" || e.wide ? "wide" : "", e.rowStart ? "row-start" : ""].filter(Boolean).join(" ")}
       for=${r}
     >
       <span id=${`${r}-label`}
@@ -4017,7 +4160,7 @@ var Bn = class extends Ye {
       <div class="plant-title">
         <div class="plant-symbol">${$("plants")}</div>
         <div>
-          <h3>
+          <h2>
             <button
               class="link"
               @click=${() => {
@@ -4029,7 +4172,7 @@ var Bn = class extends Ye {
             >
               ${t(e, "name")}
             </button>
-          </h3>
+          </h2>
           <small
             >${t(e, "botanical_name") || this.lab(t(e, "category"))}</small
           >
@@ -4589,7 +4732,9 @@ var Bn = class extends Ye {
               </div>
               <div class="dialog-body">
                 ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
-                ${this.editable ? H`<div class="actions">
+                ${this.editable ? H`<div
+                        class=${e.kind === "plant" ? "actions plant-detail-actions" : "actions"}
+                      >
                         <button
                           @click=${() => this.startEditor(e.kind === "plant" ? "plants" : "cultivations", n)}
                         >
@@ -4619,12 +4764,58 @@ var Bn = class extends Ye {
               </div>` : U}
     </dialog>`;
 	}
+	renderPlantSummary(e) {
+		let n = e.data, r = (e) => typeof n[e] == "number" ? n[e].toLocaleString(this.language, { maximumFractionDigits: 20 }) : "—", i = (e, t, i) => typeof n[e] == "number" || typeof n[t] == "number" ? `${r(e)} – ${r(t)} ${i}` : "", a = this.language === "de" ? "Tage" : "days", o = i("germination_optimal_min_c", "germination_optimal_max_c", "°C"), s = [
+			[o ? "optimalGermination" : "germinationLimits", o || i("germination_min_c", "germination_max_c", "°C")],
+			["germinationDuration", i("germination_days_min", "germination_days_max", a)],
+			["depth_cm", typeof n.depth_cm == "number" ? `${r("depth_cm")} cm` : ""],
+			["plantRowSpacing", typeof n.spacing_cm == "number" || typeof n.row_spacing_cm == "number" ? `${r("spacing_cm")} / ${r("row_spacing_cm")} cm` : ""],
+			["cultivationDuration", i("duration_days_min", "duration_days_max", a)],
+			["site", t(e, "site")]
+		];
+		return H`<div class="plant-summary-heading">
+        ${t(e, "botanical_name") ? H`<p><i>${t(e, "botanical_name")}</i></p>` : U}
+        ${t(e, "category") ? H`<span class="badge">${this.lab(t(e, "category"))}</span>` : U}
+      </div>
+      <dl class="plant-quick-facts">
+        ${s.filter(([, e]) => e).map(([e, t]) => H`<div>
+                <dt>${this.tr(e)}</dt>
+                <dd>${t}</dd>
+              </div>`)}
+      </dl>`;
+	}
 	renderPlantDetail(e) {
 		let n = this.tables.varieties.filter((n) => t(n, "plant_id") === e.id);
-		return H`<p class="notice">${this.tr("temperatureHint")}</p>
-      ${this.renderData(e.data)}
+		return H`${this.renderPlantSummary(e)}
+      <div
+        class="detail-jumps"
+        role="group"
+        aria-label=${this.tr("plantSections")}
+      >
+        ${[
+			"varieties",
+			"windows",
+			"observations"
+		].map((e) => H`<button
+              type="button"
+              @click=${() => {
+			let t = this.renderRoot.querySelector("#detail-dialog"), n = t?.querySelector(`#plant-${e}`);
+			if (t && n) {
+				let e = t.querySelector(".dialog-head")?.getBoundingClientRect().height ?? 0;
+				t.scrollTop += n.getBoundingClientRect().top - t.getBoundingClientRect().top - e - 12, n.focus({ preventScroll: !0 });
+			}
+		}}
+            >
+              ${this.tr(e === "windows" ? "jumpWindows" : e === "observations" ? "jumpObservations" : e)}
+            </button>`)}
+      </div>
+      <details class="plant-full-information">
+        <summary>${this.tr("allPlantInformation")}</summary>
+        <p class="notice">${this.tr("temperatureHint")}</p>
+        ${this.renderData(e.data, ["name", "botanical_name"])}
+      </details>
       <div class="section-head">
-        <h3>${this.tr("varieties")}</h3>
+        <h3 id="plant-varieties" tabindex="-1">${this.tr("varieties")}</h3>
         ${this.editable ? H`<button @click=${() => this.startEditor("varieties", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newVariety")}</button>` : U}
       </div>
       ${n.length ? n.map((e) => H`<article class="item">
@@ -4650,7 +4841,7 @@ var Bn = class extends Ye {
                           </button>` : U}
                 </article>`) : H`<p class="muted">${this.tr("noVarieties")}</p>`}
       <div class="section-head">
-        <h3>${this.tr("windows")}</h3>
+        <h3 id="plant-windows" tabindex="-1">${this.tr("windows")}</h3>
         ${this.editable ? H`<button @click=${() => this.startEditor("growing_windows", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newWindow")}</button>` : U}
       </div>
       ${this.plantWindows(e.id).length ? this.plantWindows(e.id).map((e) => H`<article class="item">
@@ -4678,7 +4869,9 @@ var Bn = class extends Ye {
                           </button>` : U}
                 </article>`) : H`<p class="muted">${this.tr("noAllWindows")}</p>`}
       <div class="section-head">
-        <h3>${this.tr("observations")}</h3>
+        <h3 id="plant-observations" tabindex="-1">
+          ${this.tr("observations")}
+        </h3>
         ${this.editable && !e.data.archived ? H`<button class="primary" @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newSowing")}</button>` : U}
       </div>
       ${this.renderHistory(this.tables.cultivations.filter((n) => t(n, "plant_id") === e.id), !0)}`;
@@ -5271,7 +5464,22 @@ var Bn = class extends Ye {
 	}
 	render() {
 		let e = this.page === "plants" ? ["newPlant", "plants"] : this.page === "locations" ? ["newLocation", "locations"] : ["newSowing", "cultivations"];
-		return H`<div class="app">
+		return H`<header class="ha-navigation">
+        <button
+          type="button"
+          class="icon"
+          aria-label=${this.tr("haMenu")}
+          title=${this.tr("haMenu")}
+          @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {
+			bubbles: !0,
+			composed: !0
+		}))}
+        >
+          ${$("menu")}
+        </button>
+        <span>Home Assistant</span>
+      </header>
+      <div class="app">
         <aside>
           <div class="brand">
             <span class="brand-icon">${$("plants")}</span>

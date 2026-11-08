@@ -17,6 +17,8 @@ from unittest.mock import patch
 from custom_components.garden_planner.calendar_math import contains_day, next_window_day
 from custom_components.garden_planner.exchange import export_csv, import_csv
 from custom_components.garden_planner.models import (
+    PLANT_MEASURE_FIELDS,
+    SCHEMA_VERSION,
     ConflictError,
     NotFoundError,
     StorageError,
@@ -124,17 +126,21 @@ class StorageTests(unittest.TestCase):
                 event["revision"],
             )
 
-    def test_window_variety_can_change_without_rewriting_history(self) -> None:
-        first = self.db.create(
-            "varieties", {"plant_id": self.plant["id"], "name": "First"}
+    def test_live_masters_discard_retired_traits_and_window_varieties(self) -> None:
+        variety = self.db.create(
+            "varieties",
+            {
+                "plant_id": self.plant["id"],
+                "name": "Variety",
+                **{key: 1 for key in PLANT_MEASURE_FIELDS},
+            },
         )
-        second = self.db.create(
-            "varieties", {"plant_id": self.plant["id"], "name": "Second"}
-        )
+        self.assertFalse(PLANT_MEASURE_FIELDS & variety["data"].keys())
         window = self.db.create(
             "growing_windows",
             {
                 "plant_id": self.plant["id"],
+                "variety_id": variety["id"],
                 "activity": "direct",
                 "environment": "outdoors",
                 "start_month": 9,
@@ -143,26 +149,27 @@ class StorageTests(unittest.TestCase):
                 "end_day": 31,
             },
         )
-        culture = self.culture()
-        for variety_id in (first["id"], second["id"], None):
-            window = self.db.update(
-                "growing_windows",
-                window["id"],
-                {"variety_id": variety_id},
-                window["revision"],
-            )
-            self.assertEqual(window["data"].get("variety_id"), variety_id)
-            self.assertEqual(self.db.get("cultivations", culture["id"]), culture)
-        other = self.db.create("plants", {"name": "Other"})
-        foreign = self.db.create(
-            "varieties", {"plant_id": other["id"], "name": "Foreign"}
+        self.assertNotIn("variety_id", window["data"])
+        window = self.db.update(
+            "growing_windows",
+            window["id"],
+            {"variety_id": variety["id"], "notes": "Applies to the plant"},
+            window["revision"],
         )
-        for changes in ({"variety_id": foreign["id"]}, {"plant_id": other["id"]}):
-            with self.assertRaises(ValidationError):
-                self.db.update(
-                    "growing_windows", window["id"], changes, window["revision"]
-                )
-            self.assertEqual(self.db.get("growing_windows", window["id"]), window)
+        self.assertNotIn("variety_id", window["data"])
+        updated = self.db.update(
+            "varieties",
+            variety["id"],
+            {"depth_cm": 2, "notes": "Preserved"},
+            variety["revision"],
+        )
+        self.assertNotIn("depth_cm", updated["data"])
+        self.assertEqual(updated["data"]["notes"], "Preserved")
+        self.assertIsNone(
+            self.db.db.execute(
+                "SELECT variety_id FROM growing_windows WHERE id=?", (window["id"],)
+            ).fetchone()[0]
+        )
 
     def test_stale_edits_and_deletes_rejected(self) -> None:
         self.db.update("plants", self.plant["id"], {"notes": "First edit"}, 1)
@@ -455,13 +462,171 @@ class MigrationTests(unittest.TestCase):
                 ("old", 1, now(), now(), json.dumps({"name": "Preserved"})),
             )
 
+    def legacy_two(self) -> dict[str, Any]:
+        db = Database(self.directory)
+        with patch(
+            "custom_components.garden_planner.storage.database.SCHEMA_VERSION", 2
+        ):
+            db.open()
+            try:
+                plant = db.create(
+                    "plants",
+                    {
+                        "name": "Chili example",
+                        "germination_optimal_min_c": 20,
+                        "germination_optimal_max_c": 25,
+                    },
+                )
+                variety = db.create(
+                    "varieties",
+                    {
+                        "plant_id": plant["id"],
+                        "name": "Thai example",
+                        "notes": "Keep this note",
+                    },
+                )
+                window = db.create(
+                    "growing_windows",
+                    {
+                        "plant_id": plant["id"],
+                        "activity": "indoors",
+                        "environment": "indoors",
+                        "start_month": 1,
+                        "start_day": 1,
+                        "end_month": 12,
+                        "end_day": 31,
+                        "notes": "Keep the window",
+                    },
+                )
+                old_variety = {
+                    **variety["data"],
+                    **{key: 1 for key in PLANT_MEASURE_FIELDS},
+                }
+                old_window = {
+                    **window["data"],
+                    "variety_id": variety["id"],
+                    "germination_optimal_min_c": 21,
+                    "germination_optimal_max_c": 24,
+                }
+                db.db.execute(
+                    "UPDATE varieties SET data=? WHERE id=?",
+                    (json.dumps(old_variety), variety["id"]),
+                )
+                db.db.execute(
+                    "UPDATE growing_windows SET data=?, variety_id=? WHERE id=?",
+                    (json.dumps(old_window), variety["id"], window["id"]),
+                )
+                culture = db.create(
+                    "cultivations",
+                    {
+                        "plant_id": plant["id"],
+                        "variety_id": variety["id"],
+                        "date": "2026-02-01",
+                        "method": "indoors",
+                    },
+                )
+                old_data = {
+                    **culture["data"],
+                    "snapshot": {
+                        **culture["data"]["snapshot"],
+                        "variety": old_variety,
+                        "windows": [old_window],
+                    },
+                }
+                db.db.execute(
+                    "UPDATE cultivations SET data=? WHERE id=?",
+                    (json.dumps(old_data), culture["id"]),
+                )
+                return {
+                    "plant": plant,
+                    "variety": db.get("varieties", variety["id"]),
+                    "window": db.get("growing_windows", window["id"]),
+                    "culture": db.get("cultivations", culture["id"]),
+                    "export": db.export_data(),
+                }
+            finally:
+                db.close()
+
+    def test_schema_three_cleans_only_live_masters_and_keeps_backup(self) -> None:
+        before = self.legacy_two()
+        db = Database(self.directory)
+        db.open()
+        self.addCleanup(db.close)
+        variety = db.get("varieties", before["variety"]["id"])
+        window = db.get("growing_windows", before["window"]["id"])
+        self.assertFalse(PLANT_MEASURE_FIELDS & variety["data"].keys())
+        self.assertEqual(variety["data"]["notes"], "Keep this note")
+        self.assertEqual(variety["revision"], before["variety"]["revision"] + 1)
+        self.assertNotIn("variety_id", window["data"])
+        self.assertEqual(window["data"]["notes"], "Keep the window")
+        self.assertEqual(db.get("plants", before["plant"]["id"]), before["plant"])
+        self.assertEqual(
+            db.get("cultivations", before["culture"]["id"]), before["culture"]
+        )
+        backup = self.directory / "backups" / db.list_backups()[0]
+        with closing(sqlite3.connect(backup)) as copy:
+            self.assertEqual(copy.execute("PRAGMA user_version").fetchone()[0], 2)
+            self.assertIn(
+                "depth_cm",
+                json.loads(copy.execute("SELECT data FROM varieties").fetchone()[0]),
+            )
+        new = db.create(
+            "cultivations",
+            {
+                "plant_id": before["plant"]["id"],
+                "variety_id": variety["id"],
+                "date": "2027-02-01",
+                "method": "indoors",
+            },
+        )
+        self.assertFalse(
+            PLANT_MEASURE_FIELDS & new["data"]["snapshot"]["variety"].keys()
+        )
+        self.assertFalse(
+            PLANT_MEASURE_FIELDS & new["data"]["snapshot"]["windows"][0].keys()
+        )
+        self.assertEqual(
+            new["data"]["snapshot"]["plant"]["germination_optimal_min_c"], 20
+        )
+
+    def test_old_export_cannot_reintroduce_retired_live_fields(self) -> None:
+        before = self.legacy_two()
+        db = Database(self.directory / "imported")
+        db.open()
+        self.addCleanup(db.close)
+        preview = db.preview_import(before["export"], "replace")
+        db.import_data(before["export"], preview["token"], "replace")
+        self.assertFalse(
+            PLANT_MEASURE_FIELDS
+            & db.get("varieties", before["variety"]["id"])["data"].keys()
+        )
+        self.assertNotIn(
+            "variety_id", db.get("growing_windows", before["window"]["id"])["data"]
+        )
+        self.assertEqual(
+            db.get("cultivations", before["culture"]["id"])["data"],
+            before["culture"]["data"],
+        )
+
+    def test_schema_three_cleanup_rolls_back_on_failure(self) -> None:
+        before = self.legacy_two()
+        with patch.dict(MIGRATIONS, {3: [MIGRATIONS[3][0], "INVALID SQL"]}):
+            with self.assertRaises(sqlite3.Error):
+                Database(self.directory).open()
+        with closing(sqlite3.connect(self.path)) as conn:
+            self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 2)
+            data = json.loads(conn.execute("SELECT data FROM varieties").fetchone()[0])
+            self.assertEqual(data, before["variety"]["data"])
+
     def test_migration_preserves_records_and_preupgrade_backup(self) -> None:
         self.legacy()
         db = Database(self.directory)
         db.open()
         self.addCleanup(db.close)
         self.assertEqual(db.get("plants", "old")["data"]["name"], "Preserved")
-        self.assertEqual(db.db.execute("PRAGMA user_version").fetchone()[0], 2)
+        self.assertEqual(
+            db.db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION
+        )
         backups = db.list_backups()
         self.assertEqual(len(backups), 1)
         with closing(

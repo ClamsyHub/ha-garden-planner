@@ -61,6 +61,7 @@ export interface ImportPlan {
 }
 export interface Field {
   wide?: boolean;
+  rowStart?: boolean;
   key: string;
   type?: "text" | "textarea" | "number" | "date" | "select" | "checkbox";
   required?: boolean;

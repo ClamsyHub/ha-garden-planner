@@ -2,4 +2,4 @@
 
 DOMAIN = "garden_planner"
 NAME = "Garden Planner"
-MIN_HA_VERSION = "2026.6.0"
+MIN_HA_VERSION = "2026.7.0"

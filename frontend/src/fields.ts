@@ -141,12 +141,16 @@ export function fieldsFor(
             }
           : scalarField(key),
       ),
-      ...measures.map(scalarField),
+      ...(table === "plants"
+        ? measures.map((key) => ({
+            ...scalarField(key),
+            rowStart: ["depth_cm", "spacing_cm"].includes(key),
+          }))
+        : []),
     ];
   if (table === "growing_windows")
     return [
-      plantField,
-      varietyField,
+      { ...plantField, wide: true },
       select(
         "activity",
         [

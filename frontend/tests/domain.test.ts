@@ -297,3 +297,51 @@ it("sensor search matches friendly names or IDs and excludes non-temperature sen
   expect(temperatureSensors(hass, "")).toHaveLength(2);
   expect(temperatureSensors(undefined, "air")).toEqual([]);
 });
+
+it("plant-only traits remain unambiguous across several plant-wide windows", () => {
+  const culture = record({
+    date: "2026-09-12",
+    method: "direct",
+    snapshot: {
+      plant: {
+        name: "Chili",
+        germination_optimal_min_c: 20,
+        germination_optimal_max_c: 25,
+      },
+      variety: { name: "Thai" },
+      location: null,
+      windows: [
+        {
+          activity: "direct",
+          start_month: 1,
+          start_day: 1,
+          end_month: 12,
+          end_day: 31,
+        },
+        {
+          activity: "direct",
+          start_month: 2,
+          start_day: 1,
+          end_month: 11,
+          end_day: 30,
+        },
+      ],
+    },
+  });
+  expect(recommendedRange(culture)).toEqual({ min: 20, max: 25 });
+});
+it("varieties and growing windows no longer offer retired master fields", () => {
+  const tables = emptyTables();
+  const keys = fieldsFor("varieties", {}, tables, "de", false).map(
+    (f) => f.key,
+  );
+  expect(keys).not.toContain("germination_optimal_min_c");
+  expect(keys).not.toContain("depth_cm");
+  expect(keys).not.toContain("duration_days_min");
+  expect(
+    fieldsFor("growing_windows", {}, tables, "de", false).map((f) => f.key),
+  ).not.toContain("variety_id");
+  expect(
+    fieldsFor("cultivations", {}, tables, "de", false).map((f) => f.key),
+  ).toContain("variety_id");
+});

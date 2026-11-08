@@ -80,6 +80,7 @@ const activities = [
   "other",
 ];
 const paths: Record<string, string> = {
+  menu: "M3 6h18M3 12h18M3 18h18",
   overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
   calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
   plants: "M12 21V10M12 15C3 15 3 6 3 6s9-1 9 9zm0-5c0-8 9-8 9-8s1 9-9 8z",
@@ -623,7 +624,7 @@ export class GardenPlannerPanel extends LitElement {
       (dialog?.bottom ?? window.innerHeight) - 8,
     );
     if (rect.bottom < top || rect.top > bottom) {
-      this.sensorOpen = false;
+      this.sensorMaxHeight = 0;
       return;
     }
     const above = Math.max(0, rect.top - top - 4);
@@ -634,6 +635,9 @@ export class GardenPlannerPanel extends LitElement {
     );
   };
   private openSensorOptions(): void {
+    this.renderRoot
+      .querySelector<HTMLInputElement>("#field-sensor_entity_id")
+      ?.scrollIntoView({ block: "nearest" });
     this.sensorOpen = true;
     this.positionSensorOptions();
   }
@@ -760,7 +764,7 @@ export class GardenPlannerPanel extends LitElement {
       this.changeField(field.key, (event.target as HTMLInputElement).value);
     const id = `field-${field.key}`;
     return html`<label
-      class=${field.type === "textarea" || field.wide ? "wide" : ""}
+      class=${[field.type === "textarea" || field.wide ? "wide" : "", field.rowStart ? "row-start" : ""].filter(Boolean).join(" ")}
       for=${id}
     >
       <span id=${`${id}-label`}
@@ -998,7 +1002,7 @@ export class GardenPlannerPanel extends LitElement {
       <div class="plant-title">
         <div class="plant-symbol">${icon("plants")}</div>
         <div>
-          <h3>
+          <h2>
             <button
               class="link"
               @click=${() => {
@@ -1007,7 +1011,7 @@ export class GardenPlannerPanel extends LitElement {
             >
               ${text(plant, "name")}
             </button>
-          </h3>
+          </h2>
           <small
             >${text(plant, "botanical_name") || this.lab(text(plant, "category"))}</small
           >
@@ -1752,7 +1756,9 @@ export class GardenPlannerPanel extends LitElement {
                 ${this.error ? html`<p class="notice error" role="alert">${this.error}</p>` : nothing}
                 ${
                   this.editable
-                    ? html`<div class="actions">
+                    ? html`<div
+                        class=${selected.kind === "plant" ? "actions plant-detail-actions" : "actions"}
+                      >
                         <button
                           @click=${() => this.startEditor(selected.kind === "plant" ? "plants" : "cultivations", record)}
                         >
@@ -1791,14 +1797,113 @@ export class GardenPlannerPanel extends LitElement {
       }
     </dialog>`;
   }
+  private renderPlantSummary(plant: Entity): TemplateResult {
+    const data = plant.data;
+    const number = (key: string) =>
+      typeof data[key] === "number"
+        ? (data[key] as number).toLocaleString(this.language, {
+            maximumFractionDigits: 20,
+          })
+        : "—";
+    const range = (low: string, high: string, unit: string) =>
+      typeof data[low] === "number" || typeof data[high] === "number"
+        ? `${number(low)} – ${number(high)} ${unit}`
+        : "";
+    const days = this.language === "de" ? "Tage" : "days";
+    const optimal = range(
+      "germination_optimal_min_c",
+      "germination_optimal_max_c",
+      "°C",
+    );
+    const facts: [string, string][] = [
+      [
+        optimal ? "optimalGermination" : "germinationLimits",
+        optimal || range("germination_min_c", "germination_max_c", "°C"),
+      ],
+      [
+        "germinationDuration",
+        range("germination_days_min", "germination_days_max", days),
+      ],
+      [
+        "depth_cm",
+        typeof data.depth_cm === "number" ? `${number("depth_cm")} cm` : "",
+      ],
+      [
+        "plantRowSpacing",
+        typeof data.spacing_cm === "number" ||
+        typeof data.row_spacing_cm === "number"
+          ? `${number("spacing_cm")} / ${number("row_spacing_cm")} cm`
+          : "",
+      ],
+      [
+        "cultivationDuration",
+        range("duration_days_min", "duration_days_max", days),
+      ],
+      ["site", text(plant, "site")],
+    ];
+    return html`<div class="plant-summary-heading">
+        ${text(plant, "botanical_name") ? html`<p><i>${text(plant, "botanical_name")}</i></p>` : nothing}
+        ${text(plant, "category") ? html`<span class="badge">${this.lab(text(plant, "category"))}</span>` : nothing}
+      </div>
+      <dl class="plant-quick-facts">
+        ${facts
+          .filter(([, value]) => value)
+          .map(
+            ([key, value]) =>
+              html`<div>
+                <dt>${this.tr(key)}</dt>
+                <dd>${value}</dd>
+              </div>`,
+          )}
+      </dl>`;
+  }
   private renderPlantDetail(plant: Entity): TemplateResult {
     const varieties = this.tables.varieties.filter(
       (v) => text(v, "plant_id") === plant.id,
     );
-    return html`<p class="notice">${this.tr("temperatureHint")}</p>
-      ${this.renderData(plant.data)}
+    return html`${this.renderPlantSummary(plant)}
+      <div
+        class="detail-jumps"
+        role="group"
+        aria-label=${this.tr("plantSections")}
+      >
+        ${["varieties", "windows", "observations"].map(
+          (section) =>
+            html`<button
+              type="button"
+              @click=${() => {
+                const dialog =
+                  this.renderRoot.querySelector<HTMLDialogElement>(
+                    "#detail-dialog",
+                  );
+                const target = dialog?.querySelector<HTMLElement>(
+                  `#plant-${section}`,
+                );
+                if (dialog && target) {
+                  const header =
+                    dialog
+                      .querySelector(".dialog-head")
+                      ?.getBoundingClientRect().height ?? 0;
+                  dialog.scrollTop +=
+                    target.getBoundingClientRect().top -
+                    dialog.getBoundingClientRect().top -
+                    header -
+                    12;
+                  target.focus({ preventScroll: true });
+                }
+              }}
+            >
+              ${this.tr(section === "windows" ? "jumpWindows" : section === "observations" ? "jumpObservations" : section)}
+            </button>`,
+        )}
+      </div>
+      <details class="plant-full-information">
+        <summary>${this.tr("allPlantInformation")}</summary>
+        <p class="notice">${this.tr("temperatureHint")}</p>
+        ${this.renderData(plant.data, ["name", "botanical_name"])}
+      </details>
       <div class="section-head">
-        <h3>${this.tr("varieties")}</h3>
+        <h3 id="plant-varieties" tabindex="-1">${this.tr("varieties")}</h3>
         ${this.editable ? html`<button @click=${() => this.startEditor("varieties", undefined, { plant_id: plant.id })}>${icon("plus")}${this.tr("newVariety")}</button>` : nothing}
       </div>
       ${
@@ -1832,7 +1937,7 @@ export class GardenPlannerPanel extends LitElement {
           : html`<p class="muted">${this.tr("noVarieties")}</p>`
       }
       <div class="section-head">
-        <h3>${this.tr("windows")}</h3>
+        <h3 id="plant-windows" tabindex="-1">${this.tr("windows")}</h3>
         ${this.editable ? html`<button @click=${() => this.startEditor("growing_windows", undefined, { plant_id: plant.id })}>${icon("plus")}${this.tr("newWindow")}</button>` : nothing}
       </div>
       ${
@@ -1871,7 +1976,9 @@ export class GardenPlannerPanel extends LitElement {
           : html`<p class="muted">${this.tr("noAllWindows")}</p>`
       }
       <div class="section-head">
-        <h3>${this.tr("observations")}</h3>
+        <h3 id="plant-observations" tabindex="-1">
+          ${this.tr("observations")}
+        </h3>
         ${this.editable && !plant.data.archived ? html`<button class="primary" @click=${() => this.startEditor("cultivations", undefined, { plant_id: plant.id })}>${icon("plus")}${this.tr("newSowing")}</button>` : nothing}
       </div>
       ${this.renderHistory(
@@ -2645,7 +2752,19 @@ export class GardenPlannerPanel extends LitElement {
         : this.page === "locations"
           ? ["newLocation", "locations"]
           : ["newSowing", "cultivations"];
-    return html`<div class="app">
+    return html`<header class="ha-navigation">
+        <button
+          type="button"
+          class="icon"
+          aria-label=${this.tr("haMenu")}
+          title=${this.tr("haMenu")}
+          @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }))}
+        >
+          ${icon("menu")}
+        </button>
+        <span>Home Assistant</span>
+      </header>
+      <div class="app">
         <aside>
           <div class="brand">
             <span class="brand-icon">${icon("plants")}</span>

@@ -8,7 +8,7 @@ from typing import Any
 MAX_TEXT = 20000
 MAX_RECORDS = 50000
 MAX_IMPORT_BYTES = 20 * 1024 * 1024
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 FORMAT_VERSION = 1
 STATUSES = (
     "planned",
@@ -92,6 +92,35 @@ NUMBER_FIELDS = {
     "quantity",
     "temperature_c",
 }
+PLANT_MEASURE_FIELDS = {
+    "germination_min_c",
+    "germination_optimal_min_c",
+    "germination_optimal_max_c",
+    "germination_max_c",
+    "germination_days_min",
+    "germination_days_max",
+    "depth_cm",
+    "spacing_cm",
+    "row_spacing_cm",
+    "duration_days_min",
+    "duration_days_max",
+}
+
+
+def clean_master_data(table: str, data: Any) -> Any:
+    """Discard retired live-master fields, never frozen cultivation snapshots."""
+    if not isinstance(data, dict):
+        return data
+    retired = (
+        PLANT_MEASURE_FIELDS
+        if table == "varieties"
+        else {"variety_id"}
+        if table == "growing_windows"
+        else set()
+    )
+    return {key: value for key, value in data.items() if key not in retired}
+
+
 PLANT_FIELDS = {
     "name",
     "botanical_name",

@@ -96,15 +96,15 @@ export const styles = css`
   .app {
     display: grid;
     grid-template-columns: 236px minmax(0, 1fr);
-    min-height: 100vh;
+    min-height: calc(100dvh - 56px);
   }
   aside {
     background: var(--gp-card);
     border-right: 1px solid var(--gp-border);
     padding: 30px 18px;
     position: sticky;
-    top: 0;
-    height: 100vh;
+    top: 56px;
+    height: calc(100dvh - 56px);
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -849,6 +849,10 @@ export const styles = css`
     background: #10291f88;
     backdrop-filter: blur(3px);
   }
+  #editor-dialog {
+    scroll-padding-top: 90px;
+    scroll-padding-bottom: 80px;
+  }
   .dialog-head {
     position: sticky;
     top: 0;
@@ -878,6 +882,77 @@ export const styles = css`
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 17px;
+  }
+  .form-grid .row-start {
+    grid-column-start: 1;
+  }
+  .ha-navigation {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 4px 12px;
+    background: var(--gp-card);
+    border-bottom: 1px solid var(--gp-border);
+  }
+  .ha-navigation span {
+    font-weight: 600;
+  }
+  .plant-detail-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .detail-jumps button {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+  .plant-title h2 {
+    font-size: 16px;
+    letter-spacing: normal;
+    margin: 0 0 7px;
+  }
+  .plant-summary-heading {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .plant-summary-heading p {
+    margin: 0;
+  }
+  .plant-quick-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+  }
+  .plant-quick-facts > div {
+    padding: 10px 12px;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    min-width: 0;
+  }
+  .plant-quick-facts dt {
+    font-size: 12px;
+    color: var(--gp-muted);
+  }
+  .plant-quick-facts dd {
+    margin: 3px 0 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+  .detail-jumps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .plant-full-information {
+    margin: 12px 0;
   }
   .form-grid .wide {
     min-width: 0;
@@ -944,9 +1019,9 @@ export const styles = css`
     }
     aside {
       position: sticky;
-      top: 0;
+      top: 56px;
       height: auto;
-      z-index: 5;
+      z-index: 1;
       padding: 10px 12px 0;
       border-right: 0;
       border-bottom: 1px solid var(--gp-border);
@@ -1037,6 +1112,40 @@ export const styles = css`
     .item-content {
       min-width: 180px;
     }
+    .plant-detail-actions button {
+      font-size: 12px;
+      padding: 7px 4px;
+      min-width: 0;
+    }
+    .plant-quick-facts {
+      grid-template-columns: 1fr;
+      gap: 0;
+      border: 1px solid var(--gp-border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .plant-quick-facts > div {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      border: 0;
+      border-bottom: 1px solid var(--gp-border);
+      border-radius: 0;
+      padding: 7px 10px;
+    }
+    .plant-quick-facts > div:last-child {
+      border-bottom: 0;
+    }
+    .plant-quick-facts dt {
+      max-width: 62%;
+    }
+    .plant-quick-facts dd {
+      margin: 0;
+      text-align: right;
+      font-size: 13px;
+    }
+
     .form-grid {
       grid-template-columns: minmax(0, 1fr);
     }

@@ -28,7 +28,22 @@ export function recommendedRange(
         return contains({ ...culture, data: d }, text(culture, "date"));
       })
     : [];
-  if (windows.length > 1) return undefined;
+  if (
+    windows.length > 1 &&
+    windows.some((w) => {
+      const data = object(w);
+      return (
+        data &&
+        [
+          "germination_min_c",
+          "germination_optimal_min_c",
+          "germination_optimal_max_c",
+          "germination_max_c",
+        ].some((key) => key in data)
+      );
+    })
+  )
+    return undefined;
   if (windows.length === 1) data = { ...data, ...object(windows[0]) };
   const min = data.germination_optimal_min_c;
   const max = data.germination_optimal_max_c;

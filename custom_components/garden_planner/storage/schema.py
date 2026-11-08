@@ -1,6 +1,6 @@
 """Versioned schema statements; migration execution belongs to the worker."""
 
-from ..models import PARENTS, TABLES
+from ..models import PARENTS, PLANT_MEASURE_FIELDS, TABLES
 
 APPLICATION_ID = 0x47504C4E
 
@@ -45,4 +45,24 @@ def performance_indexes() -> list[str]:
     return result
 
 
-MIGRATIONS = {1: initial_schema(), 2: performance_indexes()}
+def plant_level_traits() -> list[str]:
+    """Migration 3 removes retired master values without touching observations."""
+    paths = ", ".join(f"'$.{field}'" for field in sorted(PLANT_MEASURE_FIELDS))
+    present = " OR ".join(
+        f"json_type(data, '$.{field}') IS NOT NULL"
+        for field in sorted(PLANT_MEASURE_FIELDS)
+    )
+    return [
+        f"UPDATE varieties SET data=json_remove(data, {paths}), "
+        "revision=revision+1, updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') "
+        f"WHERE {present}",
+        "UPDATE growing_windows SET data=json_remove(data, '$.variety_id'), "
+        "variety_id=NULL, revision=revision+1, "
+        "updated_at=strftime('%Y-%m-%dT%H:%M:%SZ','now') "
+        "WHERE variety_id IS NOT NULL OR json_type(data, '$.variety_id') IS NOT NULL",
+        "UPDATE settings SET value=CAST(CAST(value AS INTEGER)+1 AS TEXT) "
+        "WHERE key='generation'",
+    ]
+
+
+MIGRATIONS = {1: initial_schema(), 2: performance_indexes(), 3: plant_level_traits()}
