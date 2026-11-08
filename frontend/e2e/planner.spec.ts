@@ -2,6 +2,18 @@ import type { Hass } from "../src/types";
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+// Release each test's temporary SQLite worker rather than retaining the whole matrix.
+test.afterEach(async ({ page, request }) => {
+  const session = new URL(page.url()).searchParams.get("session");
+  if (session) {
+    const response = await request.post(`/__test_api/${session}`, {
+      data: { operation: "close_test_session" },
+    });
+    expect(response.ok()).toBe(true);
+    expect(await response.json()).toEqual({ closed: true });
+  }
+});
+
 async function open(
   page: Page,
   flags: Record<string, string> = {},
@@ -87,6 +99,10 @@ test("plant CRUD, winter window, variety and confirmed deletion", async ({
   ).toHaveCount(0);
   await page
     .getByRole("button", { name: /Testpflanze, Direktsaat, Januar 2027/ })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Direktsaat · Testpflanze", exact: true })
+    .getByRole("button", { name: "Alle Pflanzendetails", exact: true })
     .click();
   detail = page.getByRole("dialog", { name: "Testpflanze", exact: true });
   await detail
@@ -654,7 +670,10 @@ test("week view includes overlapping growing windows and keeps concrete appointm
     .getByRole("button", { name: /Blattkultur · Beispiel.*Direktsaat/ })
     .click();
   await expect(
-    page.getByRole("dialog", { name: "Blattkultur · Beispiel", exact: true }),
+    page.getByRole("dialog", {
+      name: "Direktsaat · Blattkultur · Beispiel",
+      exact: true,
+    }),
   ).toBeVisible();
   await page
     .getByRole("dialog")
@@ -1244,4 +1263,178 @@ test("plant summary is compact and full information remains available", async ({
     .include("garden-planner-panel")
     .analyze();
   expect(accessibility.violations).toEqual([]);
+});
+
+test("calendar views share period-first details and show the matching note in tooltips", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await navigate(page, "Meine Pflanzen");
+  await page
+    .getByRole("button", { name: "Pflanze anlegen", exact: true })
+    .first()
+    .click();
+  const editor = page.locator("#editor-dialog");
+  await editor.getByLabel("Name *", { exact: true }).fill("Kalenderpflanze");
+  await editor
+    .getByLabel("Botanischer Name", { exact: true })
+    .fill("Synthetic calendar crop");
+  await editor
+    .getByLabel("Keimtemperatur: optimal ab (°C)", { exact: true })
+    .fill("22");
+  await editor
+    .getByLabel("Keimtemperatur: optimal bis (°C)", { exact: true })
+    .fill("28");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await page
+    .getByRole("button", { name: "Kalenderpflanze", exact: true })
+    .click();
+  const plant = page.getByRole("dialog", {
+    name: "Kalenderpflanze",
+    exact: true,
+  });
+  const note = "Nur dieses Zeitfenster: <b>eigene Notiz</b>.\nZweite Zeile.";
+  for (const [activity, notes] of [
+    ["direct", note],
+    ["care", "Notiz des anderen Zeitfensters."],
+  ]) {
+    await plant
+      .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+      .click();
+    await editor
+      .getByLabel("Tätigkeit *", { exact: true })
+      .selectOption(activity!);
+    await editor.getByLabel("Startmonat *", { exact: true }).selectOption("11");
+    await editor.getByLabel("Starttag *", { exact: true }).fill("1");
+    await editor.getByLabel("Endmonat *", { exact: true }).selectOption("11");
+    await editor.getByLabel("Endtag *", { exact: true }).fill("30");
+    await editor.getByLabel("Notizen", { exact: true }).fill(notes!);
+    await editor
+      .getByRole("button", { name: "Speichern", exact: true })
+      .click();
+    await expect(editor).not.toBeVisible();
+  }
+  await plant.getByRole("button", { name: "Schließen", exact: true }).click();
+  await navigate(page, "Aussaatkalender");
+  await expect(page.locator(".segmented").getByRole("button")).toHaveText([
+    "Jahr",
+    "Monat",
+    "Woche",
+  ]);
+  for (const mode of ["Jahr", "Monat", "Woche"]) {
+    await page.getByRole("button", { name: mode, exact: true }).click();
+    const entry =
+      mode === "Jahr"
+        ? page.getByRole("button", {
+            name: /Kalenderpflanze, Direktsaat, November 2026/,
+          })
+        : mode === "Monat"
+          ? page.locator(".month-event.direct")
+          : page.locator(".week-window.direct");
+    expect(await entry.getAttribute("title")).toContain(note);
+    if (mode === "Monat")
+      await expect(entry.locator(".badge")).toHaveAttribute("title", note);
+    if (mode === "Jahr") {
+      await entry.focus();
+      await entry.press("Enter");
+    } else if (testInfo.project.name.startsWith("mobile-")) await entry.tap();
+    else await entry.click();
+    const detail = page.getByRole("dialog", {
+      name: "Direktsaat · Kalenderpflanze",
+      exact: true,
+    });
+    await expect(detail).toBeVisible();
+    await expect(detail.locator(".calendar-window-note")).toHaveText(
+      /Nur dieses Zeitfenster/,
+    );
+    await expect(
+      detail.getByText("Notiz des anderen Zeitfensters.", { exact: true }),
+    ).toHaveCount(0);
+    await expect(detail.locator(".calendar-plant-profile")).toContainText(
+      "Kalenderpflanze",
+    );
+    await expect(detail.locator(".calendar-plant-profile")).toContainText(
+      "22 – 28 °C",
+    );
+    const [windowBox, profileBox] = await Promise.all([
+      detail.locator(".calendar-window-card").boundingBox(),
+      detail.locator(".calendar-plant-profile").boundingBox(),
+    ]);
+    expect(windowBox!.y).toBeLessThan(profileBox!.y);
+    await expect(detail.locator("b")).toHaveCount(0);
+    if (mode === "Jahr") {
+      await detail.screenshot({
+        path: testInfo.outputPath("calendar-period-detail.png"),
+        scale: "css",
+      });
+      const a11y = await new AxeBuilder({ page })
+        .include("garden-planner-panel")
+        .analyze();
+      expect(a11y.violations).toEqual([]);
+    }
+    await detail
+      .getByRole("button", { name: "Schließen", exact: true })
+      .click();
+  }
+});
+
+test("read-only users can inspect calendar windows and open the full plant profile", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", role: "reader" });
+  await navigate(page, "Aussaatkalender");
+  await page.getByRole("button", { name: "Woche", exact: true }).click();
+  const entry = page.locator(".week-window.direct");
+  await entry.click();
+  const detail = page.getByRole("dialog", {
+    name: "Direktsaat · Blattkultur · Beispiel",
+    exact: true,
+  });
+  await expect(detail.locator(".calendar-window-card")).toBeVisible();
+  await expect(
+    detail.getByRole("button", {
+      name: "Anbauzeitraum bearbeiten",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await detail
+    .getByRole("button", { name: "Alle Pflanzendetails", exact: true })
+    .click();
+  const full = page.getByRole("dialog", {
+    name: "Blattkultur · Beispiel",
+    exact: true,
+  });
+  await expect(full).toBeVisible();
+  await expect(
+    full.getByRole("button", { name: "Bearbeiten", exact: true }),
+  ).toHaveCount(0);
+  await full.getByRole("button", { name: "Schließen", exact: true }).click();
+  await expect(entry).toBeFocused();
+});
+
+test("long calendar notes remain complete behind a compact preview and editable", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Aussaatkalender");
+  await page.getByRole("button", { name: "Woche", exact: true }).click();
+  await page.locator(".week-window.direct").click();
+  const detail = page.getByRole("dialog", {
+    name: "Direktsaat · Blattkultur · Beispiel",
+    exact: true,
+  });
+  await detail
+    .getByRole("button", { name: "Anbauzeitraum bearbeiten", exact: true })
+    .click();
+  const editor = page.locator("#editor-dialog");
+  const note = "Lange eigene Kalendernotiz. ".repeat(80);
+  await editor.getByLabel("Notizen", { exact: true }).fill(note);
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(detail.getByText(note, { exact: true })).not.toBeVisible();
+  await detail
+    .getByText("Vollständige Notiz anzeigen", { exact: true })
+    .click();
+  await expect(detail.getByText(note, { exact: true })).toBeVisible();
 });

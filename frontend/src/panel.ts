@@ -54,7 +54,7 @@ import {
 } from "./types";
 
 type Editor = { table: Table; record?: Entity; draft: Data };
-type Selection = { kind: "plant" | "culture"; id: string };
+type Selection = { kind: "plant" | "culture" | "window"; id: string };
 type Reviewed = {
   plan: ImportPlan;
   payload?: unknown;
@@ -90,6 +90,7 @@ const paths: Record<string, string> = {
   locations: "M3 3l6 3 6-3 6 3v15l-6-3-6 3-6-3zm6 3v15m6-18v15",
   settings:
     "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-6v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2",
+  edit: "M4 20h4L20 8l-4-4L4 16v4ZM14 6l4 4",
   plus: "M12 5v14M5 12h14",
   close: "M6 6l12 12M6 18 18 6",
   arrow: "M9 5l7 7-7 7",
@@ -335,8 +336,10 @@ export class GardenPlannerPanel extends LitElement {
   private syncDialog(id: string, open: boolean): void {
     const dialog = this.renderRoot.querySelector<HTMLDialogElement>(`#${id}`);
     if (open && dialog && !dialog.open) {
+      const previous = this.dialogTriggers.get(id);
       const trigger =
-        this.lastTrigger ??
+        (this.lastTrigger?.isConnected ? this.lastTrigger : undefined) ??
+        (previous?.isConnected ? previous : undefined) ??
         this.shadowRoot?.activeElement ??
         this.ownerDocument.activeElement;
       if (trigger instanceof HTMLElement) this.dialogTriggers.set(id, trigger);
@@ -1190,7 +1193,7 @@ export class GardenPlannerPanel extends LitElement {
     return html`${this.renderFilters(true)}
       <div class="toolbar">
         <div class="segmented" aria-label=${this.tr("calendar")}>
-          ${(["month", "year", "week"] as const).map(
+          ${(["year", "month", "week"] as const).map(
             (mode) =>
               html`<button
                 aria-pressed=${this.calendarMode === mode}
@@ -1273,8 +1276,8 @@ export class GardenPlannerPanel extends LitElement {
                           class="row-title"
                           @click=${() => {
                             this.selected = {
-                              kind: "plant",
-                              id: text(window, "plant_id"),
+                              kind: "window",
+                              id: window.id,
                             };
                           }}
                         >
@@ -1287,11 +1290,11 @@ export class GardenPlannerPanel extends LitElement {
                             ? html`<button
                                 class=${`year-cell ${text(window, "activity")}`}
                                 aria-label=${`${this.nameFor(text(window, "plant_id"), "plants")}, ${this.lab(text(window, "activity"))}, ${monthLabel(this.year, month, this.language)}`}
-                                title=${windowLabel(window, this.language)}
+                                title=${this.windowTooltip(window)}
                                 @click=${() => {
                                   this.selected = {
-                                    kind: "plant",
-                                    id: text(window, "plant_id"),
+                                    kind: "window",
+                                    id: window.id,
                                   };
                                 }}
                               >
@@ -1318,29 +1321,29 @@ export class GardenPlannerPanel extends LitElement {
                     )
                     .map(
                       (window) =>
-                        html`<article
-                          class=${`plant activity ${text(window, "activity")}`}
+                        html`<button
+                          type="button"
+                          class=${`month-event plant activity ${text(window, "activity")}`}
+                          aria-label=${`${this.nameFor(text(window, "plant_id"), "plants")}, ${this.lab(text(window, "activity"))}, ${windowLabel(window, this.language)}`}
+                          title=${this.windowTooltip(window)}
+                          @click=${() => {
+                            this.selected = { kind: "window", id: window.id };
+                          }}
                         >
-                          <h3>
-                            <button
-                              class="link"
-                              @click=${() => {
-                                this.selected = {
-                                  kind: "plant",
-                                  id: text(window, "plant_id"),
-                                };
-                              }}
-                            >
-                              ${this.nameFor(text(window, "plant_id"), "plants")}
-                            </button>
-                          </h3>
-                          <span class="badge"
+                          <strong class="month-event-title"
+                            >${this.nameFor(text(window, "plant_id"), "plants")}</strong
+                          >
+                          <span
+                            class="badge"
+                            title=${text(window, "notes") || windowLabel(window, this.language)}
                             >${this.lab(text(window, "activity"))}</span
-                          ><small
+                          >
+                          <small
                             >${windowLabel(window, this.language)} ·
                             ${this.lab(text(window, "environment"))}</small
-                          >${text(window, "regional_notes") ? html`<p>${text(window, "regional_notes")}</p>` : nothing}
-                        </article>`,
+                          >
+                          ${text(window, "regional_notes") ? html`<span class="month-region-note">${text(window, "regional_notes")}</span>` : nothing}
+                        </button>`,
                     )}
                 </div>
                 ${!windows.some((w) => activeInMonth(w, this.year, this.month)) ? this.empty("noWindows") : nothing}
@@ -1373,10 +1376,11 @@ export class GardenPlannerPanel extends LitElement {
             ({ window, segments }) =>
               html`<button
                 class=${`week-window ${text(window, "activity")}`}
+                title=${this.windowTooltip(window)}
                 @click=${() => {
                   this.selected = {
-                    kind: "plant",
-                    id: text(window, "plant_id"),
+                    kind: "window",
+                    id: window.id,
                   };
                 }}
               >
@@ -1717,8 +1721,129 @@ export class GardenPlannerPanel extends LitElement {
         )}
     </dl>`;
   }
+  private windowTooltip(window: Entity): string {
+    const notes = text(window, "notes");
+    return `${windowLabel(window, this.language)}${notes ? `\n\n${notes}` : ""}`;
+  }
+  private renderWindowDetail(id: string): TemplateResult {
+    const window = this.tables.growing_windows.find((w) => w.id === id);
+    const plant = window
+      ? this.tables.plants.find((p) => p.id === text(window, "plant_id"))
+      : undefined;
+    const notes = text(window, "notes");
+    const preview =
+      notes.length > 360 ? `${notes.slice(0, 360).trimEnd()}…` : notes;
+    const extras =
+      window &&
+      ["regional_notes", "source", "source_url"].some((key) =>
+        text(window, key),
+      );
+    return html`<dialog
+      id="detail-dialog"
+      aria-labelledby="detail-title"
+      @close=${() => {
+        this.selected = null;
+      }}
+    >
+      <div class="dialog-head">
+        <div>
+          <small>${this.tr("windowDetail")}</small>
+          <h2 id="detail-title">
+            ${window && plant ? `${this.lab(text(window, "activity"))} · ${text(plant, "name")}` : this.tr("windowDetail")}
+          </h2>
+        </div>
+        <button
+          class="icon"
+          aria-label=${this.tr("close")}
+          @click=${() => {
+            this.selected = null;
+          }}
+        >
+          ${icon("close")}
+        </button>
+      </div>
+      <div class="dialog-body calendar-detail-body">
+        ${this.error ? html`<p class="notice error" role="alert">${this.error}</p>` : nothing}
+        ${
+          window && plant
+            ? html` <section
+                  class=${`calendar-window-card ${text(window, "activity")}`}
+                  aria-label=${this.tr("windowDetail")}
+                >
+                  <small>${this.tr("recurringWindow")}</small>
+                  <h3 class="calendar-window-dates">
+                    ${windowLabel(window, this.language)}
+                  </h3>
+                  <div class="calendar-window-badges">
+                    <span class="badge"
+                      >${this.lab(text(window, "environment"))}</span
+                    >
+                    ${text(window, "method") && text(window, "method") !== text(window, "activity") ? html`<span class="badge">${this.lab(text(window, "method"))}</span>` : nothing}
+                  </div>
+                  ${
+                    notes
+                      ? html`<div class="calendar-window-note">
+                          <h3>${this.tr("notes")}</h3>
+                          <p>${preview}</p>
+                          ${
+                            notes.length > 360
+                              ? html`<details>
+                                  <summary>
+                                    ${this.tr("fullWindowNote")}
+                                  </summary>
+                                  <p>${notes}</p>
+                                </details>`
+                              : nothing
+                          }
+                        </div>`
+                      : nothing
+                  }
+                  ${
+                    extras
+                      ? html`<details>
+                          <summary>${this.tr("windowExtra")}</summary>
+                          ${this.renderData({ regional_notes: window.data.regional_notes, source: window.data.source, source_url: window.data.source_url })}
+                        </details>`
+                      : nothing
+                  }
+                  ${this.editable ? html`<button type="button" @click=${() => this.startEditor("growing_windows", window)}>${icon("edit")}${this.tr("editWindow")}</button>` : nothing}
+                </section>
+                <section
+                  class="calendar-plant-profile"
+                  aria-labelledby="calendar-plant-profile-title"
+                >
+                  <div class="section-head">
+                    <div>
+                      <small>${this.tr("plantProfile")}</small>
+                      <h3 id="calendar-plant-profile-title">
+                        ${text(plant, "name")}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      class="link"
+                      @click=${() => {
+                        this.selected = { kind: "plant", id: plant.id };
+                      }}
+                    >
+                      ${this.tr("openPlant")}${icon("arrow")}
+                    </button>
+                  </div>
+                  ${this.renderPlantSummary(plant)}
+                  <details class="plant-full-information">
+                    <summary>${this.tr("allPlantInformation")}</summary>
+                    ${this.renderData(plant.data, ["name", "botanical_name"])}
+                  </details>
+                </section>`
+            : html`<p role="alert">${this.tr("not_found")}</p>`
+        }
+      </div>
+    </dialog>`;
+  }
   private renderDetail(): TemplateResult {
     const selected = this.selected;
+    if (selected?.kind === "window")
+      return this.renderWindowDetail(selected.id);
     const record = selected
       ? this.tables[selected.kind === "plant" ? "plants" : "cultivations"].find(
           (r) => r.id === selected.id,

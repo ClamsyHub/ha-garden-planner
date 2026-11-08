@@ -642,6 +642,64 @@ export const styles = css`
   .year-cell:hover .bar {
     opacity: 1;
   }
+  .month-event {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    font-weight: normal;
+    gap: 8px;
+  }
+  .month-event-title {
+    font-size: 16px;
+  }
+  .month-region-note {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .calendar-detail-body {
+    display: grid;
+    gap: 20px;
+  }
+  .calendar-window-card {
+    padding: 18px;
+    border: 1px solid var(--gp-border);
+    border-left: 5px solid var(--bar-color);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bar-color) 5%, var(--gp-card));
+  }
+  .calendar-window-card .calendar-window-dates {
+    font-size: 21px;
+    margin: 5px 0 10px;
+  }
+  .calendar-window-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .calendar-window-note {
+    margin: 16px 0;
+  }
+  .calendar-window-note h3 {
+    font-size: 13px;
+    color: var(--gp-muted);
+  }
+  .calendar-window-note p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .calendar-plant-profile {
+    padding-top: 2px;
+    min-width: 0;
+  }
+  .calendar-plant-profile .section-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .calendar-plant-profile .plant-quick-facts {
+    margin-bottom: 0;
+  }
   .month-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

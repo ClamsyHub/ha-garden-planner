@@ -841,6 +841,13 @@ var Ze = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, ft = {
+	windowDetail: "Anbauzeitraum",
+	recurringWindow: "Jährlich wiederkehrender Zeitraum",
+	plantProfile: "Pflanzensteckbrief",
+	openPlant: "Alle Pflanzendetails",
+	editWindow: "Anbauzeitraum bearbeiten",
+	windowExtra: "Regionale Hinweise und Quelle",
+	fullWindowNote: "Vollständige Notiz anzeigen",
 	jumpWindows: "Zeiträume",
 	jumpObservations: "Beobachtungen",
 	haMenu: "Home-Assistant-Menü öffnen",
@@ -889,6 +896,13 @@ var Ze = {
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, pt = {
+	windowDetail: "Growing window",
+	recurringWindow: "Annually recurring window",
+	plantProfile: "Plant profile",
+	openPlant: "All plant details",
+	editWindow: "Edit growing window",
+	windowExtra: "Regional notes and source",
+	fullWindowNote: "Show complete note",
 	jumpWindows: "Windows",
 	jumpObservations: "Observations",
 	haMenu: "Open Home Assistant menu",
@@ -3055,6 +3069,64 @@ var Fn = j`
   .year-cell:hover .bar {
     opacity: 1;
   }
+  .month-event {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    font-weight: normal;
+    gap: 8px;
+  }
+  .month-event-title {
+    font-size: 16px;
+  }
+  .month-region-note {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .calendar-detail-body {
+    display: grid;
+    gap: 20px;
+  }
+  .calendar-window-card {
+    padding: 18px;
+    border: 1px solid var(--gp-border);
+    border-left: 5px solid var(--bar-color);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bar-color) 5%, var(--gp-card));
+  }
+  .calendar-window-card .calendar-window-dates {
+    font-size: 21px;
+    margin: 5px 0 10px;
+  }
+  .calendar-window-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .calendar-window-note {
+    margin: 16px 0;
+  }
+  .calendar-window-note h3 {
+    font-size: 13px;
+    color: var(--gp-muted);
+  }
+  .calendar-window-note p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .calendar-plant-profile {
+    padding-top: 2px;
+    min-width: 0;
+  }
+  .calendar-plant-profile .section-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .calendar-plant-profile .plant-quick-facts {
+    margin-bottom: 0;
+  }
   .month-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -3613,6 +3685,7 @@ var Fn = j`
 	history: "M3 11a9 9 0 1 1 2 7M3 4v7h7m2-4v6l4 2",
 	locations: "M3 3l6 3 6-3 6 3v15l-6-3-6 3-6-3zm6 3v15m6-18v15",
 	settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-6v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2",
+	edit: "M4 20h4L20 8l-4-4L4 16v4ZM14 6l4 4",
 	plus: "M12 5v14M5 12h14",
 	close: "M6 6l12 12M6 18 18 6",
 	arrow: "M9 5l7 7-7 7",
@@ -3745,8 +3818,8 @@ var Bn = class extends Ye {
 	syncDialog(e, t) {
 		let n = this.renderRoot.querySelector(`#${e}`);
 		if (t && n && !n.open) {
-			let t = this.lastTrigger ?? this.shadowRoot?.activeElement ?? this.ownerDocument.activeElement;
-			t instanceof HTMLElement && this.dialogTriggers.set(e, t), n.showModal();
+			let t = this.dialogTriggers.get(e), r = (this.lastTrigger?.isConnected ? this.lastTrigger : void 0) ?? (t?.isConnected ? t : void 0) ?? this.shadowRoot?.activeElement ?? this.ownerDocument.activeElement;
+			r instanceof HTMLElement && this.dialogTriggers.set(e, r), n.showModal();
 		}
 		!t && n?.open && n.close();
 	}
@@ -4313,8 +4386,8 @@ var Bn = class extends Ye {
       <div class="toolbar">
         <div class="segmented" aria-label=${this.tr("calendar")}>
           ${[
-			"month",
 			"year",
+			"month",
 			"week"
 		].map((e) => H`<button
                 aria-pressed=${this.calendarMode === e}
@@ -4383,8 +4456,8 @@ var Bn = class extends Ye {
                           class="row-title"
                           @click=${() => {
 			this.selected = {
-				kind: "plant",
-				id: t(e, "plant_id")
+				kind: "window",
+				id: e.id
 			};
 		}}
                         >
@@ -4395,11 +4468,11 @@ var Bn = class extends Ye {
                         >${n.map((n) => f(e, this.year, n) ? H`<button
                                 class=${`year-cell ${t(e, "activity")}`}
                                 aria-label=${`${this.nameFor(t(e, "plant_id"), "plants")}, ${this.lab(t(e, "activity"))}, ${g(this.year, n, this.language)}`}
-                                title=${_(e, this.language)}
+                                title=${this.windowTooltip(e)}
                                 @click=${() => {
 			this.selected = {
-				kind: "plant",
-				id: t(e, "plant_id")
+				kind: "window",
+				id: e.id
 			};
 		}}
                               >
@@ -4415,29 +4488,32 @@ var Bn = class extends Ye {
                 </div>
                 <p class="muted">${this.tr("recommendation")}</p>
                 <div class="month-list">
-                  ${e.filter((e) => f(e, this.year, this.month)).map((e) => H`<article
-                          class=${`plant activity ${t(e, "activity")}`}
-                        >
-                          <h3>
-                            <button
-                              class="link"
-                              @click=${() => {
+                  ${e.filter((e) => f(e, this.year, this.month)).map((e) => H`<button
+                          type="button"
+                          class=${`month-event plant activity ${t(e, "activity")}`}
+                          aria-label=${`${this.nameFor(t(e, "plant_id"), "plants")}, ${this.lab(t(e, "activity"))}, ${_(e, this.language)}`}
+                          title=${this.windowTooltip(e)}
+                          @click=${() => {
 			this.selected = {
-				kind: "plant",
-				id: t(e, "plant_id")
+				kind: "window",
+				id: e.id
 			};
 		}}
-                            >
-                              ${this.nameFor(t(e, "plant_id"), "plants")}
-                            </button>
-                          </h3>
-                          <span class="badge"
+                        >
+                          <strong class="month-event-title"
+                            >${this.nameFor(t(e, "plant_id"), "plants")}</strong
+                          >
+                          <span
+                            class="badge"
+                            title=${t(e, "notes") || _(e, this.language)}
                             >${this.lab(t(e, "activity"))}</span
-                          ><small
+                          >
+                          <small
                             >${_(e, this.language)} ·
                             ${this.lab(t(e, "environment"))}</small
-                          >${t(e, "regional_notes") ? H`<p>${t(e, "regional_notes")}</p>` : U}
-                        </article>`)}
+                          >
+                          ${t(e, "regional_notes") ? H`<span class="month-region-note">${t(e, "regional_notes")}</span>` : U}
+                        </button>`)}
                 </div>
                 ${e.some((e) => f(e, this.year, this.month)) ? U : this.empty("noWindows")}
               </section>` : this.renderWeek()}`;
@@ -4457,10 +4533,11 @@ var Bn = class extends Ye {
         <div class="week-windows">
           ${r.map(({ window: e, segments: n }) => H`<button
                 class=${`week-window ${t(e, "activity")}`}
+                title=${this.windowTooltip(e)}
                 @click=${() => {
 			this.selected = {
-				kind: "plant",
-				id: t(e, "plant_id")
+				kind: "window",
+				id: e.id
 			};
 		}}
               >
@@ -4702,8 +4779,113 @@ var Bn = class extends Ye {
               </dd>`)}
     </dl>`;
 	}
+	windowTooltip(e) {
+		let n = t(e, "notes");
+		return `${_(e, this.language)}${n ? `\n\n${n}` : ""}`;
+	}
+	renderWindowDetail(e) {
+		let n = this.tables.growing_windows.find((t) => t.id === e), r = n ? this.tables.plants.find((e) => e.id === t(n, "plant_id")) : void 0, i = t(n, "notes"), a = i.length > 360 ? `${i.slice(0, 360).trimEnd()}…` : i, o = n && [
+			"regional_notes",
+			"source",
+			"source_url"
+		].some((e) => t(n, e));
+		return H`<dialog
+      id="detail-dialog"
+      aria-labelledby="detail-title"
+      @close=${() => {
+			this.selected = null;
+		}}
+    >
+      <div class="dialog-head">
+        <div>
+          <small>${this.tr("windowDetail")}</small>
+          <h2 id="detail-title">
+            ${n && r ? `${this.lab(t(n, "activity"))} · ${t(r, "name")}` : this.tr("windowDetail")}
+          </h2>
+        </div>
+        <button
+          class="icon"
+          aria-label=${this.tr("close")}
+          @click=${() => {
+			this.selected = null;
+		}}
+        >
+          ${$("close")}
+        </button>
+      </div>
+      <div class="dialog-body calendar-detail-body">
+        ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
+        ${n && r ? H` <section
+                  class=${`calendar-window-card ${t(n, "activity")}`}
+                  aria-label=${this.tr("windowDetail")}
+                >
+                  <small>${this.tr("recurringWindow")}</small>
+                  <h3 class="calendar-window-dates">
+                    ${_(n, this.language)}
+                  </h3>
+                  <div class="calendar-window-badges">
+                    <span class="badge"
+                      >${this.lab(t(n, "environment"))}</span
+                    >
+                    ${t(n, "method") && t(n, "method") !== t(n, "activity") ? H`<span class="badge">${this.lab(t(n, "method"))}</span>` : U}
+                  </div>
+                  ${i ? H`<div class="calendar-window-note">
+                          <h3>${this.tr("notes")}</h3>
+                          <p>${a}</p>
+                          ${i.length > 360 ? H`<details>
+                                  <summary>
+                                    ${this.tr("fullWindowNote")}
+                                  </summary>
+                                  <p>${i}</p>
+                                </details>` : U}
+                        </div>` : U}
+                  ${o ? H`<details>
+                          <summary>${this.tr("windowExtra")}</summary>
+                          ${this.renderData({
+			regional_notes: n.data.regional_notes,
+			source: n.data.source,
+			source_url: n.data.source_url
+		})}
+                        </details>` : U}
+                  ${this.editable ? H`<button type="button" @click=${() => this.startEditor("growing_windows", n)}>${$("edit")}${this.tr("editWindow")}</button>` : U}
+                </section>
+                <section
+                  class="calendar-plant-profile"
+                  aria-labelledby="calendar-plant-profile-title"
+                >
+                  <div class="section-head">
+                    <div>
+                      <small>${this.tr("plantProfile")}</small>
+                      <h3 id="calendar-plant-profile-title">
+                        ${t(r, "name")}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      class="link"
+                      @click=${() => {
+			this.selected = {
+				kind: "plant",
+				id: r.id
+			};
+		}}
+                    >
+                      ${this.tr("openPlant")}${$("arrow")}
+                    </button>
+                  </div>
+                  ${this.renderPlantSummary(r)}
+                  <details class="plant-full-information">
+                    <summary>${this.tr("allPlantInformation")}</summary>
+                    ${this.renderData(r.data, ["name", "botanical_name"])}
+                  </details>
+                </section>` : H`<p role="alert">${this.tr("not_found")}</p>`}
+      </div>
+    </dialog>`;
+	}
 	renderDetail() {
-		let e = this.selected, n = e ? this.tables[e.kind === "plant" ? "plants" : "cultivations"].find((t) => t.id === e.id) : void 0;
+		let e = this.selected;
+		if (e?.kind === "window") return this.renderWindowDetail(e.id);
+		let n = e ? this.tables[e.kind === "plant" ? "plants" : "cultivations"].find((t) => t.id === e.id) : void 0;
 		return H`<dialog
       id="detail-dialog"
       aria-labelledby="detail-title"

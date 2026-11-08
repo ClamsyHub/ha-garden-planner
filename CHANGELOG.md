@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5 — 2026-11-08
+
+- Order calendar views as year, month and week.
+- Include growing-window notes in hover tooltips across all three views.
+- Open a shared compact growing-window detail dialog with dates, environment and notes, followed by a plant profile.
+- Keep full plant details and permitted growing-window editing accessible from the dialog.
+- Preserve long notes behind an expandable preview; add keyboard, read-only and mobile WebKit regression coverage.
+
 ## 0.1.4 — 2026-11-08
 
 - Add a persistent Home Assistant sidebar menu button, including narrow/iPhone layouts.

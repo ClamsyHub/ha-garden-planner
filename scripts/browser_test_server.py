@@ -107,6 +107,13 @@ async def main() -> None:
 
     async def request(session: str, body: dict[str, Any]) -> Any:
         async with locks.setdefault(session, asyncio.Lock()):
+            if body.get("operation") == "close_test_session":
+                existing = sessions.pop(session, None)
+                if existing is not None:
+                    directory, service = existing
+                    await service.worker.async_close()
+                    directory.cleanup()
+                return {"closed": True}
             if session not in sessions:
                 if len(sessions) >= 100:
                     raise ValueError("Too many test sessions")

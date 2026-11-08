@@ -150,3 +150,9 @@ public-package HA installation evidence is in [publication](publication.md).
 Der Menüknopf oben öffnet die Home-Assistant-Seitenleiste über das native Menü-Ereignis. Pflanzen zeigen kompakte Kennwerte und aufklappbare vollständige Informationen; die Knöpfe Sorten, Zeiträume und Beobachtungen springen direkt zum jeweiligen Bereich. Messwerte werden an Pflanzen gepflegt, nicht an Sorten. Zeiträume gelten für die Pflanze; eine Sortenwahl ist weiterhin bei tatsächlichen Aussaaten möglich.
 
 ![Kompakte Pflanzendetails – synthetisches iPhone-WebKit-Beispiel](screenshots/plant-summary-mobile.png)
+
+## Kalenderdetails ab v0.1.5
+
+Die Ansichten stehen in der Reihenfolge Jahr, Monat und Woche. Der bestehende Monatsstart bleibt erhalten. Über Jahresbalken, Monats-Tätigkeiten und saisonalen Wochenereignissen zeigt der native Browser-Tooltip die passende Zeitraum-Notiz. Auf Touchscreens öffnen dieselben Elemente per Antippen die Detailansicht.
+
+Die Detailansicht zeigt zuerst den jährlich wiederkehrenden Anbauzeitraum mit Tätigkeit, Datum, Umgebung und Notiz. Darunter folgt ein kompakter Pflanzensteckbrief. Lange Notizen und zusätzliche Quellenangaben sind aufklappbar; alle Pflanzendetails bleiben erreichbar. Bearbeiten wird nur berechtigten Personen angeboten. Tatsächliche Aufgaben und Kulturereignisse behalten ihre eigenen Detailansichten.
