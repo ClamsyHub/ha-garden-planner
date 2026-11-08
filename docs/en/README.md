@@ -4,13 +4,13 @@
 
 Local sowing, planting, care and harvest planning for Home Assistant.
 
-**Public development release: [v0.1.4](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.4).**
+**Public development release: [v0.1.5](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.5).**
 [Source](https://github.com/ClamsyHub/ha-garden-planner) is public. Not a stable 1.0
 release and not included in the official catalog. [Publication evidence](../publication.md).
 
 ## Interface and features
 
-Seven German/English views: overview, month/week/year calendar, plants, current
+Seven German/English views: overview, year/month/week calendar, plants, current
 crops, multi-year history, beds/locations and settings. Responsive light/dark
 layouts, keyboard dialogs, multiple seasonal windows and dated cultivation events.
 Historical snapshots retain context after master-data edits. Outcomes are explicit
@@ -29,7 +29,7 @@ Planner in Settings → Devices & services. One shared garden is supported.
 
 Add `https://github.com/ClamsyHub/ha-garden-planner` as an **Integration** custom
 repository in HACS/Marketplace (connect GitHub first in Marketplace). Install
-v0.1.4 (no pre-release setting required), restart when requested and add Garden Planner
+v0.1.5 (no pre-release setting required), restart when requested and add Garden Planner
 under Settings → Devices & services. Direct catalog search requires an accepted
 catalog submission.
 GitHub publication, custom-repository installation and official catalog membership
@@ -94,3 +94,5 @@ Project code: [MIT](../../LICENSE). Dependencies retain their
 [Rollen und Benachrichtigungen / Users and notifications](../notifications.md)
 
 From v0.1.4, cultivation traits belong to plants and windows apply to all varieties. Schema-3 migration removes retired variety values after taking a database backup; historical snapshots remain intact. [Migration and rollback](../releases/v0.1.4.md).
+
+From v0.1.5, calendar entries include note tooltips and open compact growing-window details followed by the plant profile. Tap the entry on touchscreens. [Update notes](../releases/v0.1.5.md).

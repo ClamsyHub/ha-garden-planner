@@ -6,7 +6,7 @@
 
 Lokaler Aussaat-, Pflanz-, Pflege- und Erntekalender für Home Assistant.
 
-**Öffentliche Entwicklungsversion: [v0.1.4](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.4).**
+**Öffentliche Entwicklungsversion: [v0.1.5](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.5).**
 Automatisches Seitenleisten-Panel, Live-Temperaturen, Sensor-/Kalender-Entitäten,
 Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Dies ist eine
 frühe Version 0.x, noch keine stabile Version 1.0.
@@ -18,8 +18,8 @@ offiziellen Katalog. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Veröffentlicht:** v0.1.4 mit Smartphone-Menü, Anbauwerten nur an der Pflanze
-und kompakten Pflanzendetails. [Datenmigration und Updatehinweise](docs/releases/v0.1.4.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
+**Veröffentlicht:** v0.1.5 mit Kalenderreihenfolge Jahr / Monat / Woche,
+Notiz-Tooltips und kompakten Zeitraumdetails mit Pflanzensteckbrief. [Updatehinweise](docs/releases/v0.1.5.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
 ist eingereicht und wartet auf die Maintainer. [Status](docs/catalog/README.md).
 
 ## Oberfläche
@@ -29,7 +29,7 @@ ist eingereicht und wartet auf die Maintainer. [Status](docs/catalog/README.md).
 Eine zusammenhängende Anwendung mit sieben Bereichen:
 
 1. **Übersicht:** hinterlegte Anbauzeiträume des aktuellen Monats, Aufgaben und Kennzahlen.
-2. **Aussaatkalender:** Monat, Woche und Jahresbalken mit Tagesgrenzen, Filtern und Pflanzendetails.
+2. **Aussaatkalender:** Jahr, Monat und Woche mit Tagesgrenzen, Filtern, Notiz-Tooltips und Zeitraum-/Pflanzendetails.
 3. **Meine Pflanzen:** Stammdaten, Sorten, mehrere Zeitfenster, Suche, Sortierung, Duplizieren und Archivieren.
 4. **Aktuelle Kulturen:** Aussaat erfassen, bearbeiten und datierte Ereignisse dokumentieren; Aufgaben erledigen.
 5. **Aussaat-Historie:** tatsächliche Aussaattermine und Ergebnisse über mehrere Jahre vergleichen.

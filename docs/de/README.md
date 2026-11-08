@@ -2,13 +2,13 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand: öffentliche Entwicklungsversion v0.1.4
+## Stand: öffentliche Entwicklungsversion v0.1.5
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
 sowie einen Kalender für konkrete Aufgaben und dokumentierte Kulturereignisse
 bereit. [Repository](https://github.com/ClamsyHub/ha-garden-planner) und
-[Version v0.1.4](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.4)
+[Version v0.1.5](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.5)
 sind öffentlich. Keine Aufnahme in den offiziellen Katalog. Entwicklung und Tests
 erfolgen außerhalb produktiver Dateien.
 
@@ -28,7 +28,7 @@ wurden die in [Validierung](../validation.md) angegebenen Umgebungen.
 1. In HACS bzw. Marketplace **Benutzerdefiniertes Repository / Custom Repository**
    öffnen. Für ein eigenes Repository im Marketplace zuerst GitHub verbinden.
 2. `https://github.com/ClamsyHub/ha-garden-planner` als Typ **Integration** hinzufügen.
-3. v0.1.4 herunterladen/installieren. Dafür müssen Vorabversionen nicht aktiviert werden.
+3. v0.1.5 herunterladen/installieren. Dafür müssen Vorabversionen nicht aktiviert werden.
 4. HA bei entsprechender Aufforderung neu starten (bei HACS empfohlen).
 5. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden
    Planner auswählen und bestätigen. Das Panel erscheint automatisch.
@@ -129,3 +129,5 @@ weiterhin offen. [Prüfergebnisse und offene Punkte](../validation.md).
 [Rollen und Benachrichtigungen / Users and notifications](../notifications.md)
 
 Ab v0.1.4 liegen Anbau-Messwerte nur an der Pflanze, Zeiträume gelten für alle Sorten. Die Datenmigration entfernt alte Sortenwerte und erstellt vorher eine Datenbanksicherung. Historische Momentaufnahmen bleiben erhalten. [Migration und Rollback](../releases/v0.1.4.md).
+
+Ab v0.1.5 stehen die Kalenderansichten in der Reihenfolge Jahr / Monat / Woche. Tooltips zeigen Zeitraum-Notizen; Antippen oder Anklicken öffnet kompakte Zeitraumdetails mit Pflanzensteckbrief darunter. [Updatehinweise](../releases/v0.1.5.md).
