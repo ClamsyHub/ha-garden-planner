@@ -841,6 +841,7 @@ var Ze = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, ft = {
+	multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
 	windowDetail: "Anbauzeitraum",
 	recurringWindow: "Jährlich wiederkehrender Zeitraum",
 	plantProfile: "Pflanzensteckbrief",
@@ -869,6 +870,7 @@ var Ze = {
 	routeDestination: "Gerät / Versandziel",
 	missingDestination: "nicht verfügbar",
 	emailRecipient: "Empfänger-E-Mail-Adresse",
+	sidebarHint: "Entzogenes Leserecht blendet den Menüpunkt in der nativen HA-Seitenleiste aus. Andere Menüeinträge bleiben unverändert. Administratoren behalten Zugriff. Bereits geöffnete Ansichten verlieren ihre Datenberechtigung; bei älteren Clients kann Neuladen nötig sein.",
 	rolesHint: "Administratoren haben immer volle Rechte. Bearbeiten schließt Sehen ein. Diese Rechte schützen die Garden-Planner-Oberfläche und ihre Datenzugriffe; native HA-Entitäten unterliegen zusätzlich den Home-Assistant-Rechten.",
 	routeHint: "Push und E-Mail lassen sich je Benutzer getrennt aktivieren. Wähle das tatsächliche Gerät oder die E-Mail-Entität; Home Assistant ordnet diese Ziele nicht automatisch einem Benutzer zu. Es werden keine Testnachrichten gesendet. Identische Versandziele werden pro Termin nur einmal angesprochen.",
 	integrationSettings: "Home-Assistant-Einstellungen",
@@ -896,6 +898,7 @@ var Ze = {
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, pt = {
+	multiFilterHint: "Select multiple values. An empty selection shows all.",
 	windowDetail: "Growing window",
 	recurringWindow: "Annually recurring window",
 	plantProfile: "Plant profile",
@@ -924,6 +927,7 @@ var Ze = {
 	routeDestination: "Device / destination",
 	missingDestination: "unavailable",
 	emailRecipient: "Recipient email address",
+	sidebarHint: "Revoking viewing hides the native HA sidebar link and keeps other entries unchanged. Administrators retain access. Already-open views lose data access; older clients may need a reload.",
 	rolesHint: "Administrators always have full access. Editing includes viewing. These permissions protect the Garden Planner panel and its data API; native HA entities also follow Home Assistant permissions.",
 	routeHint: "Enable push and email independently for each user. Select the actual device or email entity; Home Assistant does not automatically assign destinations to users. No test messages are sent. Identical destinations receive at most one attempt per date.",
 	integrationSettings: "Home Assistant settings",
@@ -1176,7 +1180,7 @@ var ht = {
 	initialEventHint: "Datum und Status dieses ersten Ereignisses werden über die Aussaat bearbeitet.",
 	limitedTransport: "Dateiübertragungen unterliegen zusätzlich der Größenbegrenzung deiner Home-Assistant-Verbindung.",
 	retry: "Erneut versuchen",
-	yearlyHint: "Jede Zeile zeigt eine Tätigkeit. Tippe auf einen Balken für die Pflanzendetails.",
+	yearlyHint: "Jede Zeile zeigt eine Tätigkeit. Tippe auf einen Balken für Zeitraumdetails und Pflanzensteckbrief.",
 	actualWork: "Geplante Aufgaben und dokumentierte Ereignisse",
 	untitled: "Unbenannter Eintrag",
 	variety: "Sorte",
@@ -1405,7 +1409,7 @@ var ht = {
 	initialEventHint: "Edit the initial event date and status through its sowing record.",
 	limitedTransport: "File transfers are also subject to your Home Assistant connection size limit.",
 	retry: "Try again",
-	yearlyHint: "Each row shows an activity. Tap a bar to open plant details.",
+	yearlyHint: "Each row shows an activity. Tap a bar for period details and the plant profile.",
 	actualWork: "Planned tasks and recorded events",
 	untitled: "Untitled record",
 	variety: "Variety",
@@ -3008,8 +3012,54 @@ var Fn = j`
   .harvest {
     --bar-color: #b97856;
   }
+  .multi-filter {
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  .multi-filter legend {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .multi-filter details {
+    position: relative;
+  }
+  .multi-filter summary {
+    min-height: 44px;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    background: var(--gp-card);
+    padding: 12px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+  .multi-filter-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 6;
+    max-height: min(320px, 45dvh);
+    overflow: auto;
+    padding: 12px;
+    background: var(--gp-card);
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px #0002;
+  }
+  .multi-filter-options .check {
+    min-height: 44px;
+  }
+  .multi-filter-options p {
+    margin-top: 0;
+    font-size: 12px;
+  }
   .year-scroll {
     overflow: auto;
+    max-height: min(65dvh, 720px);
+    overscroll-behavior: contain;
     max-width: 100%;
     border: 1px solid var(--gp-border);
     border-radius: 12px;
@@ -3030,11 +3080,18 @@ var Fn = j`
     padding: 7px;
   }
   .year-grid .month-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
     text-align: center;
     background: var(--gp-soft);
     font-size: 11px;
     font-weight: 600;
     padding-top: 16px;
+  }
+  .year-grid .month-head:first-child {
+    left: 0;
+    z-index: 4;
   }
   .year-grid .row-title {
     justify-content: flex-start;
@@ -3704,7 +3761,7 @@ function zn() {
 }
 var Bn = class extends Ye {
 	constructor(...e) {
-		super(...e), this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = zn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.activity = "", this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = zn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -3754,7 +3811,8 @@ var Bn = class extends Ye {
 			showArchived: { state: !0 },
 			calendarMode: { state: !0 },
 			anchor: { state: !0 },
-			activity: { state: !0 },
+			calendarCategories: { state: !0 },
+			calendarActivities: { state: !0 },
 			selected: { state: !0 },
 			editor: { state: !0 },
 			sensorOpen: { state: !0 },
@@ -4155,6 +4213,41 @@ var Bn = class extends Ye {
             </form>` : U}
     </dialog>`;
 	}
+	renderMultiFilter(e, t, n) {
+		let r = this.tr(e === "category" ? "allCategories" : "allActivities");
+		return H`<fieldset class="multi-filter">
+      <legend>${this.tr(e)}</legend>
+      <details>
+        <summary>
+          ${n.length ? n.map((e) => this.lab(e)).join(" · ") : r}
+        </summary>
+        <div class="multi-filter-options">
+          <p class="muted">${this.tr("multiFilterHint")}</p>
+          ${t.map((t) => H`<label class="check"
+                ><input
+                  type="checkbox"
+                  .checked=${n.includes(t)}
+                  @change=${(r) => {
+			let i = r.target.checked ? [...n, t] : n.filter((e) => e !== t);
+			e === "category" ? this.calendarCategories = i : this.calendarActivities = i;
+		}}
+                />${this.lab(t)}</label
+              >`)}
+          <button
+            type="button"
+            @click=${() => {
+			e === "category" ? this.calendarCategories = [] : this.calendarActivities = [];
+		}}
+          >
+            ${r}
+          </button>
+        </div>
+      </details>
+    </fieldset>`;
+	}
+	calendarActivityMatches(e) {
+		return !this.calendarActivities.length || this.calendarActivities.includes(e);
+	}
 	renderFilters(e = !1) {
 		return H`<div class="filters">
       <label
@@ -4165,34 +4258,34 @@ var Bn = class extends Ye {
 			this.query = e.target.value;
 		}}
       /></label>
-      <label
-        >${this.tr("category")}<select
-          aria-label=${this.tr("category")}
-          @change=${(e) => {
+      ${e ? H`${this.renderMultiFilter("category", this.categories, this.calendarCategories)}${this.renderMultiFilter("activity", Ln, this.calendarActivities)}` : H`
+              <label
+                >${this.tr("category")}<select
+                  aria-label=${this.tr("category")}
+                  @change=${(e) => {
 			this.category = e.target.value;
 		}}
-        >
-          <option value="">${this.tr("allCategories")}</option>
-          ${this.categories.map((e) => H`<option value=${e} .selected=${this.category === e}>${this.lab(e)}</option>`)}
-        </select></label
-      >
-      <label
-        >${this.tr(e ? "activity" : "method")}<select
-          aria-label=${this.tr(e ? "activity" : "method")}
-          @change=${(t) => {
-			e ? this.activity = t.target.value : this.method = t.target.value;
+                >
+                  <option value="">${this.tr("allCategories")}</option>
+                  ${this.categories.map((e) => H`<option value=${e} .selected=${this.category === e}>${this.lab(e)}</option>`)}
+                </select></label
+              >
+              <label
+                >${this.tr("method")}<select
+                  aria-label=${this.tr("method")}
+                  @change=${(e) => {
+			this.method = e.target.value;
 		}}
-        >
-          <option value="">
-            ${this.tr(e ? "allActivities" : "allMethods")}
-          </option>
-          ${(e ? Ln : [
+                >
+                  <option value="">${this.tr("allMethods")}</option>
+                  ${[
 			"direct",
 			"indoors",
 			"transplant"
-		]).map((t) => H`<option value=${t} .selected=${(e ? this.activity : this.method) === t}>${this.lab(t)}</option>`)}
-        </select></label
-      >
+		].map((e) => H`<option value=${e} .selected=${this.method === e}>${this.lab(e)}</option>`)}
+                </select></label
+              >
+            `}
       ${e ? U : H`<label
                 >${this.tr("sort")}<select
                   @change=${(e) => {
@@ -4218,7 +4311,7 @@ var Bn = class extends Ye {
 	filteredPlants(e = !1) {
 		let n = /* @__PURE__ */ new Map();
 		if (this.sort === "next" && !e) for (let e of this.tables.plants) n.set(e.id, p(this.plantWindows(e.id).filter((e) => !this.method || t(e, "method") === this.method || t(e, "activity") === this.method), this.today) ?? "9999");
-		return this.tables.plants.filter((n) => (this.showArchived && !e || !n.data.archived) && (!this.category || t(n, "category") === this.category) && (!this.query || `${t(n, "name")} ${t(n, "botanical_name")}`.toLocaleLowerCase(this.language).includes(this.query.toLocaleLowerCase(this.language))) && (e || !this.method || this.plantWindows(n.id).some((e) => t(e, "method") === this.method || t(e, "activity") === this.method))).sort((r, i) => this.sort === "next" && !e && (n.get(r.id) ?? "").localeCompare(n.get(i.id) ?? "") || t(r, "name").localeCompare(t(i, "name"), this.language));
+		return this.tables.plants.filter((n) => (this.showArchived && !e || !n.data.archived) && (e ? !this.calendarCategories.length || this.calendarCategories.includes(t(n, "category")) : !this.category || t(n, "category") === this.category) && (!this.query || `${t(n, "name")} ${t(n, "botanical_name")}`.toLocaleLowerCase(this.language).includes(this.query.toLocaleLowerCase(this.language))) && (e || !this.method || this.plantWindows(n.id).some((e) => t(e, "method") === this.method || t(e, "activity") === this.method))).sort((r, i) => this.sort === "next" && !e && (n.get(r.id) ?? "").localeCompare(n.get(i.id) ?? "") || t(r, "name").localeCompare(t(i, "name"), this.language));
 	}
 	empty(e, t = "", n, r) {
 		return H`<div class="empty">
@@ -4370,7 +4463,7 @@ var Bn = class extends Ye {
 	}
 	calendarWindows() {
 		let e = new Set(this.filteredPlants(!0).map((e) => e.id));
-		return this.tables.growing_windows.filter((n) => e.has(t(n, "plant_id")) && (!this.activity || this.activity === t(n, "activity"))).sort((e, t) => this.compareWindows(e, t));
+		return this.tables.growing_windows.filter((n) => e.has(t(n, "plant_id")) && this.calendarActivityMatches(t(n, "activity"))).sort((e, t) => this.compareWindows(e, t));
 	}
 	shiftCalendar(e) {
 		if (this.calendarMode === "week") this.anchor = s(this.anchor || this.today, e * 7);
@@ -4561,9 +4654,9 @@ var Bn = class extends Ye {
       <div class="scroll" tabindex="0" aria-label=${this.tr("week")}>
         <div class="week-grid">
           ${e.map((e) => {
-			let r = this.tables.tasks.filter((r) => t(r, "date") === e && (!this.activity || t(r, "activity") === this.activity) && (!t(r, "plant_id") || n.has(t(r, "plant_id"))));
+			let r = this.tables.tasks.filter((r) => t(r, "date") === e && this.calendarActivityMatches(t(r, "activity")) && (!t(r, "plant_id") || n.has(t(r, "plant_id"))));
 			r.sort((e, n) => Ln.indexOf(t(e, "activity")) - Ln.indexOf(t(n, "activity")));
-			let i = this.tables.cultivation_events.filter((r) => t(r, "date") === e && this.tables.cultivations.some((e) => e.id === t(r, "cultivation_id") && n.has(t(e, "plant_id")) && (!this.activity || this.eventActivity(r, e) === this.activity))), a = [...r.map((e) => ({
+			let i = this.tables.cultivation_events.filter((r) => t(r, "date") === e && this.tables.cultivations.some((e) => e.id === t(r, "cultivation_id") && n.has(t(e, "plant_id")) && this.calendarActivityMatches(this.eventActivity(r, e)))), a = [...r.map((e) => ({
 				kind: "task",
 				record: e,
 				activity: t(e, "activity")
@@ -5396,7 +5489,7 @@ var Bn = class extends Ye {
 	}
 	renderUserRoles(e, t) {
 		return H`<h3>${this.tr("userRoles")}</h3>
-      <p class="muted">${this.tr("rolesHint")}</p>
+      <p class="muted">${this.tr("rolesHint")} ${this.tr("sidebarHint")}</p>
       <div class="roles-scroll" tabindex="0" aria-label=${this.tr("userRoles")}>
         <table class="roles-table">
           <thead>

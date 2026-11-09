@@ -156,3 +156,32 @@ Der Menüknopf oben öffnet die Home-Assistant-Seitenleiste über das native Men
 Die Ansichten stehen in der Reihenfolge Jahr, Monat und Woche. Der bestehende Monatsstart bleibt erhalten. Über Jahresbalken, Monats-Tätigkeiten und saisonalen Wochenereignissen zeigt der native Browser-Tooltip die passende Zeitraum-Notiz. Auf Touchscreens öffnen dieselben Elemente per Antippen die Detailansicht.
 
 Die Detailansicht zeigt zuerst den jährlich wiederkehrenden Anbauzeitraum mit Tätigkeit, Datum, Umgebung und Notiz. Darunter folgt ein kompakter Pflanzensteckbrief. Lange Notizen und zusätzliche Quellenangaben sind aufklappbar; alle Pflanzendetails bleiben erreichbar. Bearbeiten wird nur berechtigten Personen angeboten. Tatsächliche Aufgaben und Kulturereignisse behalten ihre eigenen Detailansichten.
+
+
+## Mehrfachfilter und Jahresliste ab v0.1.6
+
+Im Aussaatkalender bieten Kategorie und Tätigkeit aufklappbare Checkbox-Listen.
+Mehrere Werte innerhalb derselben Liste werden mit ODER verknüpft; Kategorie,
+Tätigkeit und Suchtext mit UND. Ohne Auswahl zeigt der jeweilige Filter alle Werte.
+Die Auswahl bleibt beim Wechsel zwischen Jahr, Monat und Woche bestehen und
+wirkt auch auf die konkreten Wochenaufgaben und Kulturereignisse.
+
+Lange Jahreslisten scrollen in einem begrenzten Bereich. Jan–Dez bleiben oben
+sichtbar; die Pflanzen-/Jahr-Eckzelle bleibt zusätzlich links fixiert, auch auf dem
+Smartphone beim horizontalen und vertikalen Scrollen.
+
+## Native Seitenleisten-Sichtbarkeit
+
+Garden Planner verwendet Home Assistants `async_user_store` für die native
+`sidebar.hiddenPanels`-Einstellung und deren Live-Abonnements. Nur der eigene
+Link wird verändert. Eine eigene Markierung erlaubt das Wiederherstellen beim
+Erteilen von Leserecht, ohne zuvor manuell versteckte Links einzublenden.
+Leere Lesefreigaben setzen das Panel zusätzlich auf `require_admin`.
+Datenberechtigungen werden unabhängig von dieser kosmetischen Sichtbarkeit
+serverseitig geprüft; direkte URLs umgehen sie nicht. Nutzer können ihre native
+Seitenleiste auch selbst bearbeiten, wodurch ein manuell wieder eingeblendeter
+Link weiterhin an der Datenberechtigung scheitert. Ältere Clients neu laden.
+
+Offizielle Schnittstellen/Implementierungen, geprüft am 2026-11-09:
+- https://github.com/home-assistant/core/blob/2026.11.0/homeassistant/components/frontend/storage.py
+- https://github.com/home-assistant/frontend/blob/dev/src/components/ha-sidebar.ts

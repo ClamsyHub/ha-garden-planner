@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
+from homeassistant.auth import EVENT_USER_ADDED, EVENT_USER_UPDATED
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant, callback
@@ -23,6 +24,7 @@ from .options import validate_options
 from .reminders import Reminders
 from .runtime import Runtime
 from .service import PlannerService
+from .sidebar import async_sync_sidebar
 from .storage import PlannerWorker
 from .websocket_api import SIGNAL_CHANGED, async_register_api
 
@@ -59,6 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass.data[f"{DOMAIN}_exchange_registered"] = True
         await async_register_frontend(hass)
         panel_added = True
+        await async_sync_sidebar(hass, service.readers)
         await coordinator.async_refresh()
         if not coordinator.last_update_success:
             raise ConfigEntryNotReady("Initial Garden Planner refresh failed.")
@@ -79,12 +82,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if runtime:
                 await runtime.close()
 
+        async def users_changed(event: Event[Any]) -> None:
+            if runtime and not runtime.closing:
+                await async_sync_sidebar(hass, service.readers)
+
         async def options_changed(host: HomeAssistant, config: ConfigEntry) -> None:
             options = validate_options(dict(config.options))
             service.writers = frozenset(options["writers"])
             service.readers = (
                 None if options["readers"] is None else frozenset(options["readers"])
             )
+            await async_sync_sidebar(hass, service.readers)
             async_dispatcher_send(hass, SIGNAL_CHANGED)
 
         runtime.cancel.extend(
@@ -93,6 +101,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 async_track_time_interval(hass, tick, timedelta(minutes=15)),
                 hass.bus.async_listen(EVENT_HOMEASSISTANT_STOP, stop),
                 entry.add_update_listener(options_changed),
+                hass.bus.async_listen(EVENT_USER_ADDED, users_changed),
+                hass.bus.async_listen(EVENT_USER_UPDATED, users_changed),
             ]
         )
     except Exception as err:

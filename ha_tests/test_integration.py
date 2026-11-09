@@ -9,6 +9,7 @@ from types import MappingProxyType
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
+from homeassistant.auth import auth_manager_from_config
 from homeassistant.auth.models import User
 from homeassistant.auth.permissions.models import PermissionLookup
 from homeassistant.components.http import HomeAssistantHTTP
@@ -19,6 +20,8 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import AbortFlow
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceRegistry
 from homeassistant.helpers.entity_registry import EntityRegistry
 from homeassistant.helpers.http import KEY_ALLOW_CONFIGURED_CORS
@@ -43,6 +46,10 @@ class IntegrationHarness(unittest.IsolatedAsyncioTestCase):
         self.hass = HomeAssistant(self.temp.name)
         self.hass.config_entries = ConfigEntries(self.hass, {})
         await self.hass.config_entries.async_initialize()
+        dr.async_setup(self.hass)
+        await dr.async_load(self.hass, load_empty=True)
+        await er.async_load(self.hass, load_empty=True)
+        self.hass.auth = await auth_manager_from_config(self.hass, [], [])
         self.hass.http = HomeAssistantHTTP(
             self.hass, None, None, None, ["127.0.0.1"], 0, [], "modern"
         )

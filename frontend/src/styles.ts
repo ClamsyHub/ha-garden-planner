@@ -581,8 +581,54 @@ export const styles = css`
   .harvest {
     --bar-color: #b97856;
   }
+  .multi-filter {
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  .multi-filter legend {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .multi-filter details {
+    position: relative;
+  }
+  .multi-filter summary {
+    min-height: 44px;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    background: var(--gp-card);
+    padding: 12px;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+  .multi-filter-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 6;
+    max-height: min(320px, 45dvh);
+    overflow: auto;
+    padding: 12px;
+    background: var(--gp-card);
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px #0002;
+  }
+  .multi-filter-options .check {
+    min-height: 44px;
+  }
+  .multi-filter-options p {
+    margin-top: 0;
+    font-size: 12px;
+  }
   .year-scroll {
     overflow: auto;
+    max-height: min(65dvh, 720px);
+    overscroll-behavior: contain;
     max-width: 100%;
     border: 1px solid var(--gp-border);
     border-radius: 12px;
@@ -603,11 +649,18 @@ export const styles = css`
     padding: 7px;
   }
   .year-grid .month-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
     text-align: center;
     background: var(--gp-soft);
     font-size: 11px;
     font-weight: 600;
     padding-top: 16px;
+  }
+  .year-grid .month-head:first-child {
+    left: 0;
+    z-index: 4;
   }
   .year-grid .row-title {
     justify-content: flex-start;

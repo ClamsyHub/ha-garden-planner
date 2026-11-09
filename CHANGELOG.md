@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.6 — 2026-11-09
+
+- Allow multiple calendar categories and activities, combined consistently across year, month and week.
+- Keep year headings and the top-left corner visible in a bounded, scrollable year grid.
+- Synchronize revoked viewing with native per-user sidebar preferences; restore only integration-owned hides and retain administrator access. Track new users and role changes.
+- Lead installation documentation with official catalog search following HACS acceptance on 2026-11-09; retain custom repositories as a fallback.
+
 ## 0.1.5 — 2026-11-08
 
 - Order calendar views as year, month and week.

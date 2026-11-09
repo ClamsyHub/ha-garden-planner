@@ -131,7 +131,8 @@ export class GardenPlannerPanel extends LitElement {
     showArchived: { state: true },
     calendarMode: { state: true },
     anchor: { state: true },
-    activity: { state: true },
+    calendarCategories: { state: true },
+    calendarActivities: { state: true },
     selected: { state: true },
     editor: { state: true },
     sensorOpen: { state: true },
@@ -167,7 +168,8 @@ export class GardenPlannerPanel extends LitElement {
   private showArchived = false;
   private calendarMode: "month" | "year" | "week" = "month";
   private anchor = "";
-  private activity = "";
+  private calendarCategories: string[] = [];
+  private calendarActivities: string[] = [];
   private selected: Selection | null = null;
   private editor: Editor | null = null;
   private sensorOpen = false;
@@ -885,6 +887,56 @@ export class GardenPlannerPanel extends LitElement {
       }
     </dialog>`;
   }
+  private renderMultiFilter(
+    kind: "category" | "activity",
+    values: string[],
+    selected: string[],
+  ): TemplateResult {
+    const allLabel = this.tr(
+      kind === "category" ? "allCategories" : "allActivities",
+    );
+    return html`<fieldset class="multi-filter">
+      <legend>${this.tr(kind)}</legend>
+      <details>
+        <summary>
+          ${selected.length ? selected.map((value) => this.lab(value)).join(" · ") : allLabel}
+        </summary>
+        <div class="multi-filter-options">
+          <p class="muted">${this.tr("multiFilterHint")}</p>
+          ${values.map(
+            (value) =>
+              html`<label class="check"
+                ><input
+                  type="checkbox"
+                  .checked=${selected.includes(value)}
+                  @change=${(event: Event) => {
+                    const next = (event.target as HTMLInputElement).checked
+                      ? [...selected, value]
+                      : selected.filter((item) => item !== value);
+                    if (kind === "category") this.calendarCategories = next;
+                    else this.calendarActivities = next;
+                  }}
+                />${this.lab(value)}</label
+              >`,
+          )}
+          <button
+            type="button"
+            @click=${() => {
+              if (kind === "category") this.calendarCategories = [];
+              else this.calendarActivities = [];
+            }}
+          >
+            ${allLabel}
+          </button>
+        </div>
+      </details>
+    </fieldset>`;
+  }
+  private calendarActivityMatches(value: string): boolean {
+    return (
+      !this.calendarActivities.length || this.calendarActivities.includes(value)
+    );
+  }
   private renderFilters(calendar = false): TemplateResult {
     return html`<div class="filters">
       <label
@@ -895,31 +947,34 @@ export class GardenPlannerPanel extends LitElement {
             this.query = (e.target as HTMLInputElement).value;
           }}
       /></label>
-      <label
-        >${this.tr("category")}<select
-          aria-label=${this.tr("category")}
-          @change=${(e: Event) => {
-            this.category = (e.target as HTMLSelectElement).value;
-          }}
-        >
-          <option value="">${this.tr("allCategories")}</option>
-          ${this.categories.map((c) => html`<option value=${c} .selected=${this.category === c}>${this.lab(c)}</option>`)}
-        </select></label
-      >
-      <label
-        >${this.tr(calendar ? "activity" : "method")}<select
-          aria-label=${this.tr(calendar ? "activity" : "method")}
-          @change=${(e: Event) => {
-            if (calendar) this.activity = (e.target as HTMLSelectElement).value;
-            else this.method = (e.target as HTMLSelectElement).value;
-          }}
-        >
-          <option value="">
-            ${this.tr(calendar ? "allActivities" : "allMethods")}
-          </option>
-          ${(calendar ? activities : ["direct", "indoors", "transplant"]).map((value) => html`<option value=${value} .selected=${(calendar ? this.activity : this.method) === value}>${this.lab(value)}</option>`)}
-        </select></label
-      >
+      ${
+        calendar
+          ? html`${this.renderMultiFilter("category", this.categories, this.calendarCategories)}${this.renderMultiFilter("activity", activities, this.calendarActivities)}`
+          : html`
+              <label
+                >${this.tr("category")}<select
+                  aria-label=${this.tr("category")}
+                  @change=${(e: Event) => {
+                    this.category = (e.target as HTMLSelectElement).value;
+                  }}
+                >
+                  <option value="">${this.tr("allCategories")}</option>
+                  ${this.categories.map((c) => html`<option value=${c} .selected=${this.category === c}>${this.lab(c)}</option>`)}
+                </select></label
+              >
+              <label
+                >${this.tr("method")}<select
+                  aria-label=${this.tr("method")}
+                  @change=${(e: Event) => {
+                    this.method = (e.target as HTMLSelectElement).value;
+                  }}
+                >
+                  <option value="">${this.tr("allMethods")}</option>
+                  ${["direct", "indoors", "transplant"].map((value) => html`<option value=${value} .selected=${this.method === value}>${this.lab(value)}</option>`)}
+                </select></label
+              >
+            `
+      }
       ${
         !calendar
           ? html`<label
@@ -966,7 +1021,10 @@ export class GardenPlannerPanel extends LitElement {
       .filter(
         (p) =>
           ((this.showArchived && !calendar) || !p.data.archived) &&
-          (!this.category || text(p, "category") === this.category) &&
+          (calendar
+            ? !this.calendarCategories.length ||
+              this.calendarCategories.includes(text(p, "category"))
+            : !this.category || text(p, "category") === this.category) &&
           (!this.query ||
             `${text(p, "name")} ${text(p, "botanical_name")}`
               .toLocaleLowerCase(this.language)
@@ -1170,7 +1228,7 @@ export class GardenPlannerPanel extends LitElement {
       .filter(
         (w) =>
           ids.has(text(w, "plant_id")) &&
-          (!this.activity || this.activity === text(w, "activity")),
+          this.calendarActivityMatches(text(w, "activity")),
       )
       .sort((a, b) => this.compareWindows(a, b));
   }
@@ -1408,7 +1466,7 @@ export class GardenPlannerPanel extends LitElement {
             const tasks = this.tables.tasks.filter(
               (task) =>
                 text(task, "date") === day &&
-                (!this.activity || text(task, "activity") === this.activity) &&
+                this.calendarActivityMatches(text(task, "activity")) &&
                 (!text(task, "plant_id") ||
                   visible.has(text(task, "plant_id"))),
             );
@@ -1424,8 +1482,7 @@ export class GardenPlannerPanel extends LitElement {
                   (c) =>
                     c.id === text(event, "cultivation_id") &&
                     visible.has(text(c, "plant_id")) &&
-                    (!this.activity ||
-                      this.eventActivity(event, c) === this.activity),
+                    this.calendarActivityMatches(this.eventActivity(event, c)),
                 ),
             );
             const appointments = [
@@ -2599,7 +2656,7 @@ export class GardenPlannerPanel extends LitElement {
     draft: HostSettings,
   ): TemplateResult {
     return html`<h3>${this.tr("userRoles")}</h3>
-      <p class="muted">${this.tr("rolesHint")}</p>
+      <p class="muted">${this.tr("rolesHint")} ${this.tr("sidebarHint")}</p>
       <div class="roles-scroll" tabindex="0" aria-label=${this.tr("userRoles")}>
         <table class="roles-table">
           <thead>

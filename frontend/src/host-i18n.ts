@@ -1,5 +1,6 @@
 import type { Language } from "./types";
 const de = {
+  multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
   windowDetail: "Anbauzeitraum",
   recurringWindow: "Jährlich wiederkehrender Zeitraum",
   plantProfile: "Pflanzensteckbrief",
@@ -31,6 +32,8 @@ const de = {
   routeDestination: "Gerät / Versandziel",
   missingDestination: "nicht verfügbar",
   emailRecipient: "Empfänger-E-Mail-Adresse",
+  sidebarHint:
+    "Entzogenes Leserecht blendet den Menüpunkt in der nativen HA-Seitenleiste aus. Andere Menüeinträge bleiben unverändert. Administratoren behalten Zugriff. Bereits geöffnete Ansichten verlieren ihre Datenberechtigung; bei älteren Clients kann Neuladen nötig sein.",
   rolesHint:
     "Administratoren haben immer volle Rechte. Bearbeiten schließt Sehen ein. Diese Rechte schützen die Garden-Planner-Oberfläche und ihre Datenzugriffe; native HA-Entitäten unterliegen zusätzlich den Home-Assistant-Rechten.",
   routeHint:
@@ -67,6 +70,7 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  multiFilterHint: "Select multiple values. An empty selection shows all.",
   windowDetail: "Growing window",
   recurringWindow: "Annually recurring window",
   plantProfile: "Plant profile",
@@ -98,6 +102,8 @@ const en: Record<keyof typeof de, string> = {
   routeDestination: "Device / destination",
   missingDestination: "unavailable",
   emailRecipient: "Recipient email address",
+  sidebarHint:
+    "Revoking viewing hides the native HA sidebar link and keeps other entries unchanged. Administrators retain access. Already-open views lose data access; older clients may need a reload.",
   rolesHint:
     "Administrators always have full access. Editing includes viewing. These permissions protect the Garden Planner panel and its data API; native HA entities also follow Home Assistant permissions.",
   routeHint:

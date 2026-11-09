@@ -20,8 +20,8 @@
   re-download and restart tests. Complete; see [evidence](publication.md).
 - **Phase 7 – catalog:** owner-approved regular v0.1.1 published; public store
   upgrades verified. [PR #13526](https://github.com/hacs/default/pull/13526) submitted.
-  Awaiting maintainer triage and acceptance; catalog membership is not complete.
+  Approved and merged by Frenck on 2026-11-09; official catalog inclusion is complete.
 
-Version 0.1.5 is published as a regular early-development release. Feature releases and 1.0.0 require passing runtime tests.
+The latest 0.x version is available as a regular early-development release. Feature releases and 1.0.0 require passing runtime tests.
 Later scope: photos, seed stock, yields, crop rotation, companion planting and
 weather history. No unsourced horticultural claims or private user data in samples.

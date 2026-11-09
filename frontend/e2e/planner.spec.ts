@@ -29,6 +29,24 @@ async function open(
   ).toBeVisible();
   await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
 }
+async function calendarFilter(
+  page: Page,
+  kind: string,
+  values: string[],
+): Promise<void> {
+  const group = page.getByRole("group", { name: kind, exact: true });
+  const details = group.locator("details");
+  if (!(await details.evaluate((node) => node.hasAttribute("open"))))
+    await group.locator("summary").click();
+  await group
+    .getByRole("button", {
+      name: kind === "Kategorie" ? "Alle Kategorien" : "Alle Tätigkeiten",
+    })
+    .click();
+  for (const value of values)
+    await group.getByRole("checkbox", { name: value, exact: true }).check();
+  await group.locator("summary").click();
+}
 async function navigate(page: Page, name: string): Promise<void> {
   await page
     .getByRole("navigation")
@@ -658,11 +676,11 @@ test("week view includes overlapping growing windows and keeps concrete appointm
   await expect(
     possible.getByText("02.11.2026 – 08.11.2026", { exact: true }),
   ).toBeVisible();
-  await page.getByLabel("Tätigkeit", { exact: true }).selectOption("indoors");
+  await calendarFilter(page, "Tätigkeit", ["Vorziehen"]);
   await expect(
     possible.getByText(/Keine passenden Anbauzeiträume/),
   ).toBeVisible();
-  await page.getByLabel("Tätigkeit", { exact: true }).selectOption("");
+  await calendarFilter(page, "Tätigkeit", []);
   await page.getByLabel("Woche auswählen", { exact: true }).fill("2026-10-30");
   await page.getByLabel("Woche auswählen", { exact: true }).press("Tab");
   await expect(possible.getByText("01.11.2026", { exact: true })).toBeVisible();
@@ -980,7 +998,7 @@ test("all seven calendar activities have distinct bars and lifecycle order", asy
         nodes.map((n) => n.className.replace("week-window ", "")),
       ),
   ).toEqual(sequence);
-  await page.getByLabel("Tätigkeit", { exact: true }).selectOption("prick_out");
+  await calendarFilter(page, "Tätigkeit", ["Pikieren"]);
   await expect(page.locator(".week-window")).toHaveCount(1);
 });
 
@@ -1437,4 +1455,95 @@ test("long calendar notes remain complete behind a compact preview and editable"
     .getByText("Vollständige Notiz anzeigen", { exact: true })
     .click();
   await expect(detail.getByText(note, { exact: true })).toBeVisible();
+});
+
+test("calendar combines multiple category and activity filters across all views", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Aussaatkalender");
+  await calendarFilter(page, "Kategorie", ["Gemüse", "Blumen"]);
+  await calendarFilter(page, "Tätigkeit", ["Direktsaat", "Auspflanzen"]);
+  await page.getByRole("button", { name: "Jahr", exact: true }).click();
+  await expect(page.locator(".year-grid .row-title")).toHaveCount(2);
+  await expect(page.locator(".year-grid .row-title")).toContainText([
+    "Blattkultur",
+    "Blütenkultur",
+  ]);
+  await page.getByRole("button", { name: "Monat", exact: true }).click();
+  await expect(page.locator(".month-event")).toHaveCount(1);
+  await page.getByRole("button", { name: "Woche", exact: true }).click();
+  await expect(page.locator(".week-window")).toHaveCount(1);
+  await expect(page.locator(".week-event")).toHaveCount(0);
+  await calendarFilter(page, "Tätigkeit", ["Direktsaat", "Pflege"]);
+  await expect(page.locator(".week-window")).toHaveCount(1);
+  await expect(
+    page.getByText("Beet kontrollieren · Beispiel", { exact: true }),
+  ).toBeVisible();
+  await calendarFilter(page, "Kategorie", ["Blumen"]);
+  await expect(page.locator(".week-window")).toHaveCount(0);
+  await calendarFilter(page, "Kategorie", []);
+  await expect(page.locator(".week-window")).toHaveCount(1);
+  await calendarFilter(page, "Tätigkeit", []);
+  await page.getByRole("button", { name: "Jahr", exact: true }).click();
+  await expect(page.locator(".year-grid .row-title")).toHaveCount(4);
+  const group = page.getByRole("group", { name: "Tätigkeit", exact: true });
+  await group.locator("summary").click();
+  const a11y = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(a11y.violations).toEqual([]);
+});
+
+test("year headings stay visible while scrolling vertically and the corner stays left", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  // Repeat synthetic fixtures only in this UI stress case, preserving actual IDs for selection.
+  await page.evaluate(() => {
+    const panel = document.querySelector(
+      "garden-planner-panel",
+    ) as HTMLElement & {
+      tables: { growing_windows: unknown[] };
+      requestUpdate(): void;
+    };
+    panel.tables = {
+      ...panel.tables,
+      growing_windows: Array.from(
+        { length: 16 },
+        () => panel.tables.growing_windows,
+      ).flat(),
+    };
+    panel.requestUpdate();
+  });
+  await navigate(page, "Aussaatkalender");
+  await page.getByRole("button", { name: "Jahr", exact: true }).click();
+  const scroll = page.locator(".year-scroll");
+  await scroll.scrollIntoViewIfNeeded();
+  const head = scroll.locator(".month-head").nth(1);
+  const corner = scroll.locator(".month-head").first();
+  const before = await head.boundingBox();
+  const cornerBefore = await corner.boundingBox();
+  await scroll.evaluate((node) => {
+    node.scrollTop = 500;
+    node.scrollLeft = 350;
+  });
+  await expect
+    .poll(() =>
+      head.evaluate((node) => Math.round(node.getBoundingClientRect().y)),
+    )
+    .toBe(Math.round(before!.y));
+  await expect
+    .poll(() =>
+      corner.evaluate((node) => Math.round(node.getBoundingClientRect().x)),
+    )
+    .toBe(Math.round(cornerBefore!.x));
+  const bounds = await scroll.boundingBox();
+  const h = await corner.boundingBox();
+  expect(h!.y).toBeGreaterThanOrEqual(bounds!.y);
+  expect(h!.y + h!.height).toBeLessThan(bounds!.y + bounds!.height);
+  await page.screenshot({
+    path: testInfo.outputPath("year-sticky-headers.png"),
+    scale: "css",
+  });
 });

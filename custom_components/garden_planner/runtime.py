@@ -14,6 +14,7 @@ from .models import ValidationError
 from .options import notification_destinations, validate_options
 from .reminders import Reminders
 from .service import Actor, PlannerService
+from .sidebar import async_sync_sidebar
 from .websocket_api import SIGNAL_CHANGED
 
 
@@ -72,6 +73,7 @@ class Runtime:
         self.service.readers = (
             None if settings["readers"] is None else frozenset(settings["readers"])
         )
+        await async_sync_sidebar(self.hass, self.service.readers)
         async_dispatcher_send(self.hass, SIGNAL_CHANGED)
         return settings
 

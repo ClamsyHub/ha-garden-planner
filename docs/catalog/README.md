@@ -1,15 +1,18 @@
-> Current release: [v0.1.5](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.5), published 2026-11-08. The original submission evidence below documents v0.1.1. Catalog acceptance remains a separate maintainer decision.
+> Current release: [latest public release](https://github.com/ClamsyHub/ha-garden-planner/releases/latest). Catalog inclusion was accepted on 2026-11-09. The original submission evidence below documents v0.1.1.
 
-# Phase 7 — submitted, awaiting maintainer acceptance
+# Phase 7 — accepted into the official community catalog
 
-Status checked 2026-11-06. The owner explicitly approved the regular release and submission.
+Status verified 2026-11-09. [PR #13526](https://github.com/hacs/default/pull/13526)
+was approved and merged by `frenck` at **12:46:53 UTC / 13:46:53 Europe/Berlin**.
+`ClamsyHub/ha-garden-planner` is present in the upstream `hacs/default` integration list.
+This completes official catalog inclusion. Store clients may need to refresh their catalog.
 
-- [v0.1.1 release](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.1) is public, not a pre-release. This remains an early 0.x version, not stable 1.0.
-- [Protected release workflow](https://github.com/ClamsyHub/ha-garden-planner/actions/runs/42249493733): all nine jobs successful, including HACS and Hassfest before publication.
-- Tested release commit: `a3626114264295756356b16eade77f80bd918a71`.
-- [Catalog PR #13526](https://github.com/hacs/default/pull/13526): open, not merged; maintainer edits enabled, no individual reviews requested. Exactly one sorted integration entry is added.
-- Upstream JSON, schema, sorting, editable-PR and preflight checks succeeded. The category-specific checks were skipped pending maintainer triage (no `New default repository` label yet). They are not reported as passed.
-- No maintainer comments at the status check. Official catalog membership remains pending acceptance and catalog processing.
+The reviewer requested catalog-search-first German/English installation instructions
+and an up-to-date release link. These are addressed in v0.1.6. Custom repositories
+remain a fallback, and existing installations keep their data.
+
+The evidence below records the original v0.1.1 installation and submission tests;
+it is historical evidence, not a statement that current catalog acceptance is pending.
 
 ## Public release verification
 

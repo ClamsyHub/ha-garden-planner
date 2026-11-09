@@ -6,21 +6,20 @@
 
 Lokaler Aussaat-, Pflanz-, Pflege- und Erntekalender für Home Assistant.
 
-**Öffentliche Entwicklungsversion: [v0.1.5](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.5).**
+**Öffentliche Entwicklungsversion: [neueste Veröffentlichung](https://github.com/ClamsyHub/ha-garden-planner/releases/latest).**
 Automatisches Seitenleisten-Panel, Live-Temperaturen, Sensor-/Kalender-Entitäten,
 Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Dies ist eine
 frühe Version 0.x, noch keine stabile Version 1.0.
 
 Quellcode: [ClamsyHub/ha-garden-planner](https://github.com/ClamsyHub/ha-garden-planner).
-Die erste Entwicklungsversion ist veröffentlicht und als Custom Repository
-in HACS und Marketplace getestet. Keine Aufnahme in den
-offiziellen Katalog. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
+Garden Planner ist seit dem 9. November 2026 im offiziellen HACS-Community-Katalog
+aufgenommen. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Veröffentlicht:** v0.1.5 mit Kalenderreihenfolge Jahr / Monat / Woche,
-Notiz-Tooltips und kompakten Zeitraumdetails mit Pflanzensteckbrief. [Updatehinweise](docs/releases/v0.1.5.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
-ist eingereicht und wartet auf die Maintainer. [Status](docs/catalog/README.md).
+**Änderungen v0.1.6:** Mehrfachfilter, fixierte Jahresüberschriften und native
+Seitenleisten-Sichtbarkeit nach Leserecht. [Updatehinweise](docs/releases/v0.1.6.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
+wurde am 9. November 2026 von Frenck akzeptiert und zusammengeführt. [Status](docs/catalog/README.md).
 
 ## Oberfläche
 
@@ -62,6 +61,12 @@ Sicherheitsminimum: Home Assistant **ab 2026.7.0**, einschließlich Container un
 unterstützter Installationsarten. Keine zusätzlichen Container, Cloud-Dienste oder
 HACS-Karten. Das fertige Frontend liegt bereits im Integrationspaket; Nutzer werden
 weder Node.js noch einen eigenen Build benötigen.
+
+**Installation:** In HACS bzw. Home Assistant Marketplace nach **Garden Planner**
+suchen und installieren. Anschließend HA neu starten und unter
+**Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden Planner
+auswählen. Ein Custom Repository ist dafür nicht mehr erforderlich; es bleibt
+als [Alternative](docs/de/README.md) dokumentiert.
 
 Die Integration registriert das Panel automatisch; YAML und zusätzliche
 Frontend-Ressourcen sind nicht erforderlich. Eine vollständige Einrichtung wurde
@@ -114,12 +119,12 @@ produktive HA-Konfigurationen oder private Testdaten.
 
 ## Noch offen vor einem stabilen Release
 
-Versionswechsel beim nächsten Release, weitere Praxis-/Gerätetests und die
-gesondert freizugebende Katalogaufnahme. GitHub-Veröffentlichung und erste
-Custom-Repository-Installation sind abgeschlossen: [Veröffentlichungsnachweis](docs/publication.md).
+Weitere Praxis-/Gerätetests und die Bewertung vor Version 1.0 stehen aus.
+GitHub-Veröffentlichung, Custom-Repository-Installation und offizielle
+HACS-Katalogaufnahme sind abgeschlossen: [Veröffentlichungsnachweis](docs/publication.md).
 Die [Release-Checkliste](docs/releasing.md) bleibt für weitere Versionen verbindlich.
 Administratoren bearbeiten und verwalten Freigaben; weitere aktive HA-Nutzer
-lesen den gemeinsamen Garten. Erinnerungen sind standardmäßig ausgeschaltet.
+lesen den gemeinsamen Garten, sofern ihnen Leserecht gewährt ist. Erinnerungen sind standardmäßig ausgeschaltet.
 Ihre Aktivierung erfordert einen vorhandenen HA-Benachrichtigungskanal.
 Details zu Versandversuchen, Sensoren und Datensicherung: [Betrieb](docs/de/README.md).
 

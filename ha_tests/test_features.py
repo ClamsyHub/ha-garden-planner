@@ -10,12 +10,11 @@ from typing import Any
 
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
-from homeassistant.auth import auth_manager_from_config
+from homeassistant.auth.const import GROUP_ID_ADMIN
 from homeassistant.components.frontend import DATA_PANELS
+from homeassistant.components.frontend.storage import async_user_store
 from homeassistant.components.http.const import KEY_HASS_USER
 from homeassistant.core import ServiceCall
-from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.http import KEY_AUTHENTICATED, KEY_HASS
 
 from custom_components.garden_planner.calendar import GardenCalendar
@@ -24,6 +23,7 @@ from custom_components.garden_planner.const import DOMAIN
 from custom_components.garden_planner.options import DEFAULT_OPTIONS
 from custom_components.garden_planner.reminders import candidates
 from custom_components.garden_planner.sensor import GardenCount
+from custom_components.garden_planner.service import Actor, AuthorizationError
 from custom_components.garden_planner.storage import PlannerWorker
 from ha_tests.test_integration import IntegrationHarness
 
@@ -33,10 +33,6 @@ class FeatureTests(IntegrationHarness):
 
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
-        dr.async_setup(self.hass)
-        await dr.async_load(self.hass, load_empty=True)
-        await er.async_load(self.hass, load_empty=True)
-        self.hass.auth = await auth_manager_from_config(self.hass, [], [])
         self.owner = await self.hass.auth.async_create_user("Synthetic owner")
         self.editor = await self.hass.auth.async_create_user("Synthetic editor")
         self.hass.config_entries._entries[self.entry.entry_id] = self.entry
@@ -47,6 +43,98 @@ class FeatureTests(IntegrationHarness):
             self.delivered.append(call.data["message"])
 
         self.hass.services.async_register("notify", "test_local", notify)
+
+    async def test_sidebar_revocation_restores_only_our_link_and_keeps_admin_access(
+        self,
+    ) -> None:
+        outsider = await self.hass.auth.async_create_user("Synthetic outsider")
+        editor_store = await async_user_store(self.hass, self.editor.id)
+        outsider_store = await async_user_store(self.hass, outsider.id)
+        owner_store = await async_user_store(self.hass, self.owner.id)
+        original = {
+            "hiddenPanels": ["map"],
+            "panelOrder": ["history", "map"],
+            "other": True,
+        }
+        await editor_store.async_set_item("sidebar", original)
+        await outsider_store.async_set_item(
+            "sidebar", {"hiddenPanels": ["garden-planner", "map"]}
+        )
+        changes: list[bool] = []
+        unsubscribe = editor_store.async_subscribe(
+            "sidebar", lambda: changes.append(True)
+        )
+        self.addCleanup(unsubscribe)
+
+        result = await self.request(
+            "set_settings",
+            {"settings": {**DEFAULT_OPTIONS, "readers": []}, "confirm": True},
+        )
+        self.assertTrue(result["success"])
+        self.assertEqual(
+            editor_store.data["sidebar"],
+            {**original, "hiddenPanels": ["map", "garden-planner"]},
+        )
+        self.assertNotIn(
+            "garden-planner",
+            owner_store.data.get("sidebar", {}).get("hiddenPanels", []),
+        )
+        self.assertTrue(self.hass.data[DATA_PANELS]["garden-planner"].require_admin)
+        service = self.hass.data[DOMAIN]
+        with self.assertRaises(AuthorizationError):
+            await service.async_execute(
+                "list", {"table": "plants"}, Actor(self.editor.id)
+            )
+        await service.async_execute(
+            "list", {"table": "plants"}, Actor(self.owner.id, is_admin=True)
+        )
+        self.assertTrue(changes)
+
+        result = await self.request(
+            "set_settings",
+            {
+                "settings": {**DEFAULT_OPTIONS, "readers": [self.editor.id]},
+                "confirm": True,
+            },
+        )
+        self.assertTrue(result["success"])
+        self.assertEqual(editor_store.data["sidebar"], original)
+        self.assertEqual(
+            outsider_store.data["sidebar"]["hiddenPanels"], ["garden-planner", "map"]
+        )
+        self.assertFalse(self.hass.data[DATA_PANELS]["garden-planner"].require_admin)
+        await service.async_execute("list", {"table": "plants"}, Actor(self.editor.id))
+        with self.assertRaises(AuthorizationError):
+            await service.async_execute("list", {"table": "plants"}, Actor(outsider.id))
+
+        # Returning to unrestricted viewing also restores only integration-owned hides.
+        await self.request(
+            "set_settings",
+            {"settings": {**DEFAULT_OPTIONS, "readers": []}, "confirm": True},
+        )
+        await self.request(
+            "set_settings", {"settings": DEFAULT_OPTIONS, "confirm": True}
+        )
+        self.assertEqual(editor_store.data["sidebar"], original)
+        self.assertIn("garden-planner", outsider_store.data["sidebar"]["hiddenPanels"])
+
+    async def test_sidebar_tracks_new_users_and_administrator_promotion(self) -> None:
+        result = await self.request(
+            "set_settings",
+            {
+                "settings": {**DEFAULT_OPTIONS, "readers": [self.editor.id]},
+                "confirm": True,
+            },
+        )
+        self.assertTrue(result["success"])
+        late = await self.hass.auth.async_create_user("Synthetic later user")
+        await self.hass.async_block_till_done(wait_background_tasks=True)
+        store = await async_user_store(self.hass, late.id)
+        self.assertIn("garden-planner", store.data["sidebar"]["hiddenPanels"])
+        await self.hass.auth.async_update_user(late, group_ids=[GROUP_ID_ADMIN])
+        await self.hass.async_block_till_done(wait_background_tasks=True)
+        self.assertTrue(late.is_admin)
+        self.assertNotIn("garden-planner", store.data["sidebar"]["hiddenPanels"])
 
     async def test_panel_and_static_code_are_registered_automatically(self) -> None:
         panels = self.hass.data[DATA_PANELS]

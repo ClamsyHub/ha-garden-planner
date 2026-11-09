@@ -245,7 +245,7 @@ const de = {
     "Dateiübertragungen unterliegen zusätzlich der Größenbegrenzung deiner Home-Assistant-Verbindung.",
   retry: "Erneut versuchen",
   yearlyHint:
-    "Jede Zeile zeigt eine Tätigkeit. Tippe auf einen Balken für die Pflanzendetails.",
+    "Jede Zeile zeigt eine Tätigkeit. Tippe auf einen Balken für Zeitraumdetails und Pflanzensteckbrief.",
   actualWork: "Geplante Aufgaben und dokumentierte Ereignisse",
   untitled: "Unbenannter Eintrag",
   variety: "Sorte",
@@ -491,7 +491,8 @@ const en: Record<keyof typeof de, string> = {
   limitedTransport:
     "File transfers are also subject to your Home Assistant connection size limit.",
   retry: "Try again",
-  yearlyHint: "Each row shows an activity. Tap a bar to open plant details.",
+  yearlyHint:
+    "Each row shows an activity. Tap a bar for period details and the plant profile.",
   actualWork: "Planned tasks and recorded events",
   untitled: "Untitled record",
   variety: "Variety",

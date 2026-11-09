@@ -2,42 +2,46 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand: öffentliche Entwicklungsversion v0.1.5
+## Stand dieser Dokumentation: v0.1.6
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
 sowie einen Kalender für konkrete Aufgaben und dokumentierte Kulturereignisse
 bereit. [Repository](https://github.com/ClamsyHub/ha-garden-planner) und
-[Version v0.1.5](https://github.com/ClamsyHub/ha-garden-planner/releases/tag/v0.1.5)
-sind öffentlich. Keine Aufnahme in den offiziellen Katalog. Entwicklung und Tests
-erfolgen außerhalb produktiver Dateien.
-
-## Isolierte Testinstallation
-
-Sicherheitsminimum: HA >=2026.7.0. Das vollständige Verzeichnis `custom_components/garden_planner/`
-mit `www/` in das gleichnamige Verzeichnis der **separaten Testinstanz** kopieren.
-HA neu starten. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen**
-Garden Planner wählen und bestätigen. Das Panel **Garden Planner** erscheint in
-der Seitenleiste. Kein YAML, keine zusätzliche Karte und kein Node.js erforderlich.
-Es wird genau ein gemeinsamer Garten unterstützt. Mit allen unterstützten
-Installationsarten soll dieselbe Integration funktionieren; tatsächlich geprüft
-wurden die in [Validierung](../validation.md) angegebenen Umgebungen.
+[aktuelle Veröffentlichung](https://github.com/ClamsyHub/ha-garden-planner/releases/latest)
+sind öffentlich. Seit dem 9. November 2026 ist Garden Planner im offiziellen
+HACS-Community-Katalog aufgenommen. Entwicklung und Tests erfolgen außerhalb produktiver Dateien.
 
 ## Installation über HACS oder Marketplace
 
-1. In HACS bzw. Marketplace **Benutzerdefiniertes Repository / Custom Repository**
-   öffnen. Für ein eigenes Repository im Marketplace zuerst GitHub verbinden.
-2. `https://github.com/ClamsyHub/ha-garden-planner` als Typ **Integration** hinzufügen.
-3. v0.1.5 herunterladen/installieren. Dafür müssen Vorabversionen nicht aktiviert werden.
-4. HA bei entsprechender Aufforderung neu starten (bei HACS empfohlen).
-5. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden
-   Planner auswählen und bestätigen. Das Panel erscheint automatisch.
+1. In HACS bzw. Home Assistant Marketplace nach **Garden Planner** suchen.
+2. Den Eintrag öffnen und die aktuelle reguläre Version herunterladen/installieren.
+3. Home Assistant nach der Installation neu starten.
+4. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden Planner
+   auswählen und bestätigen. Das Panel erscheint automatisch in der Seitenleiste.
 
-Die direkte Katalogsuche wird erst nach akzeptiertem Aufnahme-PR verfügbar.
-GitHub-Veröffentlichung, Custom Repository und offizieller Katalog sind drei
-getrennte Schritte. Das öffentliche Update v0.1.0 → v0.1.1 wurde über HACS 2.0.5
-mit HA 2026.7.0 und den nativen Marketplace mit HA 2026.11.0 getestet.
-Alle Gartendaten blieben erhalten. [Nachweis und PR-Status](../catalog/README.md).
+Garden Planner ist seit dem 9. November 2026 im offiziellen Community-Katalog.
+[Akzeptierter Aufnahme-PR #13526](https://github.com/hacs/default/pull/13526).
+Bei einer verzögerten Katalogaktualisierung zunächst die Store-Liste aktualisieren.
+Eine vorhandene Custom-Repository-Installation muss nicht neu eingerichtet werden;
+Gartendaten und Einstellungen bleiben bei einem normalen Update erhalten.
+Vor Updates die HA-Konfiguration sichern, anschließend HA neu starten und die Panel-Seite neu laden.
+
+### Alternative: benutzerdefiniertes Repository
+
+Falls der Eintrag noch nicht in der lokalen Suche erscheint: Unter **Benutzerdefiniertes
+Repository / Custom Repository** `https://github.com/ClamsyHub/ha-garden-planner`
+als Typ **Integration** hinzufügen (im Marketplace gegebenenfalls zuerst GitHub verbinden).
+Die aktuelle reguläre Version installieren; Vorabversionen müssen nicht aktiviert werden.
+Danach wie oben neu starten und die Integration hinzufügen.
+
+### Isolierte Testinstallation
+
+Sicherheitsminimum: HA >=2026.7.0. Für manuelle Tests das vollständige Verzeichnis
+`custom_components/garden_planner/` mit `www/` in eine **separate Testinstanz** kopieren.
+HA neu starten und Garden Planner unter Geräte & Dienste hinzufügen. Kein YAML,
+keine zusätzliche Karte und kein Node.js erforderlich. Es wird ein gemeinsamer Garten unterstützt.
+Tatsächlich geprüfte Umgebungen: [Validierung](../validation.md).
 
 ## Bedienung und Berechtigungen
 
@@ -46,7 +50,13 @@ Sorten, Anbauzeitfenster, tatsächliche Aussaaten und mehrjährige Historie.
 Historische Momentaufnahmen bleiben bei späteren Stammdatenänderungen erhalten.
 Erfolg wird ausdrücklich dokumentiert und nicht aus einem Abschluss abgeleitet.
 
-Alle aktiven angemeldeten HA-Nutzer können den gemeinsamen Garten lesen.
+Standardmäßig können alle aktiven angemeldeten HA-Nutzer den gemeinsamen Garten lesen.
+Administratoren können Leserechte pro Nutzer einschränken. Entzug blendet den
+Garden-Planner-Link über die native HA-Seitenleisten-Einstellung aus und sperrt
+Datenzugriffe. Erneute Freigabe stellt nur von Garden Planner ausgeblendete Links
+wieder her; vorher manuell versteckte Links bleiben versteckt. Administratoren
+behalten immer Zugriff, auch bei leerer Nutzerfreigabe. Andere Menüpunkte und
+Reihenfolgen werden erhalten. Ältere geöffnete Clients gegebenenfalls neu laden.
 Administratoren bearbeiten und können unter **Einstellungen → Home Assistant**
 weitere aktive Nutzer als Bearbeiter freigeben. Das geht auch über den nativen
 HA-Konfigurationsdialog der Integration. Import/Export, Sicherungen, Restore,
@@ -122,12 +132,13 @@ alle 15 Minuten. Allgemeine saisonale Fenster erscheinen im Garden-Planner-Panel
 der HA-Kalender enthält konkrete Aufgaben und Kulturereignisse.
 
 Die Installation des veröffentlichten Pakets und erneuter Download/Neustart
-sind in beiden Stores geprüft. Ein Wechsel zwischen zwei öffentlichen Versionen
-steht beim ersten Release noch aus. Katalogaufnahme und physische Geräte sind
-weiterhin offen. [Prüfergebnisse und offene Punkte](../validation.md).
+sind in beiden Stores geprüft. Öffentliche Versionswechsel sind ebenfalls geprüft. Die Katalogaufnahme ist
+abgeschlossen; weitere physische Gerätetests stehen aus. [Prüfergebnisse und offene Punkte](../validation.md).
 
 [Rollen und Benachrichtigungen / Users and notifications](../notifications.md)
 
 Ab v0.1.4 liegen Anbau-Messwerte nur an der Pflanze, Zeiträume gelten für alle Sorten. Die Datenmigration entfernt alte Sortenwerte und erstellt vorher eine Datenbanksicherung. Historische Momentaufnahmen bleiben erhalten. [Migration und Rollback](../releases/v0.1.4.md).
 
 Ab v0.1.5 stehen die Kalenderansichten in der Reihenfolge Jahr / Monat / Woche. Tooltips zeigen Zeitraum-Notizen; Antippen oder Anklicken öffnet kompakte Zeitraumdetails mit Pflanzensteckbrief darunter. [Updatehinweise](../releases/v0.1.5.md).
+
+Ab v0.1.6 ermöglichen die Kalenderfilter eine Mehrfachauswahl. Die Monatszeile und Eckzelle der Jahresliste sind fixiert. [Updatehinweise](../releases/v0.1.6.md).
