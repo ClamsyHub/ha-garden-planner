@@ -23,7 +23,8 @@ async def async_sync_sidebar(
     """Hide revoked users' link; restore links we hid when access is granted."""
     lock: asyncio.Lock = hass.data.setdefault(LOCK, asyncio.Lock())
     async with lock:
-        for user in await hass.auth.async_get_users():
+        users = await hass.auth.async_get_users()
+        for user in users:
             if not user.is_active or user.system_generated:
                 continue
             allowed = user.is_admin or readers is None or user.id in readers
@@ -55,7 +56,13 @@ async def async_sync_sidebar(
 
         panels = hass.data.get(frontend.DATA_PANELS, {})
         panel = panels.get(PANEL_PATH)
-        admin_only = readers == frozenset()
+        admin_only = readers is not None and not any(
+            user.is_active
+            and not user.system_generated
+            and not user.is_admin
+            and user.id in readers
+            for user in users
+        )
         if panel is not None and panel.require_admin != admin_only:
             frontend.async_register_built_in_panel(
                 hass,

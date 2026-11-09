@@ -107,6 +107,17 @@ class FeatureTests(IntegrationHarness):
         with self.assertRaises(AuthorizationError):
             await service.async_execute("list", {"table": "plants"}, Actor(outsider.id))
 
+        # Selecting only administrators is also an administrator-only panel.
+        result = await self.request(
+            "set_settings",
+            {
+                "settings": {**DEFAULT_OPTIONS, "readers": [self.owner.id]},
+                "confirm": True,
+            },
+        )
+        self.assertTrue(result["success"])
+        self.assertTrue(self.hass.data[DATA_PANELS]["garden-planner"].require_admin)
+
         # Returning to unrestricted viewing also restores only integration-owned hides.
         await self.request(
             "set_settings",
