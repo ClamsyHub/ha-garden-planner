@@ -12,7 +12,7 @@ from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 from homeassistant.auth.const import GROUP_ID_ADMIN
 from homeassistant.components.frontend import DATA_PANELS
-from homeassistant.components.frontend.storage import async_user_store
+from homeassistant.components.frontend.storage import UserStore, async_user_store
 from homeassistant.components.http.const import KEY_HASS_USER
 from homeassistant.core import ServiceCall
 from homeassistant.helpers.http import KEY_AUTHENTICATED, KEY_HASS
@@ -21,6 +21,7 @@ from custom_components.garden_planner.calendar import GardenCalendar
 from custom_components.garden_planner.config_flow import GardenOptionsFlow
 from custom_components.garden_planner.const import DOMAIN
 from custom_components.garden_planner.options import DEFAULT_OPTIONS
+from custom_components.garden_planner.reminder_preferences import STORE_KEY
 from custom_components.garden_planner.reminders import candidates
 from custom_components.garden_planner.sensor import GardenCount
 from custom_components.garden_planner.service import Actor, AuthorizationError
@@ -146,6 +147,170 @@ class FeatureTests(IntegrationHarness):
         await self.hass.async_block_till_done(wait_background_tasks=True)
         self.assertTrue(late.is_admin)
         self.assertNotIn("garden-planner", store.data["sidebar"]["hiddenPanels"])
+
+    async def test_personal_reminders_owner_persistence_and_deduplication(
+        self,
+    ) -> None:
+        plant = (
+            await self.request(
+                "create",
+                {"table": "plants", "data": {"name": "Synthetic personal plant"}},
+            )
+        )["result"]
+        window_data = {
+            "plant_id": plant["id"],
+            "activity": "direct",
+            "environment": "outdoors",
+            "start_month": 11,
+            "start_day": 6,
+            "end_month": 11,
+            "end_day": 30,
+        }
+        window = (
+            await self.request(
+                "create", {"table": "growing_windows", "data": window_data}
+            )
+        )["result"]
+        original_admin = self.connection.user
+        self.connection.user = self.editor
+        response = await self.request("get_user_reminders")
+        self.assertTrue(response["result"]["cells"][plant["id"]]["direct"])
+        response = await self.request(
+            "set_user_reminder",
+            {"plant_id": plant["id"], "activity": "direct", "enabled": False},
+        )
+        self.assertTrue(response["success"], response)
+        self.assertFalse(response["result"]["cells"][plant["id"]]["direct"])
+        self.assertFalse(
+            (await self.request("get_user_reminders"))["result"]["cells"][plant["id"]][
+                "direct"
+            ]
+        )
+        self.assertFalse(
+            (
+                await self.request(
+                    "set_user_reminder",
+                    {"plant_id": plant["id"], "activity": "care", "enabled": False},
+                )
+            )["success"]
+        )
+        self.assertFalse(
+            (
+                await self.request(
+                    "set_user_reminder",
+                    {
+                        "plant_id": plant["id"],
+                        "activity": "direct",
+                        "enabled": True,
+                        "user_id": self.owner.id,
+                    },
+                )
+            )["success"]
+        )
+        self.assertFalse(
+            (
+                await self.request(
+                    "create", {"table": "plants", "data": {"name": "Forbidden"}}
+                )
+            )["success"]
+        )
+        store = await async_user_store(self.hass, self.editor.id)
+        self.assertIn(STORE_KEY, store.data)
+        restored_store = UserStore(self.hass, self.editor.id)
+        await restored_store.async_load()
+        self.assertEqual(restored_store.data[STORE_KEY], store.data[STORE_KEY])
+        self.connection.user = self.owner
+        self.assertTrue(
+            (await self.request("get_user_reminders"))["result"]["cells"][plant["id"]][
+                "direct"
+            ]
+        )
+        routes = [
+            {
+                "user_id": user.id,
+                "kind": "push",
+                "enabled": True,
+                "service": "notify.test_local",
+                "entity": "",
+                "target": "",
+            }
+            for user in (self.editor, self.owner)
+        ]
+        result = await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "notification_routes": routes,
+                },
+                "confirm": True,
+            },
+        )
+        self.assertTrue(result["success"], result)
+        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        # First route opted out; the second identical destination still delivers.
+        await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 1)
+        await reminder.async_check(datetime(2026, 11, 6, 13, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 1)
+        await self.request(
+            "set_user_reminder",
+            {"plant_id": plant["id"], "activity": "direct", "enabled": False},
+        )
+        second = (
+            await self.request(
+                "create", {"table": "growing_windows", "data": window_data}
+            )
+        )["result"]
+        await reminder.async_check(datetime(2026, 11, 6, 14, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 1)
+        await self.request(
+            "create",
+            {
+                "table": "tasks",
+                "data": {
+                    "title": "Manual task unaffected",
+                    "date": "2026-11-06",
+                    "activity": "care",
+                },
+            },
+        )
+        await reminder.async_check(datetime(2026, 11, 6, 15, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 2)
+        for record in (window, second):
+            result = await self.request(
+                "delete",
+                {
+                    "table": "growing_windows",
+                    "id": record["id"],
+                    "revision": record["revision"],
+                    "confirm": True,
+                },
+            )
+            self.assertTrue(result["success"], result)
+        await self.request("create", {"table": "growing_windows", "data": window_data})
+        self.assertTrue(
+            (await self.request("get_user_reminders"))["result"]["cells"][plant["id"]][
+                "direct"
+            ]
+        )
+        self.connection.user = original_admin
+        await self.request(
+            "set_settings",
+            {"settings": {**DEFAULT_OPTIONS, "readers": []}, "confirm": True},
+        )
+        self.connection.user = self.editor
+        self.assertFalse((await self.request("get_user_reminders"))["success"])
+        self.assertFalse(
+            (
+                await self.request(
+                    "set_user_reminder",
+                    {"plant_id": plant["id"], "activity": "direct", "enabled": True},
+                )
+            )["success"]
+        )
+        self.connection.user = original_admin
 
     async def test_panel_and_static_code_are_registered_automatically(self) -> None:
         panels = self.hass.data[DATA_PANELS]

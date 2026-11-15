@@ -1,5 +1,22 @@
 import type { Language } from "./types";
 const de = {
+  reminders: "Erinnerungen",
+  personalSubtitle: "Wähle, woran du erinnert werden möchtest.",
+  personalUnavailable:
+    "Persönliche Erinnerungen sind nur in der Home-Assistant-Integration verfügbar.",
+  personalIntro:
+    "Meine Erinnerungen für Anbauzeiträume. Deine Auswahl wird automatisch gespeichert und gilt nur für dich – für deine eingerichteten Push- und E-Mail-Ziele.",
+  personalGlobalOn: "Der Erinnerungsversand ist global aktiviert.",
+  personalGlobalOff:
+    "Der Erinnerungsversand ist global ausgeschaltet. Deine Auswahl bleibt gespeichert; ein Administrator muss den Versand aktivieren.",
+  personalChannelOn: "Persönliche Versandziele sind eingerichtet.",
+  personalChannelOff:
+    "Für dich ist noch kein persönliches Versandziel aktiviert. Bitte einen Administrator um die Einrichtung von Push oder E-Mail.",
+  personalNoWindow: "Kein Anbauzeitraum für diese Tätigkeit vorhanden.",
+  personalHint:
+    "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl gilt für alle Zeiträume dieser Pflanze und Tätigkeit. Manuelle Aufgaben werden weiterhin erinnert. Beim Speichern wird keine Testnachricht gesendet.",
+  personalSharedHint:
+    "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er besitzt keine Benutzerzuordnung und folgt weiterhin allen Terminen, unabhängig von deiner persönlichen Auswahl.",
   multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
   windowDetail: "Anbauzeitraum",
   recurringWindow: "Jährlich wiederkehrender Zeitraum",
@@ -70,6 +87,23 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  reminders: "Reminders",
+  personalSubtitle: "Choose what you want to be reminded about.",
+  personalUnavailable:
+    "Personal reminders are available in the Home Assistant integration.",
+  personalIntro:
+    "My growing-window reminders. Your choices save automatically and apply only to your configured personal push and email destinations.",
+  personalGlobalOn: "Reminder delivery is globally enabled.",
+  personalGlobalOff:
+    "Reminder delivery is globally disabled. Your choices are saved; an administrator must enable delivery.",
+  personalChannelOn: "Personal delivery destinations are configured.",
+  personalChannelOff:
+    "No personal delivery destination is enabled for you. Ask an administrator to configure push or email.",
+  personalNoWindow: "No growing window exists for this activity.",
+  personalHint:
+    "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out covers all windows for this plant and activity. Manual tasks still generate reminders. Saving sends no test message.",
+  personalSharedHint:
+    "A shared channel is also enabled. It has no user association and continues to receive all events independently of your personal choices.",
   multiFilterHint: "Select multiple values. An empty selection shows all.",
   windowDetail: "Growing window",
   recurringWindow: "Annually recurring window",

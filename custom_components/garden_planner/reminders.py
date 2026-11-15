@@ -7,11 +7,13 @@ import logging
 from datetime import date, datetime
 from typing import Any
 
+from homeassistant.components.frontend.storage import async_user_store
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 from .options import notification_destinations, validate_options
+from .reminder_preferences import STORE_KEY, availability, selections
 from .service import PlannerService
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,7 +84,6 @@ class Reminders:
                 return
             users = {u.id: u for u in await self.hass.auth.async_get_users()}
             destinations = []
-            seen = set()
             for destination in notification_destinations(settings):
                 if not destination["legacy"]:
                     user = users.get(destination["user_id"])
@@ -103,9 +104,6 @@ class Reminders:
                         destination["target"],
                     ]
                 )
-                if signature in seen:
-                    continue
-                seen.add(signature)
                 domain, action = destination["service"].split(".", 1)
                 if not self.hass.services.has_service(domain, action):
                     _LOGGER.warning(
@@ -131,12 +129,36 @@ class Reminders:
                 data[table] = await self.service.worker.async_call(
                     "list_records", table
                 )
+            available = availability(data["plants"], data["growing_windows"])
+            personal: dict[str, dict[str, dict[str, bool]]] = {}
+            for destination, _, _, _ in destinations:
+                if not destination["legacy"] and destination["user_id"] not in personal:
+                    store = await async_user_store(self.hass, destination["user_id"])
+                    personal[destination["user_id"]] = selections(
+                        available, store.data.get(STORE_KEY, {})
+                    )
+            window_lookup = {
+                f"window:{w['id']}": w["data"] for w in data["growing_windows"]
+            }
             for key, message in candidates(
                 data, current.date(), settings["lead_days"], settings["language"]
             ):
                 if len(message) > 1000:
                     message = message[:999] + "…"
+                seen: set[str] = set()
+                window = window_lookup.get(key.rsplit(":", 1)[0])
                 for destination, domain, action, signature in destinations:
+                    if (
+                        window
+                        and not destination["legacy"]
+                        and not personal[destination["user_id"]]
+                        .get(window["plant_id"], {})
+                        .get(window["activity"], True)
+                    ):
+                        continue
+                    if signature in seen:
+                        continue
+                    seen.add(signature)
                     delivery_key = (
                         key if destination["legacy"] else f"{key}:route:{signature}"
                     )

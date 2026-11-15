@@ -54,6 +54,8 @@ class Actor:
 
 PARAMETERS: dict[str, tuple[set[str], set[str]]] = {
     "capabilities": (set(), set()),
+    "get_user_reminders": (set(), set()),
+    "set_user_reminder": ({"plant_id", "activity", "enabled"}, set()),
     "get_settings": (set(), set()),
     "set_settings": ({"settings", "confirm"}, set()),
     "reminder_log": (set(), set()),
@@ -140,7 +142,12 @@ class PlannerService:
             }
         if operation == "reminder_log":
             return await self.worker.async_call("reminder_log")
-        if operation in {"get_settings", "set_settings"}:
+        if operation in {
+            "get_settings",
+            "set_settings",
+            "get_user_reminders",
+            "set_user_reminder",
+        }:
             if self.host_handler is None:
                 raise ValidationError(
                     "Home Assistant settings are not available in this host."

@@ -8,6 +8,7 @@ import type {
   HostSettings,
   SettingsResponse,
   NotificationRoute,
+  PersonalReminders,
 } from "./types";
 import {
   LitElement,
@@ -18,6 +19,7 @@ import {
   type TemplateResult,
 } from "lit";
 import { repeat } from "lit/directives/repeat.js";
+import { live } from "lit/directives/live.js";
 import { PlannerApi } from "./api";
 import {
   activeInMonth,
@@ -68,6 +70,7 @@ const pages: Page[] = [
   "cultures",
   "history",
   "locations",
+  "reminders",
   "settings",
 ];
 const activities = [
@@ -87,6 +90,7 @@ const paths: Record<string, string> = {
   cultures:
     "M5 20h14l2-10H3zM12 10V4m0 4C6 8 6 3 6 3s6 0 6 5zm0-2c0-5 6-5 6-5s0 5-6 5z",
   history: "M3 11a9 9 0 1 1 2 7M3 4v7h7m2-4v6l4 2",
+  reminders: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
   locations: "M3 3l6 3 6-3 6 3v15l-6-3-6 3-6-3zm6 3v15m6-18v15",
   settings:
     "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-6v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2",
@@ -113,6 +117,8 @@ export class GardenPlannerPanel extends LitElement {
   static properties = {
     hass: { attribute: false },
     narrow: { type: Boolean },
+    personalReminders: { state: true },
+    reminderQuery: { state: true },
     capabilities: { state: true },
     hostSettings: { state: true },
     hostDraft: { state: true },
@@ -149,6 +155,9 @@ export class GardenPlannerPanel extends LitElement {
   };
   declare hass?: Hass;
   declare narrow: boolean;
+  private personalReminders: PersonalReminders | null = null;
+  private reminderQuery = "";
+  private preferencesGeneration = 0;
   private capabilities: Capabilities | null = null;
   private hostSettings: SettingsResponse | null = null;
   private hostDraftRevision = 0;
@@ -359,6 +368,8 @@ export class GardenPlannerPanel extends LitElement {
     this.boundUser = this.hass?.user?.id ?? "";
     this.api = this.hass?.user ? new PlannerApi(this.hass) : undefined;
     this.tables = emptyTables();
+    this.personalReminders = null;
+    this.preferencesGeneration++;
     this.capabilities = null;
     this.hostSettings = null;
     this.hostDraft = null;
@@ -406,6 +417,7 @@ export class GardenPlannerPanel extends LitElement {
       this.capabilities = capabilities;
       this.loaded = true;
       this.error = "";
+      if (this.page === "reminders") await this.loadPersonalReminders();
     } catch (error) {
       if (generation === this.loadGeneration) {
         this.error = errorText(this.language, error);
@@ -416,6 +428,8 @@ export class GardenPlannerPanel extends LitElement {
           error.code === "unauthorized"
         ) {
           this.tables = emptyTables();
+          this.personalReminders = null;
+          this.preferencesGeneration++;
           this.capabilities = null;
           this.selected = null;
           this.editor = null;
@@ -458,6 +472,10 @@ export class GardenPlannerPanel extends LitElement {
   private navigate(page: Page): void {
     this.page = page;
     this.error = "";
+    if (page === "reminders") {
+      this.personalReminders = null;
+      void this.loadPersonalReminders();
+    }
     if (page === "settings" && this.admin) {
       void this.loadBackups();
       void this.loadHostSettings();
@@ -1696,6 +1714,144 @@ export class GardenPlannerPanel extends LitElement {
           </div>`
         : this.empty("emptyHistory")
     }`;
+  }
+  private async loadPersonalReminders(): Promise<void> {
+    if (!this.api || !this.capabilities?.reminders || this.busy) return;
+    const generation = ++this.preferencesGeneration;
+    const connection = this.connectionGeneration;
+    try {
+      const value =
+        await this.api.command<PersonalReminders>("get_user_reminders");
+      if (
+        generation === this.preferencesGeneration &&
+        connection === this.connectionGeneration &&
+        this.isConnected
+      )
+        this.personalReminders = value;
+    } catch (error) {
+      if (
+        generation === this.preferencesGeneration &&
+        connection === this.connectionGeneration
+      )
+        this.error = errorText(this.language, error);
+    }
+  }
+  private async setPersonalReminder(
+    plant_id: string,
+    activity: string,
+    enabled: boolean,
+  ): Promise<void> {
+    if (!this.api || this.busy) return;
+    const previous = this.personalReminders;
+    if (previous)
+      this.personalReminders = {
+        ...previous,
+        cells: {
+          ...previous.cells,
+          [plant_id]: { ...previous.cells[plant_id], [activity]: enabled },
+        },
+      };
+    this.busy = true;
+    this.error = "";
+    const connection = this.connectionGeneration;
+    const generation = ++this.preferencesGeneration;
+    try {
+      const value = await this.api.command<PersonalReminders>(
+        "set_user_reminder",
+        { plant_id, activity, enabled },
+      );
+      if (
+        connection === this.connectionGeneration &&
+        generation === this.preferencesGeneration
+      ) {
+        this.personalReminders = value;
+        this.announce("saved");
+      }
+    } catch (error) {
+      if (
+        connection === this.connectionGeneration &&
+        generation === this.preferencesGeneration
+      ) {
+        this.personalReminders = previous;
+        this.error = errorText(this.language, error);
+      }
+    } finally {
+      if (connection === this.connectionGeneration) this.busy = false;
+    }
+  }
+  private renderPersonalReminders(): TemplateResult {
+    const preferences = this.personalReminders;
+    if (!this.capabilities?.reminders)
+      return html`<p class="notice">${this.tr("personalUnavailable")}</p>`;
+    if (!preferences) return html`<p role="status">${this.tr("loading")}</p>`;
+    const plants = this.plantList
+      .filter((plant) =>
+        text(plant, "name")
+          .toLocaleLowerCase(this.language)
+          .includes(this.reminderQuery.toLocaleLowerCase(this.language)),
+      )
+      .sort((a, b) =>
+        text(a, "name").localeCompare(text(b, "name"), this.language),
+      );
+    return html`<section class="panel">
+      <p>${this.tr("personalIntro")}</p>
+      <p class="notice">
+        ${this.tr(preferences.global_enabled ? "personalGlobalOn" : "personalGlobalOff")}
+        ${this.tr(preferences.personal_destinations ? "personalChannelOn" : "personalChannelOff")}
+      </p>
+      ${preferences.shared_channel_enabled ? html`<p class="notice">${this.tr("personalSharedHint")}</p>` : nothing}
+      <label
+        >${this.tr("search")}<input
+          type="search"
+          .value=${this.reminderQuery}
+          @input=${(event: Event) => {
+            this.reminderQuery = (event.target as HTMLInputElement).value;
+          }}
+      /></label>
+      <div
+        class="reminders-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("reminders")}
+      >
+        <table class="reminders-table">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("plants")}</th>
+              ${activities.map((activity) => html`<th scope="col">${this.lab(activity)}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${plants.map(
+              (plant) =>
+                html`<tr>
+                  <th scope="row">${text(plant, "name")}</th>
+                  ${activities.map((activity) => {
+                    const available =
+                      preferences.cells[plant.id]?.[activity] !== undefined;
+                    const checked =
+                      preferences.cells[plant.id]?.[activity] ?? false;
+                    return html`<td
+                      class=${available ? "" : "reminder-unavailable"}
+                      title=${!available ? this.tr("personalNoWindow") : ""}
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label=${`${text(plant, "name")}: ${this.lab(activity)}`}
+                        .checked=${live(checked)}
+                        ?disabled=${!available || this.busy}
+                        @change=${(event: Event) => void this.setPersonalReminder(plant.id, activity, (event.target as HTMLInputElement).checked)}
+                      />
+                    </td>`;
+                  })}
+                </tr>`,
+            )}
+          </tbody>
+        </table>
+      </div>
+      ${!plants.length ? html`<p class="muted">${this.tr("noResults")}</p>` : nothing}
+      <p class="muted">${this.tr("personalHint")}</p>
+    </section>`;
   }
   private renderLocations(): TemplateResult {
     return html`${
@@ -2967,7 +3123,9 @@ export class GardenPlannerPanel extends LitElement {
             <div>
               <div class="eyebrow">Garden Planner</div>
               <h1>${this.tr(this.page)}</h1>
-              <p class="muted">${this.tr("overviewIntro")}</p>
+              <p class="muted">
+                ${this.tr(this.page === "reminders" ? "personalSubtitle" : "overviewIntro")}
+              </p>
             </div>
             <div class="actions">
               <button
@@ -2977,11 +3135,11 @@ export class GardenPlannerPanel extends LitElement {
                 @click=${() => this.refresh()}
               >
                 ${icon("refresh")}</button
-              >${this.editable && this.page !== "settings" ? html`<button class="primary" ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}${this.tr(newAction[0])}</button>` : nothing}
+              >${this.editable && this.page !== "settings" && this.page !== "reminders" ? html`<button class="primary" ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}${this.tr(newAction[0])}</button>` : nothing}
             </div>
           </header>
           ${this.error ? html`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : nothing}
-          ${this.loaded && !this.editable ? html`<p class="notice">${this.tr("readOnly")}</p>` : nothing}
+          ${this.loaded && !this.editable && this.page !== "reminders" ? html`<p class="notice">${this.tr("readOnly")}</p>` : nothing}
           ${
             !this.loaded
               ? html`<p role="status">${this.tr("loading")}</p>`
@@ -3016,7 +3174,9 @@ export class GardenPlannerPanel extends LitElement {
                           </section>`
                         : this.page === "locations"
                           ? this.renderLocations()
-                          : this.renderSettings()
+                          : this.page === "reminders"
+                            ? this.renderPersonalReminders()
+                            : this.renderSettings()
           }
         </main>
       </div>

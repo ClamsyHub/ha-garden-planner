@@ -1,10 +1,12 @@
 """Own the entry's subscriptions, native entities and validated host settings."""
 
+import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 from homeassistant.auth.models import User
+from homeassistant.components.frontend.storage import async_user_store
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -12,6 +14,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from .coordinator import GardenCoordinator
 from .models import ValidationError
 from .options import notification_destinations, validate_options
+from .reminder_preferences import STORE_KEY, availability, selections, updated
 from .reminders import Reminders
 from .service import Actor, PlannerService
 from .sidebar import async_sync_sidebar
@@ -29,12 +32,45 @@ class Runtime:
     reminders: Reminders
     cancel: list[Callable[[], None]] = field(default_factory=list)
     closing: bool = False
+    preference_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     async def host_command(
         self, operation: str, params: dict[str, Any], actor: Actor
     ) -> Any:
         if operation == "capabilities":
             return {"http_transfer": True, "reminders": True}
+        if operation in {"get_user_reminders", "set_user_reminder"}:
+            async with self.preference_lock:
+                plants = await self.service.worker.async_call("list_records", "plants")
+                windows = await self.service.worker.async_call(
+                    "list_records", "growing_windows"
+                )
+                available = availability(plants, windows)
+                store = await async_user_store(self.hass, actor.user_id)
+                stored = store.data.get(STORE_KEY, {})
+                if operation == "set_user_reminder":
+                    if not isinstance(params["activity"], str):
+                        raise ValidationError("Activity must be text.")
+                    stored = updated(
+                        available,
+                        stored,
+                        params["plant_id"],
+                        params["activity"],
+                        params["enabled"],
+                    )
+                    await store.async_set_item(STORE_KEY, stored)
+                settings = validate_options(dict(self.entry.options))
+                return {
+                    "cells": selections(available, stored),
+                    "global_enabled": settings["reminders_enabled"],
+                    "personal_destinations": sum(
+                        1
+                        for route in settings["notification_routes"]
+                        if route["user_id"] == actor.user_id and route["enabled"]
+                    ),
+                    "shared_channel_enabled": settings["shared_channel_enabled"]
+                    and bool(settings["notify_service"]),
+                }
         if operation == "get_settings":
             users = await self.hass.auth.async_get_users()
             channels = [

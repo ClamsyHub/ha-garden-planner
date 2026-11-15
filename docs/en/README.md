@@ -10,8 +10,8 @@ release. Included in the official HACS community catalog since 9 November 2026. 
 
 ## Interface and features
 
-Seven German/English views: overview, year/month/week calendar, plants, current
-crops, multi-year history, beds/locations and settings. Responsive light/dark
+Eight German/English views: overview, year/month/week calendar, plants, current
+crops, multi-year history, beds/locations, personal reminders (from v0.1.7) and settings. Responsive light/dark
 layouts, keyboard dialogs, multiple seasonal windows and dated cultivation events.
 Historical snapshots retain context after master-data edits. Outcomes are explicit
 observations. No horticultural recommendations or personal garden data are seeded.

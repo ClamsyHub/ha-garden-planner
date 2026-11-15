@@ -26,6 +26,7 @@ export type Page =
   | "cultures"
   | "history"
   | "locations"
+  | "reminders"
   | "settings";
 export type Language = "de" | "en";
 export interface Hass {
@@ -125,4 +126,11 @@ export interface SettingsResponse {
   users: { id: string; name: string; is_admin?: boolean }[];
   notify_entities?: { id: string; name: string }[];
   channels: string[];
+}
+
+export interface PersonalReminders {
+  cells: Record<string, Record<string, boolean>>;
+  global_enabled: boolean;
+  personal_destinations: number;
+  shared_channel_enabled: boolean;
 }

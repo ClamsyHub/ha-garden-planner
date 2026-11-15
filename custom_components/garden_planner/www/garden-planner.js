@@ -440,22 +440,22 @@ var ce = class extends HTMLElement {
 };
 ce.elementStyles = [], ce.shadowRootOptions = { mode: "open" }, ce[B("elementProperties")] = /* @__PURE__ */ new Map(), ce[B("finalized")] = /* @__PURE__ */ new Map(), ie?.({ ReactiveElement: ce }), (R.reactiveElementVersions ??= []).push("2.1.2");
 // node_modules/lit-html/lit-html.js
-var le = globalThis, ue = (e) => e, de = le.trustedTypes, fe = de ? de.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, pe = "$lit$", V = `lit$${Math.random().toFixed(9).slice(2)}$`, me = "?" + V, he = `<${me}>`, ge = document, _e = () => ge.createComment(""), ve = (e) => e === null || typeof e != "object" && typeof e != "function", ye = Array.isArray, be = (e) => ye(e) || typeof e?.[Symbol.iterator] == "function", xe = "[ 	\n\f\r]", Se = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ce = /-->/g, we = />/g, Te = RegExp(`>|${xe}(?:([^\\s"'>=/]+)(${xe}*=${xe}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), Ee = /'/g, De = /"/g, Oe = /^(?:script|style|textarea|title)$/i, ke = (e) => (t, ...n) => ({
+var le = globalThis, ue = (e) => e, de = le.trustedTypes, fe = de ? de.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, pe = "$lit$", me = `lit$${Math.random().toFixed(9).slice(2)}$`, he = "?" + me, ge = `<${he}>`, _e = document, ve = () => _e.createComment(""), ye = (e) => e === null || typeof e != "object" && typeof e != "function", be = Array.isArray, xe = (e) => be(e) || typeof e?.[Symbol.iterator] == "function", Se = "[ 	\n\f\r]", Ce = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, we = /-->/g, Te = />/g, Ee = RegExp(`>|${Se}(?:([^\\s"'>=/]+)(${Se}*=${Se}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), De = /'/g, Oe = /"/g, ke = /^(?:script|style|textarea|title)$/i, Ae = (e) => (t, ...n) => ({
 	_$litType$: e,
 	strings: t,
 	values: n
-}), H = ke(1), Ae = ke(2), je = Symbol.for("lit-noChange"), U = Symbol.for("lit-nothing"), Me = /* @__PURE__ */ new WeakMap(), Ne = ge.createTreeWalker(ge, 129);
+}), V = Ae(1), je = Ae(2), H = Symbol.for("lit-noChange"), U = Symbol.for("lit-nothing"), Me = /* @__PURE__ */ new WeakMap(), Ne = _e.createTreeWalker(_e, 129);
 function Pe(e, t) {
-	if (!ye(e) || !e.hasOwnProperty("raw")) throw Error("invalid template strings array");
+	if (!be(e) || !e.hasOwnProperty("raw")) throw Error("invalid template strings array");
 	return fe === void 0 ? t : fe.createHTML(t);
 }
 var Fe = (e, t) => {
-	let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = Se;
+	let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = Ce;
 	for (let t = 0; t < n; t++) {
 		let n = e[t], s, c, l = -1, u = 0;
-		for (; u < n.length && (o.lastIndex = u, c = o.exec(n), c !== null);) u = o.lastIndex, o === Se ? c[1] === "!--" ? o = Ce : c[1] === void 0 ? c[2] === void 0 ? c[3] !== void 0 && (o = Te) : (Oe.test(c[2]) && (i = RegExp("</" + c[2], "g")), o = Te) : o = we : o === Te ? c[0] === ">" ? (o = i ?? Se, l = -1) : c[1] === void 0 ? l = -2 : (l = o.lastIndex - c[2].length, s = c[1], o = c[3] === void 0 ? Te : c[3] === "\"" ? De : Ee) : o === De || o === Ee ? o = Te : o === Ce || o === we ? o = Se : (o = Te, i = void 0);
-		let d = o === Te && e[t + 1].startsWith("/>") ? " " : "";
-		a += o === Se ? n + he : l >= 0 ? (r.push(s), n.slice(0, l) + pe + n.slice(l) + V + d) : n + V + (l === -2 ? t : d);
+		for (; u < n.length && (o.lastIndex = u, c = o.exec(n), c !== null);) u = o.lastIndex, o === Ce ? c[1] === "!--" ? o = we : c[1] === void 0 ? c[2] === void 0 ? c[3] !== void 0 && (o = Ee) : (ke.test(c[2]) && (i = RegExp("</" + c[2], "g")), o = Ee) : o = Te : o === Ee ? c[0] === ">" ? (o = i ?? Ce, l = -1) : c[1] === void 0 ? l = -2 : (l = o.lastIndex - c[2].length, s = c[1], o = c[3] === void 0 ? Ee : c[3] === "\"" ? Oe : De) : o === Oe || o === De ? o = Ee : o === we || o === Te ? o = Ce : (o = Ee, i = void 0);
+		let d = o === Ee && e[t + 1].startsWith("/>") ? " " : "";
+		a += o === Ce ? n + ge : l >= 0 ? (r.push(s), n.slice(0, l) + pe + n.slice(l) + me + d) : n + me + (l === -2 ? t : d);
 	}
 	return [Pe(e, a + (e[n] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), r];
 }, Ie = class e {
@@ -470,7 +470,7 @@ var Fe = (e, t) => {
 		for (; (i = Ne.nextNode()) !== null && c.length < s;) {
 			if (i.nodeType === 1) {
 				if (i.hasAttributes()) for (let e of i.getAttributeNames()) if (e.endsWith(pe)) {
-					let t = u[o++], n = i.getAttribute(e).split(V), r = /([.?@])?(.*)/.exec(t);
+					let t = u[o++], n = i.getAttribute(e).split(me), r = /([.?@])?(.*)/.exec(t);
 					c.push({
 						type: 1,
 						index: a,
@@ -478,45 +478,45 @@ var Fe = (e, t) => {
 						strings: n,
 						ctor: r[1] === "." ? Ve : r[1] === "?" ? He : r[1] === "@" ? Ue : Be
 					}), i.removeAttribute(e);
-				} else e.startsWith(V) && (c.push({
+				} else e.startsWith(me) && (c.push({
 					type: 6,
 					index: a
 				}), i.removeAttribute(e));
-				if (Oe.test(i.tagName)) {
-					let e = i.textContent.split(V), t = e.length - 1;
+				if (ke.test(i.tagName)) {
+					let e = i.textContent.split(me), t = e.length - 1;
 					if (t > 0) {
 						i.textContent = de ? de.emptyScript : "";
-						for (let n = 0; n < t; n++) i.append(e[n], _e()), Ne.nextNode(), c.push({
+						for (let n = 0; n < t; n++) i.append(e[n], ve()), Ne.nextNode(), c.push({
 							type: 2,
 							index: ++a
 						});
-						i.append(e[t], _e());
+						i.append(e[t], ve());
 					}
 				}
 			} else if (i.nodeType === 8) {
-				if (i.data === me) c.push({
+				if (i.data === he) c.push({
 					type: 2,
 					index: a
 				});
 				else {
 					let e = -1;
-					for (; (e = i.data.indexOf(V, e + 1)) !== -1;) c.push({
+					for (; (e = i.data.indexOf(me, e + 1)) !== -1;) c.push({
 						type: 7,
 						index: a
-					}), e += V.length - 1;
+					}), e += me.length - 1;
 				}
 			}
 			a++;
 		}
 	}
 	static createElement(e, t) {
-		let n = ge.createElement("template");
+		let n = _e.createElement("template");
 		return n.innerHTML = e, n;
 	}
 };
 function Le(e, t, n = e, r) {
-	if (t === je) return t;
-	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = ve(t) ? void 0 : t._$litDirective$;
+	if (t === H) return t;
+	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = ye(t) ? void 0 : t._$litDirective$;
 	return i?.constructor !== a && (i?._$AO?.(!1), a === void 0 ? i = void 0 : (i = new a(e), i._$AT(e, n, r)), r === void 0 ? n._$Cl = i : (n._$Co ??= [])[r] = i), i !== void 0 && (t = Le(e, i._$AS(e, t.values), i, r)), t;
 }
 var Re = class {
@@ -530,7 +530,7 @@ var Re = class {
 		return this._$AM._$AU;
 	}
 	u(e) {
-		let { el: { content: t }, parts: n } = this._$AD, r = (e?.creationScope ?? ge).importNode(t, !0);
+		let { el: { content: t }, parts: n } = this._$AD, r = (e?.creationScope ?? _e).importNode(t, !0);
 		Ne.currentNode = r;
 		let i = Ne.nextNode(), a = 0, o = 0, s = n[0];
 		for (; s !== void 0;) {
@@ -540,7 +540,7 @@ var Re = class {
 			}
 			a !== s?.index && (i = Ne.nextNode(), a++);
 		}
-		return Ne.currentNode = ge, r;
+		return Ne.currentNode = _e, r;
 	}
 	p(e) {
 		let t = 0;
@@ -564,7 +564,7 @@ var Re = class {
 		return this._$AB;
 	}
 	_$AI(e, t = this) {
-		e = Le(this, e, t), ve(e) ? e === U || e == null || e === "" ? (this._$AH !== U && this._$AR(), this._$AH = U) : e !== this._$AH && e !== je && this._(e) : e._$litType$ === void 0 ? e.nodeType === void 0 ? be(e) ? this.k(e) : this._(e) : this.T(e) : this.$(e);
+		e = Le(this, e, t), ye(e) ? e === U || e == null || e === "" ? (this._$AH !== U && this._$AR(), this._$AH = U) : e !== this._$AH && e !== H && this._(e) : e._$litType$ === void 0 ? e.nodeType === void 0 ? xe(e) ? this.k(e) : this._(e) : this.T(e) : this.$(e);
 	}
 	O(e) {
 		return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -573,7 +573,7 @@ var Re = class {
 		this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
 	}
 	_(e) {
-		this._$AH !== U && ve(this._$AH) ? this._$AA.nextSibling.data = e : this.T(ge.createTextNode(e)), this._$AH = e;
+		this._$AH !== U && ye(this._$AH) ? this._$AA.nextSibling.data = e : this.T(_e.createTextNode(e)), this._$AH = e;
 	}
 	$(e) {
 		let { values: t, _$litType$: n } = e, r = typeof n == "number" ? this._$AC(e) : (n.el === void 0 && (n.el = Ie.createElement(Pe(n.h, n.h[0]), this.options)), n);
@@ -588,9 +588,9 @@ var Re = class {
 		return t === void 0 && Me.set(e.strings, t = new Ie(e)), t;
 	}
 	k(t) {
-		ye(this._$AH) || (this._$AH = [], this._$AR());
+		be(this._$AH) || (this._$AH = [], this._$AR());
 		let n = this._$AH, r, i = 0;
-		for (let a of t) i === n.length ? n.push(r = new e(this.O(_e()), this.O(_e()), this, this.options)) : r = n[i], r._$AI(a), i++;
+		for (let a of t) i === n.length ? n.push(r = new e(this.O(ve()), this.O(ve()), this, this.options)) : r = n[i], r._$AI(a), i++;
 		i < n.length && (this._$AR(r && r._$AB.nextSibling, i), n.length = i);
 	}
 	_$AR(e = this._$AA.nextSibling, t) {
@@ -614,10 +614,10 @@ var Re = class {
 	}
 	_$AI(e, t = this, n, r) {
 		let i = this.strings, a = !1;
-		if (i === void 0) e = Le(this, e, t, 0), a = !ve(e) || e !== this._$AH && e !== je, a && (this._$AH = e);
+		if (i === void 0) e = Le(this, e, t, 0), a = !ye(e) || e !== this._$AH && e !== H, a && (this._$AH = e);
 		else {
 			let r = e, o, s;
-			for (e = i[0], o = 0; o < i.length - 1; o++) s = Le(this, r[n + o], t, o), s === je && (s = this._$AH[o]), a ||= !ve(s) || s !== this._$AH[o], s === U ? e = U : e !== U && (e += (s ?? "") + i[o + 1]), this._$AH[o] = s;
+			for (e = i[0], o = 0; o < i.length - 1; o++) s = Le(this, r[n + o], t, o), s === H && (s = this._$AH[o]), a ||= !ye(s) || s !== this._$AH[o], s === U ? e = U : e !== U && (e += (s ?? "") + i[o + 1]), this._$AH[o] = s;
 		}
 		a && !r && this.j(e);
 	}
@@ -643,7 +643,7 @@ var Re = class {
 		super(e, t, n, r, i), this.type = 5;
 	}
 	_$AI(e, t = this) {
-		if ((e = Le(this, e, t, 0) ?? U) === je) return;
+		if ((e = Le(this, e, t, 0) ?? U) === H) return;
 		let n = this._$AH, r = e === U && n !== U || e.capture !== n.capture || e.once !== n.once || e.passive !== n.passive, i = e !== U && (n === U || r);
 		r && this.element.removeEventListener(this.name, this, n), i && this.element.addEventListener(this.name, this, e), this._$AH = e;
 	}
@@ -662,12 +662,12 @@ var Re = class {
 	}
 }, Ge = {
 	M: pe,
-	P: V,
-	A: me,
+	P: me,
+	A: he,
 	C: 1,
 	L: Fe,
 	R: Re,
-	D: be,
+	D: xe,
 	V: Le,
 	I: ze,
 	H: Be,
@@ -681,7 +681,7 @@ var qe = (e, t, n) => {
 	let r = n?.renderBefore ?? t, i = r._$litPart$;
 	if (i === void 0) {
 		let e = n?.renderBefore ?? null;
-		r._$litPart$ = i = new ze(t.insertBefore(_e(), e), e, void 0, n ?? {});
+		r._$litPart$ = i = new ze(t.insertBefore(ve(), e), e, void 0, n ?? {});
 	}
 	return i._$AI(e), i;
 }, Je = globalThis, Ye = class extends ce {
@@ -703,7 +703,7 @@ var qe = (e, t, n) => {
 		super.disconnectedCallback(), this._$Do?.setConnected(!1);
 	}
 	render() {
-		return je;
+		return H;
 	}
 };
 Ye._$litElement$ = !0, Ye.finalized = !0, Je.litElementHydrateSupport?.({ LitElement: Ye });
@@ -734,9 +734,9 @@ var Ze = {
 	update(e, t) {
 		return this.render(...t);
 	}
-}, { I: et } = Ge, tt = (e) => e, nt = () => document.createComment(""), rt = (e, t, n) => {
+}, { I: et } = Ge, tt = (e) => e, nt = (e) => e.strings === void 0, rt = () => document.createComment(""), it = (e, t, n) => {
 	let r = e._$AA.parentNode, i = t === void 0 ? e._$AB : t._$AA;
-	if (n === void 0) n = new et(r.insertBefore(nt(), i), r.insertBefore(nt(), i), e, e.options);
+	if (n === void 0) n = new et(r.insertBefore(rt(), i), r.insertBefore(rt(), i), e, e.options);
 	else {
 		let t = n._$AB.nextSibling, a = n._$AM, o = a !== e;
 		if (o) {
@@ -752,13 +752,13 @@ var Ze = {
 		}
 	}
 	return n;
-}, it = (e, t, n = e) => (e._$AI(t, n), e), at = {}, ot = (e, t = at) => e._$AH = t, st = (e) => e._$AH, ct = (e) => {
+}, at = (e, t, n = e) => (e._$AI(t, n), e), ot = {}, st = (e, t = ot) => e._$AH = t, ct = (e) => e._$AH, lt = (e) => {
 	e._$AR(), e._$AA.remove();
-}, lt = (e, t, n) => {
+}, ut = (e, t, n) => {
 	let r = /* @__PURE__ */ new Map();
 	for (let i = t; i <= n; i++) r.set(e[i], i);
 	return r;
-}, ut = Qe(class extends $e {
+}, dt = Qe(class extends $e {
 	constructor(e) {
 		if (super(e), e.type !== Ze.CHILD) throw Error("repeat() can only be used in text expressions");
 	}
@@ -776,36 +776,54 @@ var Ze = {
 		return this.dt(e, t, n).values;
 	}
 	update(e, [t, n, r]) {
-		let i = st(e), { values: a, keys: o } = this.dt(t, n, r);
+		let i = ct(e), { values: a, keys: o } = this.dt(t, n, r);
 		if (!Array.isArray(i)) return this.ut = o, a;
 		let s = this.ut ??= [], c = [], l, u, d = 0, f = i.length - 1, p = 0, m = a.length - 1;
 		for (; d <= f && p <= m;) if (i[d] === null) d++;
 		else if (i[f] === null) f--;
-		else if (s[d] === o[p]) c[p] = it(i[d], a[p]), d++, p++;
-		else if (s[f] === o[m]) c[m] = it(i[f], a[m]), f--, m--;
-		else if (s[d] === o[m]) c[m] = it(i[d], a[m]), rt(e, c[m + 1], i[d]), d++, m--;
-		else if (s[f] === o[p]) c[p] = it(i[f], a[p]), rt(e, i[d], i[f]), f--, p++;
-		else if (l === void 0 && (l = lt(o, p, m), u = lt(s, d, f)), l.has(s[d])) {
+		else if (s[d] === o[p]) c[p] = at(i[d], a[p]), d++, p++;
+		else if (s[f] === o[m]) c[m] = at(i[f], a[m]), f--, m--;
+		else if (s[d] === o[m]) c[m] = at(i[d], a[m]), it(e, c[m + 1], i[d]), d++, m--;
+		else if (s[f] === o[p]) c[p] = at(i[f], a[p]), it(e, i[d], i[f]), f--, p++;
+		else if (l === void 0 && (l = ut(o, p, m), u = ut(s, d, f)), l.has(s[d])) {
 			if (l.has(s[f])) {
 				let t = u.get(o[p]), n = t === void 0 ? null : i[t];
 				if (n === null) {
-					let t = rt(e, i[d]);
-					it(t, a[p]), c[p] = t;
-				} else c[p] = it(n, a[p]), rt(e, i[d], n), i[t] = null;
+					let t = it(e, i[d]);
+					at(t, a[p]), c[p] = t;
+				} else c[p] = at(n, a[p]), it(e, i[d], n), i[t] = null;
 				p++;
-			} else ct(i[f]), f--;
-		} else ct(i[d]), d++;
+			} else lt(i[f]), f--;
+		} else lt(i[d]), d++;
 		for (; p <= m;) {
-			let t = rt(e, c[m + 1]);
-			it(t, a[p]), c[p++] = t;
+			let t = it(e, c[m + 1]);
+			at(t, a[p]), c[p++] = t;
 		}
 		for (; d <= f;) {
 			let e = i[d++];
-			e !== null && ct(e);
+			e !== null && lt(e);
 		}
-		return this.ut = o, ot(e, c), je;
+		return this.ut = o, st(e, c), H;
 	}
-}), dt = class {
+}), ft = Qe(class extends $e {
+	constructor(e) {
+		if (super(e), e.type !== Ze.PROPERTY && e.type !== Ze.ATTRIBUTE && e.type !== Ze.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
+		if (!nt(e)) throw Error("`live` bindings can only contain a single expression");
+	}
+	render(e) {
+		return e;
+	}
+	update(e, [t]) {
+		if (t === H || t === U) return t;
+		let n = e.element, r = e.name;
+		if (e.type === Ze.PROPERTY) {
+			if (t === n[r]) return H;
+		} else if (e.type === Ze.BOOLEAN_ATTRIBUTE) {
+			if (!!t === n.hasAttribute(r)) return H;
+		} else if (e.type === Ze.ATTRIBUTE && n.getAttribute(r) === t + "") return H;
+		return st(e), t;
+	}
+}), pt = class {
 	constructor(e) {
 		this.hass = e;
 	}
@@ -840,7 +858,18 @@ var Ze = {
 	subscribe(e) {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
-}, ft = {
+}, mt = {
+	reminders: "Erinnerungen",
+	personalSubtitle: "Wähle, woran du erinnert werden möchtest.",
+	personalUnavailable: "Persönliche Erinnerungen sind nur in der Home-Assistant-Integration verfügbar.",
+	personalIntro: "Meine Erinnerungen für Anbauzeiträume. Deine Auswahl wird automatisch gespeichert und gilt nur für dich – für deine eingerichteten Push- und E-Mail-Ziele.",
+	personalGlobalOn: "Der Erinnerungsversand ist global aktiviert.",
+	personalGlobalOff: "Der Erinnerungsversand ist global ausgeschaltet. Deine Auswahl bleibt gespeichert; ein Administrator muss den Versand aktivieren.",
+	personalChannelOn: "Persönliche Versandziele sind eingerichtet.",
+	personalChannelOff: "Für dich ist noch kein persönliches Versandziel aktiviert. Bitte einen Administrator um die Einrichtung von Push oder E-Mail.",
+	personalNoWindow: "Kein Anbauzeitraum für diese Tätigkeit vorhanden.",
+	personalHint: "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl gilt für alle Zeiträume dieser Pflanze und Tätigkeit. Manuelle Aufgaben werden weiterhin erinnert. Beim Speichern wird keine Testnachricht gesendet.",
+	personalSharedHint: "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er besitzt keine Benutzerzuordnung und folgt weiterhin allen Terminen, unabhängig von deiner persönlichen Auswahl.",
 	multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
 	windowDetail: "Anbauzeitraum",
 	recurringWindow: "Jährlich wiederkehrender Zeitraum",
@@ -897,7 +926,18 @@ var Ze = {
 	noDeliveries: "Noch keine Versandversuche.",
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
-}, pt = {
+}, ht = {
+	reminders: "Reminders",
+	personalSubtitle: "Choose what you want to be reminded about.",
+	personalUnavailable: "Personal reminders are available in the Home Assistant integration.",
+	personalIntro: "My growing-window reminders. Your choices save automatically and apply only to your configured personal push and email destinations.",
+	personalGlobalOn: "Reminder delivery is globally enabled.",
+	personalGlobalOff: "Reminder delivery is globally disabled. Your choices are saved; an administrator must enable delivery.",
+	personalChannelOn: "Personal delivery destinations are configured.",
+	personalChannelOff: "No personal delivery destination is enabled for you. Ask an administrator to configure push or email.",
+	personalNoWindow: "No growing window exists for this activity.",
+	personalHint: "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out covers all windows for this plant and activity. Manual tasks still generate reminders. Saving sends no test message.",
+	personalSharedHint: "A shared channel is also enabled. It has no user association and continues to receive all events independently of your personal choices.",
 	multiFilterHint: "Select multiple values. An empty selection shows all.",
 	windowDetail: "Growing window",
 	recurringWindow: "Annually recurring window",
@@ -955,11 +995,11 @@ var Ze = {
 	grantedEditor: "You have permission to edit this shared garden.",
 	notifyEntityHint: "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. Enabling a user destination switches off the existing shared channel. It sends additionally to its configured defaults only if explicitly switched back on."
 };
-function mt(e, t) {
-	return (e === "de" ? ft : pt)[t];
+function gt(e, t) {
+	return (e === "de" ? mt : ht)[t];
 }
 // src/i18n.ts
-var ht = {
+var _t = {
 	overview: "Übersicht",
 	calendar: "Aussaatkalender",
 	plants: "Meine Pflanzen",
@@ -1188,7 +1228,7 @@ var ht = {
 	busy: "Wird gespeichert …",
 	new: "Neu",
 	historicalName: "Name zum Zeitpunkt der Aussaat"
-}, gt = {
+}, vt = {
 	overview: "Overview",
 	calendar: "Sowing calendar",
 	plants: "My plants",
@@ -1418,20 +1458,20 @@ var ht = {
 	new: "New",
 	historicalName: "Name at sowing time"
 };
-function _t(e, t) {
-	return (e === "de" ? ht : gt)[t] ?? mt(e, t) ?? t;
+function yt(e, t) {
+	return (e === "de" ? _t : vt)[t] ?? gt(e, t) ?? t;
 }
-function vt(e, t) {
-	return _t(e, {
+function bt(e, t) {
+	return yt(e, {
 		soil: "soilTemperature",
 		care: "careActivity",
 		completed: "completedStatus",
 		successful: "successful"
 	}[t] ?? t);
 }
-function yt(e, t) {
+function xt(e, t) {
 	let n = t && typeof t == "object" && "code" in t ? String(t.code) : "";
-	return _t(e, [
+	return yt(e, [
 		"invalid_data",
 		"not_found",
 		"conflict",
@@ -1441,7 +1481,7 @@ function yt(e, t) {
 	].includes(n) ? n : "unexpected");
 }
 // src/fields.ts
-var bt = [
+var St = [
 	"name",
 	"botanical_name",
 	"category",
@@ -1454,7 +1494,7 @@ var bt = [
 	"care",
 	"source",
 	"source_url"
-], xt = [
+], Ct = [
 	"germination_min_c",
 	"germination_optimal_min_c",
 	"germination_optimal_max_c",
@@ -1466,15 +1506,15 @@ var bt = [
 	"row_spacing_cm",
 	"duration_days_min",
 	"duration_days_max"
-], St = (e, t) => e.map((e) => ({
+], wt = (e, t) => e.map((e) => ({
 	value: e,
-	label: vt(t, e)
-})), Ct = (e, n) => e.map((e) => ({
+	label: bt(t, e)
+})), Tt = (e, n) => e.map((e) => ({
 	value: e.id,
-	label: t(e, "name") || t(e, "title") || _t(n, "untitled")
+	label: t(e, "name") || t(e, "title") || yt(n, "untitled")
 }));
 function W(e) {
-	return xt.includes(e) || [
+	return Ct.includes(e) || [
 		"quantity",
 		"temperature_c",
 		"start_day",
@@ -1495,16 +1535,16 @@ function W(e) {
 		required: e === "name" || e === "title"
 	};
 }
-function wt(e, n, r, i, a) {
+function Et(e, n, r, i, a) {
 	let o = (e, t, n = !1) => ({
 		key: e,
 		type: "select",
-		options: St(t, i),
+		options: wt(t, i),
 		required: n
 	}), s = (e, t, n = !1, r = !1) => ({
 		key: e,
 		type: "select",
-		options: Ct(t, i),
+		options: Tt(t, i),
 		required: n,
 		disabled: r
 	}), c = (e, t) => e.filter((e) => !e.data.archived || e.id === t), l = String(n.plant_id ?? ""), u = s("plant_id", c(r.plants, l), !0, a && [
@@ -1518,10 +1558,10 @@ function wt(e, n, r, i, a) {
 	])];
 	return e === "plants" || e === "varieties" ? [
 		...e === "varieties" ? [u] : [],
-		...bt.map((e) => e === "category" ? {
+		...St.map((e) => e === "category" ? {
 			key: e,
 			type: "select",
-			options: St([.../* @__PURE__ */ new Set([
+			options: wt([.../* @__PURE__ */ new Set([
 				"vegetables",
 				"herbs",
 				"flowers",
@@ -1530,7 +1570,7 @@ function wt(e, n, r, i, a) {
 				...r.plants.map((e) => t(e, "category")).filter(Boolean)
 			])], i)
 		} : W(e)),
-		...e === "plants" ? xt.map((e) => ({
+		...e === "plants" ? Ct.map((e) => ({
 			...W(e),
 			rowStart: ["depth_cm", "spacing_cm"].includes(e)
 		})) : []
@@ -1667,7 +1707,7 @@ function wt(e, n, r, i, a) {
 		W("notes")
 	];
 }
-function Tt(e, t, n = {}) {
+function Dt(e, t, n = {}) {
 	return {
 		...{
 			plants: { category: "vegetables" },
@@ -1697,7 +1737,7 @@ function Tt(e, t, n = {}) {
 		...n
 	};
 }
-function Et(e, t, n, r) {
+function Ot(e, t, n, r) {
 	let i = {};
 	for (let e of n) {
 		if (e.disabled) continue;
@@ -1726,7 +1766,7 @@ function Et(e, t, n, r) {
 	return i;
 }
 // node_modules/fflate/esm/browser.js
-var G = Uint8Array, K = Uint16Array, Dt = Int32Array, Ot = new G([
+var G = Uint8Array, K = Uint16Array, kt = Int32Array, At = new G([
 	0,
 	0,
 	0,
@@ -1759,7 +1799,7 @@ var G = Uint8Array, K = Uint16Array, Dt = Int32Array, Ot = new G([
 	0,
 	0,
 	0
-]), kt = new G([
+]), jt = new G([
 	0,
 	0,
 	0,
@@ -1792,7 +1832,7 @@ var G = Uint8Array, K = Uint16Array, Dt = Int32Array, Ot = new G([
 	13,
 	0,
 	0
-]), At = new G([
+]), Mt = new G([
 	16,
 	17,
 	18,
@@ -1812,18 +1852,18 @@ var G = Uint8Array, K = Uint16Array, Dt = Int32Array, Ot = new G([
 	14,
 	1,
 	15
-]), jt = function(e, t) {
+]), Nt = function(e, t) {
 	for (var n = new K(31), r = 0; r < 31; ++r) n[r] = t += 1 << e[r - 1];
-	for (var i = new Dt(n[30]), r = 1; r < 30; ++r) for (var a = n[r]; a < n[r + 1]; ++a) i[a] = a - n[r] << 5 | r;
+	for (var i = new kt(n[30]), r = 1; r < 30; ++r) for (var a = n[r]; a < n[r + 1]; ++a) i[a] = a - n[r] << 5 | r;
 	return {
 		b: n,
 		r: i
 	};
-}, Mt = jt(Ot, 2), Nt = Mt.b, Pt = Mt.r;
-Nt[28] = 258, Pt[258] = 28;
-for (var Ft = jt(kt, 0), It = Ft.b, Lt = Ft.r, Rt = new K(32768), q = 0; q < 32768; ++q) {
-	var zt = (q & 43690) >> 1 | (q & 21845) << 1;
-	zt = (zt & 52428) >> 2 | (zt & 13107) << 2, zt = (zt & 61680) >> 4 | (zt & 3855) << 4, Rt[q] = ((zt & 65280) >> 8 | (zt & 255) << 8) >> 1;
+}, Pt = Nt(At, 2), Ft = Pt.b, It = Pt.r;
+Ft[28] = 258, It[258] = 28;
+for (var Lt = Nt(jt, 0), Rt = Lt.b, zt = Lt.r, Bt = new K(32768), q = 0; q < 32768; ++q) {
+	var Vt = (q & 43690) >> 1 | (q & 21845) << 1;
+	Vt = (Vt & 52428) >> 2 | (Vt & 13107) << 2, Vt = (Vt & 61680) >> 4 | (Vt & 3855) << 4, Bt[q] = ((Vt & 65280) >> 8 | (Vt & 255) << 8) >> 1;
 }
 for (var J = (function(e, t, n) {
 	for (var r = e.length, i = 0, a = new K(t); i < r; ++i) e[i] && ++a[e[i] - 1];
@@ -1833,28 +1873,28 @@ for (var J = (function(e, t, n) {
 	if (n) {
 		s = new K(1 << t);
 		var c = 15 - t;
-		for (i = 0; i < r; ++i) if (e[i]) for (var l = i << 4 | e[i], u = t - e[i], d = o[e[i] - 1]++ << u, f = d | (1 << u) - 1; d <= f; ++d) s[Rt[d] >> c] = l;
-	} else for (s = new K(r), i = 0; i < r; ++i) e[i] && (s[i] = Rt[o[e[i] - 1]++] >> 15 - e[i]);
+		for (i = 0; i < r; ++i) if (e[i]) for (var l = i << 4 | e[i], u = t - e[i], d = o[e[i] - 1]++ << u, f = d | (1 << u) - 1; d <= f; ++d) s[Bt[d] >> c] = l;
+	} else for (s = new K(r), i = 0; i < r; ++i) e[i] && (s[i] = Bt[o[e[i] - 1]++] >> 15 - e[i]);
 	return s;
-}), Bt = new G(288), q = 0; q < 144; ++q) Bt[q] = 8;
-for (var q = 144; q < 256; ++q) Bt[q] = 9;
-for (var q = 256; q < 280; ++q) Bt[q] = 7;
-for (var q = 280; q < 288; ++q) Bt[q] = 8;
-for (var Vt = new G(32), q = 0; q < 32; ++q) Vt[q] = 5;
-var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PURE__*/ J(Vt, 5, 0), Gt = /*#__PURE__*/ J(Vt, 5, 1), Kt = function(e) {
+}), Ht = new G(288), q = 0; q < 144; ++q) Ht[q] = 8;
+for (var q = 144; q < 256; ++q) Ht[q] = 9;
+for (var q = 256; q < 280; ++q) Ht[q] = 7;
+for (var q = 280; q < 288; ++q) Ht[q] = 8;
+for (var Ut = new G(32), q = 0; q < 32; ++q) Ut[q] = 5;
+var Wt = /*#__PURE__*/ J(Ht, 9, 0), Gt = /*#__PURE__*/ J(Ht, 9, 1), Kt = /*#__PURE__*/ J(Ut, 5, 0), qt = /*#__PURE__*/ J(Ut, 5, 1), Jt = function(e) {
 	for (var t = e[0], n = 1; n < e.length; ++n) e[n] > t && (t = e[n]);
 	return t;
 }, Y = function(e, t, n) {
 	var r = t / 8 | 0;
 	return (e[r] | e[r + 1] << 8) >> (t & 7) & n;
-}, qt = function(e, t) {
+}, Yt = function(e, t) {
 	var n = t / 8 | 0;
 	return (e[n] | e[n + 1] << 8 | e[n + 2] << 16) >> (t & 7);
-}, Jt = function(e) {
+}, Xt = function(e) {
 	return (e + 7) / 8 | 0;
-}, Yt = function(e, t, n) {
+}, Zt = function(e, t, n) {
 	return (t == null || t < 0) && (t = 0), (n == null || n > e.length) && (n = e.length), new G(e.subarray(t, n));
-}, Xt = [
+}, Qt = [
 	"unexpected EOF",
 	"invalid block type",
 	"invalid length/literal",
@@ -1870,10 +1910,10 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 	"stream finishing",
 	"invalid zip data"
 ], X = function(e, t, n) {
-	var r = Error(t || Xt[e]);
+	var r = Error(t || Qt[e]);
 	if (r.code = e, Error.captureStackTrace && Error.captureStackTrace(r, X), !n) throw r;
 	return r;
-}, Zt = function(e, t, n, r) {
+}, $t = function(e, t, n, r) {
 	var i = e.length, a = r ? r.length : 0;
 	if (!i || t.f && !t.l) return n || new G(0);
 	var o = !n, s = o || t.i != 2, c = t.i;
@@ -1890,7 +1930,7 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 			u = Y(e, d, 1);
 			var v = Y(e, d + 1, 3);
 			if (d += 3, !v) {
-				var y = Jt(d) + 4, b = e[y - 4] | e[y - 3] << 8, x = y + b;
+				var y = Xt(d) + 4, b = e[y - 4] | e[y - 3] << 8, x = y + b;
 				if (x > i) {
 					c && X(0);
 					break;
@@ -1898,13 +1938,13 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 				s && l(f + b), n.set(e.subarray(y, x), f), t.b = f += b, t.p = d = x * 8, t.f = u;
 				continue;
 			}
-			if (v == 1) p = Ut, m = Gt, h = 9, g = 5;
+			if (v == 1) p = Gt, m = qt, h = 9, g = 5;
 			else if (v == 2) {
 				var S = Y(e, d, 31) + 257, C = Y(e, d + 10, 15) + 4, w = S + Y(e, d + 5, 31) + 1;
 				d += 14;
-				for (var T = new G(w), E = new G(19), D = 0; D < C; ++D) E[At[D]] = Y(e, d + D * 3, 7);
+				for (var T = new G(w), E = new G(19), D = 0; D < C; ++D) E[Mt[D]] = Y(e, d + D * 3, 7);
 				d += C * 3;
-				for (var O = Kt(E), ee = (1 << O) - 1, k = J(E, O, 1), D = 0; D < w;) {
+				for (var O = Jt(E), ee = (1 << O) - 1, k = J(E, O, 1), D = 0; D < w;) {
 					var A = k[Y(e, d, ee)];
 					d += A & 15;
 					var y = A >> 4;
@@ -1915,7 +1955,7 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 					}
 				}
 				var N = T.subarray(0, S), P = T.subarray(S);
-				h = Kt(N), g = Kt(P), p = J(N, h, 1), m = J(P, g, 1);
+				h = Jt(N), g = Jt(P), p = J(N, h, 1), m = J(P, g, 1);
 			} else X(1);
 			if (d > _) {
 				c && X(0);
@@ -1924,7 +1964,7 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 		}
 		s && l(f + 131072);
 		for (var te = (1 << h) - 1, F = (1 << g) - 1, ne = d;; ne = d) {
-			var j = p[qt(e, d) & te], I = j >> 4;
+			var j = p[Yt(e, d) & te], I = j >> 4;
 			if (d += j & 15, d > _) {
 				c && X(0);
 				break;
@@ -1936,15 +1976,15 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 			} else {
 				var L = I - 254;
 				if (I > 264) {
-					var D = I - 257, R = Ot[D];
-					L = Y(e, d, (1 << R) - 1) + Nt[D], d += R;
+					var D = I - 257, R = At[D];
+					L = Y(e, d, (1 << R) - 1) + Ft[D], d += R;
 				}
-				var z = m[qt(e, d) & F], re = z >> 4;
+				var z = m[Yt(e, d) & F], re = z >> 4;
 				z || X(3), d += z & 15;
-				var P = It[re];
+				var P = Rt[re];
 				if (re > 3) {
-					var R = kt[re];
-					P += qt(e, d) & (1 << R) - 1, d += R;
+					var R = jt[re];
+					P += Yt(e, d) & (1 << R) - 1, d += R;
 				}
 				if (d > _) {
 					c && X(0);
@@ -1961,23 +2001,23 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 		}
 		t.l = p, t.p = ne, t.b = f, t.f = u, p && (u = 1, t.m = h, t.d = m, t.n = g);
 	} while (!u);
-	return f != n.length && o ? Yt(n, 0, f) : n.subarray(0, f);
-}, Z = function(e, t, n) {
+	return f != n.length && o ? Zt(n, 0, f) : n.subarray(0, f);
+}, en = function(e, t, n) {
 	n <<= t & 7;
 	var r = t / 8 | 0;
 	e[r] |= n, e[r + 1] |= n >> 8;
-}, Qt = function(e, t, n) {
+}, tn = function(e, t, n) {
 	n <<= t & 7;
 	var r = t / 8 | 0;
 	e[r] |= n, e[r + 1] |= n >> 8, e[r + 2] |= n >> 16;
-}, $t = function(e, t) {
+}, nn = function(e, t) {
 	for (var n = [], r = 0; r < e.length; ++r) e[r] && n.push({
 		s: r,
 		f: e[r]
 	});
 	var i = n.length, a = n.slice();
 	if (!i) return {
-		t: sn,
+		t: un,
 		l: 0
 	};
 	if (i == 1) {
@@ -2006,7 +2046,7 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 		r: c
 	};
 	for (var f = a[0].s, r = 1; r < i; ++r) a[r].s > f && (f = a[r].s);
-	var p = new K(f + 1), m = en(n[u - 1], p, 0);
+	var p = new K(f + 1), m = rn(n[u - 1], p, 0);
 	if (m > t) {
 		var r = 0, h = 0, g = m - t, _ = 1 << g;
 		for (a.sort(function(e, t) {
@@ -2030,9 +2070,9 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 		t: new G(p),
 		l: m
 	};
-}, en = function(e, t, n) {
-	return e.s == -1 ? Math.max(en(e.l, t, n + 1), en(e.r, t, n + 1)) : t[e.s] = n;
-}, tn = function(e) {
+}, rn = function(e, t, n) {
+	return e.s == -1 ? Math.max(rn(e.l, t, n + 1), rn(e.r, t, n + 1)) : t[e.s] = n;
+}, an = function(e) {
 	for (var t = e.length; t && !e[--t];);
 	for (var n = new K(++t), r = 0, i = e[0], a = 1, o = function(e) {
 		n[r++] = e;
@@ -2052,44 +2092,44 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 		c: n.subarray(0, r),
 		n: t
 	};
-}, nn = function(e, t) {
+}, on = function(e, t) {
 	for (var n = 0, r = 0; r < t.length; ++r) n += e[r] * t[r];
 	return n;
-}, rn = function(e, t, n) {
-	var r = n.length, i = Jt(t + 2);
+}, sn = function(e, t, n) {
+	var r = n.length, i = Xt(t + 2);
 	e[i] = r & 255, e[i + 1] = r >> 8, e[i + 2] = e[i] ^ 255, e[i + 3] = e[i + 1] ^ 255;
 	for (var a = 0; a < r; ++a) e[i + a + 4] = n[a];
 	return (i + 4 + r) * 8;
-}, an = function(e, t, n, r, i, a, o, s, c, l, u) {
-	Z(t, u++, n), ++i[256];
-	for (var d = $t(i, 15), f = d.t, p = d.l, m = $t(a, 15), h = m.t, g = m.l, _ = tn(f), v = _.c, y = _.n, b = tn(h), x = b.c, S = b.n, C = new K(19), w = 0; w < v.length; ++w) ++C[v[w] & 31];
+}, cn = function(e, t, n, r, i, a, o, s, c, l, u) {
+	en(t, u++, n), ++i[256];
+	for (var d = nn(i, 15), f = d.t, p = d.l, m = nn(a, 15), h = m.t, g = m.l, _ = an(f), v = _.c, y = _.n, b = an(h), x = b.c, S = b.n, C = new K(19), w = 0; w < v.length; ++w) ++C[v[w] & 31];
 	for (var w = 0; w < x.length; ++w) ++C[x[w] & 31];
-	for (var T = $t(C, 7), E = T.t, D = T.l, O = 19; O > 4 && !E[At[O - 1]]; --O);
-	var ee = l + 5 << 3, k = nn(i, Bt) + nn(a, Vt) + o, A = nn(i, f) + nn(a, h) + o + 14 + 3 * O + nn(C, E) + 2 * C[16] + 3 * C[17] + 7 * C[18];
-	if (c >= 0 && ee <= k && ee <= A) return rn(t, u, e.subarray(c, c + l));
+	for (var T = nn(C, 7), E = T.t, D = T.l, O = 19; O > 4 && !E[Mt[O - 1]]; --O);
+	var ee = l + 5 << 3, k = on(i, Ht) + on(a, Ut) + o, A = on(i, f) + on(a, h) + o + 14 + 3 * O + on(C, E) + 2 * C[16] + 3 * C[17] + 7 * C[18];
+	if (c >= 0 && ee <= k && ee <= A) return sn(t, u, e.subarray(c, c + l));
 	var j, M, N, P;
-	if (Z(t, u, 1 + (A < k)), u += 2, A < k) {
+	if (en(t, u, 1 + (A < k)), u += 2, A < k) {
 		j = J(f, p, 0), M = f, N = J(h, g, 0), P = h;
 		var te = J(E, D, 0);
-		Z(t, u, y - 257), Z(t, u + 5, S - 1), Z(t, u + 10, O - 4), u += 14;
-		for (var w = 0; w < O; ++w) Z(t, u + 3 * w, E[At[w]]);
+		en(t, u, y - 257), en(t, u + 5, S - 1), en(t, u + 10, O - 4), u += 14;
+		for (var w = 0; w < O; ++w) en(t, u + 3 * w, E[Mt[w]]);
 		u += 3 * O;
 		for (var F = [v, x], ne = 0; ne < 2; ++ne) for (var I = F[ne], w = 0; w < I.length; ++w) {
 			var L = I[w] & 31;
-			Z(t, u, te[L]), u += E[L], L > 15 && (Z(t, u, I[w] >> 5 & 127), u += I[w] >> 12);
+			en(t, u, te[L]), u += E[L], L > 15 && (en(t, u, I[w] >> 5 & 127), u += I[w] >> 12);
 		}
-	} else j = Ht, M = Bt, N = Wt, P = Vt;
+	} else j = Wt, M = Ht, N = Kt, P = Ut;
 	for (var w = 0; w < s; ++w) {
 		var R = r[w];
 		if (R > 255) {
 			var L = R >> 18 & 31;
-			Qt(t, u, j[L + 257]), u += M[L + 257], L > 7 && (Z(t, u, R >> 23 & 31), u += Ot[L]);
+			tn(t, u, j[L + 257]), u += M[L + 257], L > 7 && (en(t, u, R >> 23 & 31), u += At[L]);
 			var z = R & 31;
-			Qt(t, u, N[z]), u += P[z], z > 3 && (Qt(t, u, R >> 5 & 8191), u += kt[z]);
-		} else Qt(t, u, j[R]), u += M[R];
+			tn(t, u, N[z]), u += P[z], z > 3 && (tn(t, u, R >> 5 & 8191), u += jt[z]);
+		} else tn(t, u, j[R]), u += M[R];
 	}
-	return Qt(t, u, j[256]), u + M[256];
-}, on = /*#__PURE__*/ new Dt([
+	return tn(t, u, j[256]), u + M[256];
+}, ln = /*#__PURE__*/ new kt([
 	65540,
 	131080,
 	131088,
@@ -2099,18 +2139,18 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 	1048832,
 	2114560,
 	2117632
-]), sn = /*#__PURE__*/ new G(0), cn = function(e, t, n, r, i, a) {
+]), un = /*#__PURE__*/ new G(0), dn = function(e, t, n, r, i, a) {
 	var o = a.z || e.length, s = new G(r + o + 5 * (1 + Math.ceil(o / 7e3)) + i), c = s.subarray(r, s.length - i), l = a.l, u = (a.r || 0) & 7;
 	if (t) {
 		u && (c[0] = a.r >> 3);
-		for (var d = on[t - 1], f = d >> 13, p = d & 8191, m = (1 << n) - 1, h = a.p || new K(32768), g = a.h || new K(m + 1), _ = Math.ceil(n / 3), v = 2 * _, y = function(t) {
+		for (var d = ln[t - 1], f = d >> 13, p = d & 8191, m = (1 << n) - 1, h = a.p || new K(32768), g = a.h || new K(m + 1), _ = Math.ceil(n / 3), v = 2 * _, y = function(t) {
 			return (e[t] ^ e[t + 1] << _ ^ e[t + 2] << v) & m;
-		}, b = new Dt(25e3), x = new K(288), S = new K(32), C = 0, w = 0, T = a.i || 0, E = 0, D = a.w || 0, O = 0; T + 2 < o; ++T) {
+		}, b = new kt(25e3), x = new K(288), S = new K(32), C = 0, w = 0, T = a.i || 0, E = 0, D = a.w || 0, O = 0; T + 2 < o; ++T) {
 			var ee = y(T), k = T & 32767, A = g[ee];
 			if (h[k] = A, g[ee] = k, D <= T) {
 				var j = o - T;
 				if ((C > 7e3 || E > 24576) && (j > 423 || !l)) {
-					u = an(e, c, 0, b, x, S, w, E, O, T - O, u), E = C = w = 0, O = T;
+					u = cn(e, c, 0, b, x, S, w, E, O, T - O, u), E = C = w = 0, O = T;
 					for (var M = 0; M < 286; ++M) x[M] = 0;
 					for (var M = 0; M < 30; ++M) S[M] = 0;
 				}
@@ -2129,63 +2169,63 @@ var Ht = /*#__PURE__*/ J(Bt, 9, 0), Ut = /*#__PURE__*/ J(Bt, 9, 1), Wt = /*#__PU
 					k = A, A = h[k], F += k - A & 32767;
 				}
 				if (P) {
-					b[E++] = 268435456 | Pt[N] << 18 | Lt[P];
-					var ae = Pt[N] & 31, oe = Lt[P] & 31;
-					w += Ot[ae] + kt[oe], ++x[257 + ae], ++S[oe], D = T + N, ++C;
+					b[E++] = 268435456 | It[N] << 18 | zt[P];
+					var ae = It[N] & 31, oe = zt[P] & 31;
+					w += At[ae] + jt[oe], ++x[257 + ae], ++S[oe], D = T + N, ++C;
 				} else b[E++] = e[T], ++x[e[T]];
 			}
 		}
 		for (T = Math.max(T, D); T < o; ++T) b[E++] = e[T], ++x[e[T]];
-		u = an(e, c, l, b, x, S, w, E, O, T - O, u), l || (a.r = u & 7 | c[u / 8 | 0] << 3, u -= 7, a.h = g, a.p = h, a.i = T, a.w = D);
+		u = cn(e, c, l, b, x, S, w, E, O, T - O, u), l || (a.r = u & 7 | c[u / 8 | 0] << 3, u -= 7, a.h = g, a.p = h, a.i = T, a.w = D);
 	} else {
 		for (var T = a.w || 0; T < o + l; T += 65535) {
 			var se = T + 65535;
-			se >= o && (c[u / 8 | 0] = l, se = o), u = rn(c, u + 1, e.subarray(T, se));
+			se >= o && (c[u / 8 | 0] = l, se = o), u = sn(c, u + 1, e.subarray(T, se));
 		}
 		a.i = o;
 	}
-	return Yt(s, 0, r + Jt(u) + i);
-}, ln = /*#__PURE__*/ (function() {
+	return Zt(s, 0, r + Xt(u) + i);
+}, fn = /*#__PURE__*/ (function() {
 	for (var e = /* @__PURE__ */ new Int32Array(256), t = 0; t < 256; ++t) {
 		for (var n = t, r = 9; --r;) n = (n & 1 && -306674912) ^ n >>> 1;
 		e[t] = n;
 	}
 	return e;
-})(), un = function() {
+})(), pn = function() {
 	var e = -1;
 	return {
 		p: function(t) {
-			for (var n = e, r = 0; r < t.length; ++r) n = ln[n & 255 ^ t[r]] ^ n >>> 8;
+			for (var n = e, r = 0; r < t.length; ++r) n = fn[n & 255 ^ t[r]] ^ n >>> 8;
 			e = n;
 		},
 		d: function() {
 			return ~e;
 		}
 	};
-}, dn = function(e, t, n, r, i) {
+}, mn = function(e, t, n, r, i) {
 	if (!i && (i = { l: 1 }, t.dictionary)) {
 		var a = t.dictionary.subarray(-32768), o = new G(a.length + e.length);
 		o.set(a), o.set(e, a.length), e = o, i.w = a.length;
 	}
-	return cn(e, t.level == null ? 6 : t.level, t.mem == null ? i.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(e.length))) * 1.5) : 20 : 12 + t.mem, n, r, i);
-}, fn = function(e, t) {
+	return dn(e, t.level == null ? 6 : t.level, t.mem == null ? i.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(e.length))) * 1.5) : 20 : 12 + t.mem, n, r, i);
+}, hn = function(e, t) {
 	var n = {};
 	for (var r in e) n[r] = e[r];
 	for (var r in t) n[r] = t[r];
 	return n;
-}, pn = function(e, t) {
+}, gn = function(e, t) {
 	return e[t] | e[t + 1] << 8;
-}, mn = function(e, t) {
+}, _n = function(e, t) {
 	return (e[t] | e[t + 1] << 8 | e[t + 2] << 16 | e[t + 3] << 24) >>> 0;
-}, hn = function(e, t) {
-	return mn(e, t) + mn(e, t + 4) * 4294967296;
-}, Q = function(e, t, n) {
+}, vn = function(e, t) {
+	return _n(e, t) + _n(e, t + 4) * 4294967296;
+}, Z = function(e, t, n) {
 	for (; n; ++t) e[t] = n, n >>>= 8;
 };
-function gn(e, t) {
-	return dn(e, t || {}, 0, 0);
+function yn(e, t) {
+	return mn(e, t || {}, 0, 0);
 }
-var _n = /* @__PURE__ */ function() {
+var bn = /* @__PURE__ */ function() {
 	function e(e, t) {
 		typeof e == "function" && (t = e, e = {}), this.ondata = t;
 		var n = e && e.dictionary && e.dictionary.subarray(-32768);
@@ -2202,36 +2242,36 @@ var _n = /* @__PURE__ */ function() {
 		}
 	}, e.prototype.c = function(e) {
 		this.s.i = +(this.d = e || !1);
-		var t = this.s.b, n = Zt(this.p, this.s, this.o);
-		this.ondata(Yt(n, t, this.s.b), this.d), this.o = Yt(n, this.s.b - 32768), this.s.b = this.o.length, this.p = Yt(this.p, this.s.p / 8 | 0), this.s.p &= 7;
+		var t = this.s.b, n = $t(this.p, this.s, this.o);
+		this.ondata(Zt(n, t, this.s.b), this.d), this.o = Zt(n, this.s.b - 32768), this.s.b = this.o.length, this.p = Zt(this.p, this.s.p / 8 | 0), this.s.p &= 7;
 	}, e.prototype.push = function(e, t) {
 		this.e(e), this.c(t);
 	}, e;
-}(), vn = function(e, t, n, r) {
+}(), xn = function(e, t, n, r) {
 	for (var i in e) {
 		var a = e[i], o = t + i, s = r;
-		Array.isArray(a) && (s = fn(r, a[1]), a = a[0]), ArrayBuffer.isView(a) ? n[o] = [a, s] : (n[o += "/"] = [new G(0), s], vn(a, o, n, r));
+		Array.isArray(a) && (s = hn(r, a[1]), a = a[0]), ArrayBuffer.isView(a) ? n[o] = [a, s] : (n[o += "/"] = [new G(0), s], xn(a, o, n, r));
 	}
-}, yn = typeof TextEncoder < "u" && /*#__PURE__*/ new TextEncoder(), bn = typeof TextDecoder < "u" && /*#__PURE__*/ new TextDecoder();
+}, Sn = typeof TextEncoder < "u" && /*#__PURE__*/ new TextEncoder(), Cn = typeof TextDecoder < "u" && /*#__PURE__*/ new TextDecoder();
 try {
-	bn.decode(sn, { stream: !0 });
+	Cn.decode(un, { stream: !0 });
 } catch {}
-var xn = function(e) {
+var wn = function(e) {
 	for (var t = "", n = 0;;) {
 		var r = e[n++], i = (r > 127) + (r > 223) + (r > 239);
 		if (n + i > e.length) return {
 			s: t,
-			r: Yt(e, n - 1)
+			r: Zt(e, n - 1)
 		};
 		i ? i == 3 ? (r = ((r & 15) << 18 | (e[n++] & 63) << 12 | (e[n++] & 63) << 6 | e[n++] & 63) - 65536, t += String.fromCharCode(55296 | r >> 10, 56320 | r & 1023)) : i & 1 ? t += String.fromCharCode((r & 31) << 6 | e[n++] & 63) : t += String.fromCharCode((r & 15) << 12 | (e[n++] & 63) << 6 | e[n++] & 63) : t += String.fromCharCode(r);
 	}
 };
-function Sn(e, t) {
+function Tn(e, t) {
 	if (t) {
 		for (var n = new G(e.length), r = 0; r < e.length; ++r) n[r] = e.charCodeAt(r);
 		return n;
 	}
-	if (yn) return yn.encode(e);
+	if (Sn) return Sn.encode(e);
 	for (var i = e.length, a = new G(e.length + (e.length >> 1)), o = 0, s = function(e) {
 		a[o++] = e;
 	}, r = 0; r < i; ++r) {
@@ -2242,24 +2282,24 @@ function Sn(e, t) {
 		var l = e.charCodeAt(r);
 		l < 128 || t ? s(l) : l < 2048 ? (s(192 | l >> 6), s(128 | l & 63)) : l > 55295 && l < 57344 ? (l = 65536 + (l & 1047552) | e.charCodeAt(++r) & 1023, s(240 | l >> 18), s(128 | l >> 12 & 63), s(128 | l >> 6 & 63), s(128 | l & 63)) : (s(224 | l >> 12), s(128 | l >> 6 & 63), s(128 | l & 63));
 	}
-	return Yt(a, 0, o);
+	return Zt(a, 0, o);
 }
-function Cn(e, t) {
+function En(e, t) {
 	if (t) {
 		for (var n = "", r = 0; r < e.length; r += 16384) n += String.fromCharCode.apply(null, e.subarray(r, r + 16384));
 		return n;
 	}
-	if (bn) return bn.decode(e);
-	var i = xn(e), a = i.s, n = i.r;
+	if (Cn) return Cn.decode(e);
+	var i = wn(e), a = i.s, n = i.r;
 	return n.length && X(8), a;
 }
-var wn = function(e, t, n, r, i, a, o) {
+var Dn = function(e, t, n, r, i, a, o) {
 	var s = i == 4294967295, c = a == 4294967295, l = o == 4294967295, u = t + n, d = s + c + l;
 	if (r && d) {
-		for (; t + 4 < u; t += 4 + pn(e, t + 2)) if (pn(e, t) == 1) return [
-			s ? hn(e, t + 4 + 8 * c) : i,
-			c ? hn(e, t + 4) : a,
-			l ? hn(e, t + 4 + 8 * (c + s)) : o,
+		for (; t + 4 < u; t += 4 + gn(e, t + 2)) if (gn(e, t) == 1) return [
+			s ? vn(e, t + 4 + 8 * c) : i,
+			c ? vn(e, t + 4) : a,
+			l ? vn(e, t + 4 + 8 * (c + s)) : o,
 			1
 		];
 		r < 2 && X(13);
@@ -2270,35 +2310,35 @@ var wn = function(e, t, n, r, i, a, o) {
 		o,
 		0
 	];
-}, Tn = function(e) {
+}, On = function(e) {
 	var t = 0;
 	if (e) for (var n in e) {
 		var r = e[n].length;
 		r > 65535 && X(9), t += r + 4;
 	}
 	return t;
-}, En = function(e, t, n, r, i, a, o, s) {
-	var c = r.length, l = n.extra, u = s && s.length, d = Tn(l);
-	Q(e, t, o == null ? 67324752 : 33639248), t += 4, o != null && (e[t++] = 20, e[t++] = n.os), e[t] = 20, t += 2, e[t++] = n.flag << 1 | (a < 0 && 8), e[t++] = i && 8, e[t++] = n.compression & 255, e[t++] = n.compression >> 8;
+}, kn = function(e, t, n, r, i, a, o, s) {
+	var c = r.length, l = n.extra, u = s && s.length, d = On(l);
+	Z(e, t, o == null ? 67324752 : 33639248), t += 4, o != null && (e[t++] = 20, e[t++] = n.os), e[t] = 20, t += 2, e[t++] = n.flag << 1 | (a < 0 && 8), e[t++] = i && 8, e[t++] = n.compression & 255, e[t++] = n.compression >> 8;
 	var f = new Date(n.mtime == null ? Date.now() : n.mtime), p = f.getFullYear() - 1980;
-	if ((p < 0 || p > 119) && X(10), Q(e, t, p << 25 | f.getMonth() + 1 << 21 | f.getDate() << 16 | f.getHours() << 11 | f.getMinutes() << 5 | f.getSeconds() >> 1), t += 4, a != -1 && (Q(e, t, n.crc), Q(e, t + 4, a < 0 ? -a - 2 : a), Q(e, t + 8, n.size)), Q(e, t + 12, c), Q(e, t + 14, d), t += 16, o != null && (Q(e, t, u), Q(e, t + 6, n.attrs), Q(e, t + 10, o), t += 14), e.set(r, t), t += c, d) for (var m in l) {
+	if ((p < 0 || p > 119) && X(10), Z(e, t, p << 25 | f.getMonth() + 1 << 21 | f.getDate() << 16 | f.getHours() << 11 | f.getMinutes() << 5 | f.getSeconds() >> 1), t += 4, a != -1 && (Z(e, t, n.crc), Z(e, t + 4, a < 0 ? -a - 2 : a), Z(e, t + 8, n.size)), Z(e, t + 12, c), Z(e, t + 14, d), t += 16, o != null && (Z(e, t, u), Z(e, t + 6, n.attrs), Z(e, t + 10, o), t += 14), e.set(r, t), t += c, d) for (var m in l) {
 		var h = l[m], g = h.length;
-		Q(e, t, +m), Q(e, t + 2, g), e.set(h, t + 4), t += 4 + g;
+		Z(e, t, +m), Z(e, t + 2, g), e.set(h, t + 4), t += 4 + g;
 	}
 	return u && (e.set(s, t), t += u), t;
-}, Dn = function(e, t, n, r, i) {
-	Q(e, t, 101010256), Q(e, t + 8, n), Q(e, t + 10, n), Q(e, t + 12, r), Q(e, t + 16, i);
+}, An = function(e, t, n, r, i) {
+	Z(e, t, 101010256), Z(e, t + 8, n), Z(e, t + 10, n), Z(e, t + 12, r), Z(e, t + 16, i);
 };
-function On(e, t) {
+function jn(e, t) {
 	t ||= {};
 	var n = {}, r = [];
-	vn(e, "", n, t);
+	xn(e, "", n, t);
 	var i = 0, a = 0;
 	for (var o in n) {
-		var s = n[o], c = s[0], l = s[1], u = l.level == 0 ? 0 : 8, d = Sn(o), f = d.length, p = l.comment, m = p && Sn(p), h = m && m.length, g = Tn(l.extra);
+		var s = n[o], c = s[0], l = s[1], u = l.level == 0 ? 0 : 8, d = Tn(o), f = d.length, p = l.comment, m = p && Tn(p), h = m && m.length, g = On(l.extra);
 		f > 65535 && X(11);
-		var _ = u ? gn(c, l) : c, v = _.length, y = un();
-		y.p(c), r.push(fn(l, {
+		var _ = u ? yn(c, l) : c, v = _.length, y = pn();
+		y.p(c), r.push(hn(l, {
 			size: c.length,
 			crc: y.d(),
 			c: _,
@@ -2311,21 +2351,21 @@ function On(e, t) {
 	}
 	for (var b = new G(a + 22), x = i, S = a - i, C = 0; C < r.length; ++C) {
 		var d = r[C];
-		En(b, d.o, d, d.f, d.u, d.c.length);
-		var w = 30 + d.f.length + Tn(d.extra);
-		b.set(d.c, d.o + w), En(b, i, d, d.f, d.u, d.c.length, d.o, d.m), i += 16 + w + (d.m ? d.m.length : 0);
+		kn(b, d.o, d, d.f, d.u, d.c.length);
+		var w = 30 + d.f.length + On(d.extra);
+		b.set(d.c, d.o + w), kn(b, i, d, d.f, d.u, d.c.length, d.o, d.m), i += 16 + w + (d.m ? d.m.length : 0);
 	}
-	return Dn(b, i, r.length, S, x), b;
+	return An(b, i, r.length, S, x), b;
 }
-var kn = /* @__PURE__ */ function() {
+var Mn = /* @__PURE__ */ function() {
 	function e() {}
 	return e.prototype.push = function(e, t) {
 		this.ondata(null, e, t);
 	}, e.compression = 0, e;
-}(), An = /* @__PURE__ */ function() {
+}(), Nn = /* @__PURE__ */ function() {
 	function e() {
 		var e = this;
-		this.i = new _n(function(t, n) {
+		this.i = new bn(function(t, n) {
 			e.ondata(null, t, n);
 		});
 	}
@@ -2336,9 +2376,9 @@ var kn = /* @__PURE__ */ function() {
 			this.ondata(e, null, t);
 		}
 	}, e.compression = 8, e;
-}(), jn = /* @__PURE__ */ function() {
+}(), Pn = /* @__PURE__ */ function() {
 	function e(e) {
-		this.onfile = e, this.k = [], this.o = { 0: kn }, this.p = sn;
+		this.onfile = e, this.k = [], this.o = { 0: Mn }, this.p = un;
 	}
 	return e.prototype.push = function(e, t) {
 		var n = this;
@@ -2349,20 +2389,20 @@ var kn = /* @__PURE__ */ function() {
 			var a = 0, o = 0, s = void 0, c = void 0;
 			this.p.length ? e.length ? (c = new G(this.p.length + e.length), c.set(this.p), c.set(e, this.p.length)) : c = this.p : c = e;
 			for (var l = c.length, u = this.c, d = u && this.d, f = function() {
-				var e = mn(c, o);
+				var e = _n(c, o);
 				if (e == 67324752) {
 					a = 1, s = o, p.d = null, p.c = 0;
-					var t = pn(c, o + 6), r = pn(c, o + 8), i = t & 2048, d = t & 8, f = pn(c, o + 26), m = pn(c, o + 28);
+					var t = gn(c, o + 6), r = gn(c, o + 8), i = t & 2048, d = t & 8, f = gn(c, o + 26), m = gn(c, o + 28);
 					if (l > o + 30 + f + m) {
 						var h = [];
 						p.k.unshift(h), a = 2;
-						var g = mn(c, o + 18), _ = mn(c, o + 22), v = Cn(c.subarray(o + 30, o += 30 + f), !i), y = wn(c, o, m, 2, g, _, 0), b = y[0], x = y[1], S = y[3];
+						var g = _n(c, o + 18), _ = _n(c, o + 22), v = En(c.subarray(o + 30, o += 30 + f), !i), y = Dn(c, o, m, 2, g, _, 0), b = y[0], x = y[1], S = y[3];
 						d && (b = -1 - S), o += m, p.c = b;
 						var C, w = {
 							name: v,
 							compression: r,
 							start: function() {
-								if (w.ondata || X(5), !b) w.ondata(null, sn, !0);
+								if (w.ondata || X(5), !b) w.ondata(null, un, !0);
 								else {
 									var e = n.o[r];
 									e || w.ondata(X(14, "unknown compression type " + r, 1), null, !1), C = b < 0 ? new e(v) : new e(v, b, x), C.ondata = function(e, t, n) {
@@ -2372,7 +2412,7 @@ var kn = /* @__PURE__ */ function() {
 										var a = i[t];
 										C.push(a, !1);
 									}
-									n.k[0] == h && n.c ? n.d = C : C.push(sn, !0);
+									n.k[0] == h && n.c ? n.d = C : C.push(un, !0);
 								}
 							},
 							terminate: function() {
@@ -2388,8 +2428,8 @@ var kn = /* @__PURE__ */ function() {
 					if (e == 33639248) return s = o -= 4, a = 3, p.c = 0, "break";
 				}
 			}, p = this; o < l - 4 && f() !== "break"; ++o);
-			if (this.p = sn, u < 0) {
-				var m = a ? c.subarray(0, s - 12 - (u == -2 && 8) - (mn(c, s - 16) == 134695760 && 4)) : c.subarray(0, o);
+			if (this.p = un, u < 0) {
+				var m = a ? c.subarray(0, s - 12 - (u == -2 && 8) - (_n(c, s - 16) == 134695760 && 4)) : c.subarray(0, o);
 				d ? d.push(m, !!a) : this.k[+(a == 2)].push(m);
 			}
 			if (a & 2) return this.push(c.subarray(o), t);
@@ -2400,16 +2440,16 @@ var kn = /* @__PURE__ */ function() {
 		this.o[e.compression] = e;
 	}, e;
 }();
-function Mn(e, t, n) {
+function Fn(e, t, n) {
 	let r = URL.createObjectURL(new Blob([e], { type: n })), i = document.createElement("a");
 	i.href = r, i.download = t, i.click(), setTimeout(() => URL.revokeObjectURL(r), 1e3);
 }
-function Nn(e) {
-	return On(Object.fromEntries(Object.entries(e).map(([e, t]) => [e, [Sn(t), { mtime: /* @__PURE__ */ new Date("2000-01-01T00:00:00Z") }]])), { level: 6 });
+function In(e) {
+	return jn(Object.fromEntries(Object.entries(e).map(([e, t]) => [e, [Tn(t), { mtime: /* @__PURE__ */ new Date("2000-01-01T00:00:00Z") }]])), { level: 6 });
 }
-function Pn(t) {
+function Ln(t) {
 	if (t.byteLength > 20971520) throw Error("invalid_file");
-	let n = /* @__PURE__ */ new Set(["metadata.json", ...e.map((e) => `${e}.csv`)]), r = {}, i = 0, a, o = new jn((e) => {
+	let n = /* @__PURE__ */ new Set(["metadata.json", ...e.map((e) => `${e}.csv`)]), r = {}, i = 0, a, o = new Pn((e) => {
 		if (!n.has(e.name) || e.name in r || (e.originalSize ?? 0) > 20971520) {
 			a = /* @__PURE__ */ Error("invalid_file"), e.terminate();
 			return;
@@ -2422,15 +2462,15 @@ function Pn(t) {
 			else if (t.push(o), s) {
 				let n = new Uint8Array(t.reduce((e, t) => e + t.byteLength, 0)), i = 0;
 				for (let e of t) n.set(e, i), i += e.byteLength;
-				r[e.name] = Cn(n);
+				r[e.name] = En(n);
 			}
 		}, e.start();
 	});
-	if (o.register(An), o.push(t, !0), a || Object.keys(r).length !== n.size) throw Error("invalid_file");
+	if (o.register(Nn), o.push(t, !0), a || Object.keys(r).length !== n.size) throw Error("invalid_file");
 	return r;
 }
 // src/styles.ts
-var Fn = j`
+var Rn = j`
   :host {
     display: block;
     color: var(--primary-text-color, #263b30);
@@ -3055,6 +3095,61 @@ var Fn = j`
   .multi-filter-options p {
     margin-top: 0;
     font-size: 12px;
+  }
+  .reminders-scroll {
+    overflow: auto;
+    max-height: 65dvh;
+    margin-top: 20px;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+  }
+  .reminders-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 850px;
+    width: 100%;
+  }
+  .reminders-table th,
+  .reminders-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--gp-border);
+    border-right: 1px solid var(--gp-border);
+  }
+  .reminders-table th {
+    background: var(--gp-card);
+  }
+  .reminders-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-soft);
+  }
+  .reminders-table th:first-child {
+    position: sticky;
+    left: 0;
+    min-width: 180px;
+    text-align: left;
+    z-index: 1;
+  }
+  .reminders-table thead th:first-child {
+    z-index: 3;
+  }
+  .reminders-table td {
+    text-align: center;
+  }
+  .reminders-table input {
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    accent-color: var(--gp-accent);
+    cursor: pointer;
+  }
+  .reminders-table .reminder-unavailable {
+    background: var(--gp-soft);
+  }
+  .reminders-table input:disabled {
+    cursor: default;
+    opacity: 0.4;
   }
   .year-scroll {
     overflow: auto;
@@ -3717,15 +3812,16 @@ var Fn = j`
       margin-bottom: 10px;
     }
   }
-`, In = [
+`, zn = [
 	"overview",
 	"calendar",
 	"plants",
 	"cultures",
 	"history",
 	"locations",
+	"reminders",
 	"settings"
-], Ln = [
+], Q = [
 	"indoors",
 	"direct",
 	"prick_out",
@@ -3733,13 +3829,14 @@ var Fn = j`
 	"care",
 	"harvest",
 	"other"
-], Rn = {
+], Bn = {
 	menu: "M3 6h18M3 12h18M3 18h18",
 	overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
 	calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
 	plants: "M12 21V10M12 15C3 15 3 6 3 6s9-1 9 9zm0-5c0-8 9-8 9-8s1 9-9 8z",
 	cultures: "M5 20h14l2-10H3zM12 10V4m0 4C6 8 6 3 6 3s6 0 6 5zm0-2c0-5 6-5 6-5s0 5-6 5z",
 	history: "M3 11a9 9 0 1 1 2 7M3 4v7h7m2-4v6l4 2",
+	reminders: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
 	locations: "M3 3l6 3 6-3 6 3v15l-6-3-6 3-6-3zm6 3v15m6-18v15",
 	settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-6v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2",
 	edit: "M4 20h4L20 8l-4-4L4 16v4ZM14 6l4 4",
@@ -3750,18 +3847,18 @@ var Fn = j`
 	check: "M4 12l5 5L20 6"
 };
 function $(e) {
-	return Ae`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${Rn[e] ?? Rn.plants}></path></svg>`;
+	return je`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${Bn[e] ?? Bn.plants}></path></svg>`;
 }
-function zn() {
+function Vn() {
 	try {
 		return localStorage.getItem("garden-planner-language") ?? "";
 	} catch {
 		return "";
 	}
 }
-var Bn = class extends Ye {
+var Hn = class extends Ye {
 	constructor(...e) {
-		super(...e), this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = zn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.personalReminders = null, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Vn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -3787,12 +3884,14 @@ var Bn = class extends Ye {
 		};
 	}
 	static {
-		this.styles = Fn;
+		this.styles = Rn;
 	}
 	static {
 		this.properties = {
 			hass: { attribute: !1 },
 			narrow: { type: Boolean },
+			personalReminders: { state: !0 },
+			reminderQuery: { state: !0 },
 			capabilities: { state: !0 },
 			hostSettings: { state: !0 },
 			hostDraft: { state: !0 },
@@ -3832,10 +3931,10 @@ var Bn = class extends Ye {
 		return (this.languagePreference || this.hass?.locale?.language || this.hass?.language || "de").startsWith("de") ? "de" : "en";
 	}
 	tr(e) {
-		return _t(this.language, e);
+		return yt(this.language, e);
 	}
 	lab(e) {
-		return vt(this.language, e);
+		return bt(this.language, e);
 	}
 	get timeZone() {
 		return this.hass?.config.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -3883,7 +3982,7 @@ var Bn = class extends Ye {
 	}
 	async bind() {
 		let e = ++this.connectionGeneration;
-		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new dt(this.hass) : void 0, this.tables = r(), this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
+		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new pt(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
 			this.anchor ||= this.today, this.boundConnection.addEventListener?.("ready", this.reconnect);
 			try {
 				let t = await this.api.subscribe(() => {
@@ -3906,9 +4005,9 @@ var Bn = class extends Ye {
 		try {
 			let [t, n] = await Promise.all([this.api.load(), this.api.command("capabilities")]);
 			if (e !== this.loadGeneration || !this.isConnected) return;
-			this.tables = t, this.capabilities = n, this.loaded = !0, this.error = "";
+			this.tables = t, this.capabilities = n, this.loaded = !0, this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
 		} catch (t) {
-			e === this.loadGeneration && (this.error = yt(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
+			e === this.loadGeneration && (this.error = xt(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
 		}
 	}
 	announce(e) {
@@ -3924,14 +4023,14 @@ var Bn = class extends Ye {
 			let i = await this.api.command(e, t);
 			return r !== this.connectionGeneration || (await this.refresh(), r !== this.connectionGeneration) ? void 0 : (n && this.announce(n), i);
 		} catch (e) {
-			r === this.connectionGeneration && (this.error = yt(this.language, e));
+			r === this.connectionGeneration && (this.error = xt(this.language, e));
 			return;
 		} finally {
 			r === this.connectionGeneration && (this.busy = !1);
 		}
 	}
 	navigate(e) {
-		this.page = e, this.error = "", e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings());
+		this.page = e, this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings());
 	}
 	plantName(e) {
 		let n = e.data.snapshot;
@@ -3948,7 +4047,7 @@ var Bn = class extends Ye {
 		return this.tables.growing_windows.filter((n) => t(n, "plant_id") === e).sort((e, t) => this.compareWindows(e, t));
 	}
 	compareWindows(e, n) {
-		return Ln.indexOf(t(e, "activity")) - Ln.indexOf(t(n, "activity")) || Number(e.data.start_month) - Number(n.data.start_month) || Number(e.data.start_day) - Number(n.data.start_day) || this.nameFor(t(e, "plant_id"), "plants").localeCompare(this.nameFor(t(n, "plant_id"), "plants"), this.language) || e.id.localeCompare(n.id);
+		return Q.indexOf(t(e, "activity")) - Q.indexOf(t(n, "activity")) || Number(e.data.start_month) - Number(n.data.start_month) || Number(e.data.start_day) - Number(n.data.start_day) || this.nameFor(t(e, "plant_id"), "plants").localeCompare(this.nameFor(t(n, "plant_id"), "plants"), this.language) || e.id.localeCompare(n.id);
 	}
 	status(e) {
 		return y(e, this.tables.cultivation_events);
@@ -3957,11 +4056,11 @@ var Bn = class extends Ye {
 		this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
 			table: e,
 			record: t,
-			draft: t ? structuredClone(t.data) : Tt(e, this.timeZone, n)
+			draft: t ? structuredClone(t.data) : Dt(e, this.timeZone, n)
 		};
 	}
 	fieldList(e) {
-		return wt(e.table, e.draft, this.tables, this.language, !!e.record);
+		return Et(e.table, e.draft, this.tables, this.language, !!e.record);
 	}
 	changeField(e, n) {
 		if (!this.editor) return;
@@ -3989,7 +4088,7 @@ var Bn = class extends Ye {
 		if (e.preventDefault(), !this.editor || this.busy || !e.currentTarget.reportValidity()) return;
 		let t = this.editor, n;
 		try {
-			n = Et(t.table, t.draft, this.fieldList(t), t.record);
+			n = Ot(t.table, t.draft, this.fieldList(t), t.record);
 		} catch {
 			this.error = this.tr("numberRange");
 			return;
@@ -4039,7 +4138,7 @@ var Bn = class extends Ye {
 	}
 	renderSensorField(e) {
 		let t = String(this.editor?.draft.sensor_entity_id ?? ""), n = T(this.hass, t), r = this.sensorOpen && this.sensorIndex >= 0 && this.sensorIndex < n.length;
-		return H`<div class="sensor-field">
+		return V`<div class="sensor-field">
       <label id="field-sensor_entity_id-label" for="field-sensor_entity_id"
         >${this.tr(e.key)}</label
       >
@@ -4080,7 +4179,7 @@ var Bn = class extends Ye {
           style=${`--sensor-max-height:${this.sensorMaxHeight}px`}
           ?hidden=${!this.sensorOpen}
         >
-          ${n.map((e, t) => H`<button
+          ${n.map((e, t) => V`<button
                 type="button"
                 role="option"
                 tabindex="-1"
@@ -4091,7 +4190,7 @@ var Bn = class extends Ye {
               >
                 <strong>${e.name}</strong><small>${e.id}</small>
               </button>`)}
-          ${n.length ? U : H`<div class="sensor-empty" role="option" aria-disabled="true">${this.tr("noSensors")}</div>`}
+          ${n.length ? U : V`<div class="sensor-empty" role="option" aria-disabled="true">${this.tr("noSensors")}</div>`}
         </div>
       </div>
     </div>`;
@@ -4099,14 +4198,14 @@ var Bn = class extends Ye {
 	renderField(e) {
 		if (e.key === "sensor_entity_id") return this.renderSensorField(e);
 		let t = this.editor.draft[e.key], n = (t) => this.changeField(e.key, t.target.value), r = `field-${e.key}`;
-		return H`<label
+		return V`<label
       class=${[e.type === "textarea" || e.wide ? "wide" : "", e.rowStart ? "row-start" : ""].filter(Boolean).join(" ")}
       for=${r}
     >
       <span id=${`${r}-label`}
         >${this.tr(e.key)}${e.required ? " *" : ""}</span
       >
-      ${e.type === "select" ? H`<select
+      ${e.type === "select" ? V`<select
               id=${r}
               aria-labelledby=${`${r}-label`}
               name=${e.key}
@@ -4121,8 +4220,8 @@ var Bn = class extends Ye {
               >
                 ${this.tr("optional")}
               </option>
-              ${e.options?.map((e) => H`<option value=${e.value} .selected=${String(t ?? "") === e.value}>${e.label}</option>`)}
-            </select>` : e.type === "textarea" ? H`<textarea
+              ${e.options?.map((e) => V`<option value=${e.value} .selected=${String(t ?? "") === e.value}>${e.label}</option>`)}
+            </select>` : e.type === "textarea" ? V`<textarea
                 id=${r}
                 aria-labelledby=${`${r}-label`}
                 name=${e.key}
@@ -4130,7 +4229,7 @@ var Bn = class extends Ye {
                 ?disabled=${this.busy}
                 maxlength="20000"
                 @input=${n}
-              ></textarea>` : H`<input
+              ></textarea>` : V`<input
                 id=${r}
                 aria-labelledby=${`${r}-label`}
                 name=${e.key}
@@ -4148,7 +4247,7 @@ var Bn = class extends Ye {
 	}
 	renderEditor() {
 		let e = this.editor;
-		return H`<dialog
+		return V`<dialog
       id="editor-dialog"
       aria-labelledby="editor-title"
       @cancel=${(e) => {
@@ -4158,7 +4257,7 @@ var Bn = class extends Ye {
 			this.editor = null;
 		}}
     >
-      ${e ? H`<form @submit=${this.saveEditor}>
+      ${e ? V`<form @submit=${this.saveEditor}>
               <div class="dialog-head">
                 <h2 id="editor-title">
                   ${this.tr(e.record ? "edit" : {
@@ -4184,15 +4283,15 @@ var Bn = class extends Ye {
                 </button>
               </div>
               <div class="dialog-body">
-                ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
+                ${this.error ? V`<p class="notice error" role="alert">${this.error}</p>` : U}
                 ${[
 			"plants",
 			"varieties",
 			"growing_windows",
 			"cultivations",
 			"locations"
-		].includes(e.table) ? H`<p class="notice">${this.tr("temperatureHint")}</p>` : U}
-                ${e.draft.origin === "initial" ? H`<p class="notice">${this.tr("initialEventHint")}</p>` : U}
+		].includes(e.table) ? V`<p class="notice">${this.tr("temperatureHint")}</p>` : U}
+                ${e.draft.origin === "initial" ? V`<p class="notice">${this.tr("initialEventHint")}</p>` : U}
                 <div class="form-grid">
                   ${this.fieldList(e).map((e) => this.renderField(e))}
                 </div>
@@ -4215,7 +4314,7 @@ var Bn = class extends Ye {
 	}
 	renderMultiFilter(e, t, n) {
 		let r = this.tr(e === "category" ? "allCategories" : "allActivities");
-		return H`<fieldset class="multi-filter">
+		return V`<fieldset class="multi-filter">
       <legend>${this.tr(e)}</legend>
       <details>
         <summary>
@@ -4223,7 +4322,7 @@ var Bn = class extends Ye {
         </summary>
         <div class="multi-filter-options">
           <p class="muted">${this.tr("multiFilterHint")}</p>
-          ${t.map((t) => H`<label class="check"
+          ${t.map((t) => V`<label class="check"
                 ><input
                   type="checkbox"
                   .checked=${n.includes(t)}
@@ -4249,7 +4348,7 @@ var Bn = class extends Ye {
 		return !this.calendarActivities.length || this.calendarActivities.includes(e);
 	}
 	renderFilters(e = !1) {
-		return H`<div class="filters">
+		return V`<div class="filters">
       <label
         >${this.tr("search")}<input
           type="search"
@@ -4258,7 +4357,7 @@ var Bn = class extends Ye {
 			this.query = e.target.value;
 		}}
       /></label>
-      ${e ? H`${this.renderMultiFilter("category", this.categories, this.calendarCategories)}${this.renderMultiFilter("activity", Ln, this.calendarActivities)}` : H`
+      ${e ? V`${this.renderMultiFilter("category", this.categories, this.calendarCategories)}${this.renderMultiFilter("activity", Q, this.calendarActivities)}` : V`
               <label
                 >${this.tr("category")}<select
                   aria-label=${this.tr("category")}
@@ -4267,7 +4366,7 @@ var Bn = class extends Ye {
 		}}
                 >
                   <option value="">${this.tr("allCategories")}</option>
-                  ${this.categories.map((e) => H`<option value=${e} .selected=${this.category === e}>${this.lab(e)}</option>`)}
+                  ${this.categories.map((e) => V`<option value=${e} .selected=${this.category === e}>${this.lab(e)}</option>`)}
                 </select></label
               >
               <label
@@ -4282,11 +4381,11 @@ var Bn = class extends Ye {
 			"direct",
 			"indoors",
 			"transplant"
-		].map((e) => H`<option value=${e} .selected=${this.method === e}>${this.lab(e)}</option>`)}
+		].map((e) => V`<option value=${e} .selected=${this.method === e}>${this.lab(e)}</option>`)}
                 </select></label
               >
             `}
-      ${e ? U : H`<label
+      ${e ? U : V`<label
                 >${this.tr("sort")}<select
                   @change=${(e) => {
 			this.sort = e.target.value;
@@ -4314,15 +4413,15 @@ var Bn = class extends Ye {
 		return this.tables.plants.filter((n) => (this.showArchived && !e || !n.data.archived) && (e ? !this.calendarCategories.length || this.calendarCategories.includes(t(n, "category")) : !this.category || t(n, "category") === this.category) && (!this.query || `${t(n, "name")} ${t(n, "botanical_name")}`.toLocaleLowerCase(this.language).includes(this.query.toLocaleLowerCase(this.language))) && (e || !this.method || this.plantWindows(n.id).some((e) => t(e, "method") === this.method || t(e, "activity") === this.method))).sort((r, i) => this.sort === "next" && !e && (n.get(r.id) ?? "").localeCompare(n.get(i.id) ?? "") || t(r, "name").localeCompare(t(i, "name"), this.language));
 	}
 	empty(e, t = "", n, r) {
-		return H`<div class="empty">
+		return V`<div class="empty">
       ${$("plants")}
       <h2>${this.tr(e)}</h2>
-      ${t ? H`<p>${this.tr(t)}</p>` : U}${n && this.editable ? H`<button class="primary" @click=${r}>${$("plus")}${this.tr(n)}</button>` : U}
+      ${t ? V`<p>${this.tr(t)}</p>` : U}${n && this.editable ? V`<button class="primary" @click=${r}>${$("plus")}${this.tr(n)}</button>` : U}
     </div>`;
 	}
 	renderPlantCard(e) {
 		let n = this.plantWindows(e.id), r = n.length ? p(n, this.today) : void 0;
-		return H`<article class="plant">
+		return V`<article class="plant">
       <div class="plant-title">
         <div class="plant-symbol">${$("plants")}</div>
         <div>
@@ -4347,7 +4446,7 @@ var Bn = class extends Ye {
       <div>
         <span class="badge"
           >${this.lab(t(e, "category")) || this.tr("other")}</span
-        >${e.data.archived ? H` <span class="badge unknown">${this.tr("archived")}</span>` : U}
+        >${e.data.archived ? V` <span class="badge unknown">${this.tr("archived")}</span>` : U}
       </div>
       <p class="muted">
         ${r ? `${this.tr("nextSowing")} · ${h(r, this.language)}` : this.tr("noAllWindows")}
@@ -4362,7 +4461,7 @@ var Bn = class extends Ye {
 		}}
         >
           ${this.tr("details")}${$("arrow")}</button
-        >${this.editable && !e.data.archived ? H`<button class="icon" aria-label=${`${this.tr("newSowing")}: ${t(e, "name")}`} @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}</button>` : U}
+        >${this.editable && !e.data.archived ? V`<button class="icon" aria-label=${`${this.tr("newSowing")}: ${t(e, "name")}`} @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}</button>` : U}
       </div>
     </article>`;
 	}
@@ -4378,7 +4477,7 @@ var Bn = class extends Ye {
 			["successful", n.filter((e) => t(e, "result") === "successful").length],
 			["openTasks", this.tables.tasks.filter((e) => !e.data.completed).length]
 		];
-		return H`<section class="hero">
+		return V`<section class="hero">
         <div>
           <div class="eyebrow">${this.tr("garden")}</div>
           <h2>${this.tr("welcome")}</h2>
@@ -4388,13 +4487,13 @@ var Bn = class extends Ye {
           </p>
         </div>
         <div class="art">
-          ${Ae`<svg viewBox="0 0 100 120" width="100" height="120" fill="none" aria-hidden="true"><path d="M49 115V35M49 79C10 81 10 41 10 41s40 1 39 38ZM49 53C48 16 89 10 89 10s4 42-40 43Z" stroke="currentColor" stroke-width="2"/><path d="M49 103c25 0 34-21 34-21s-29-2-34 21Z" fill="currentColor" opacity=".25"/></svg>`}
+          ${je`<svg viewBox="0 0 100 120" width="100" height="120" fill="none" aria-hidden="true"><path d="M49 115V35M49 79C10 81 10 41 10 41s40 1 39 38ZM49 53C48 16 89 10 89 10s4 42-40 43Z" stroke="currentColor" stroke-width="2"/><path d="M49 103c25 0 34-21 34-21s-29-2-34 21Z" fill="currentColor" opacity=".25"/></svg>`}
         </div>
       </section>
       <div class="stats">
-        ${r.map(([e, t]) => H`<div class="stat"><strong>${t}</strong><span>${this.tr(e)}</span></div>`)}
+        ${r.map(([e, t]) => V`<div class="stat"><strong>${t}</strong><span>${this.tr(e)}</span></div>`)}
       </div>
-      ${this.tables.plants.length ? U : H`<section class="panel">${this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}</section>`}
+      ${this.tables.plants.length ? U : V`<section class="panel">${this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}</section>`}
       <div class="columns">
         <section class="panel">
           <div class="section-head">
@@ -4404,7 +4503,7 @@ var Bn = class extends Ye {
             </button>
           </div>
           <p class="muted">${this.tr("recommendation")}</p>
-          ${e.length ? e.map((e) => H`<div class=${`item activity ${t(e, "activity")}`}>
+          ${e.length ? e.map((e) => V`<div class=${`item activity ${t(e, "activity")}`}>
                       <span class="plant-symbol">${$("plants")}</span>
                       <div class="item-content">
                         <button
@@ -4426,12 +4525,12 @@ var Bn = class extends Ye {
                         </p>
                         <small>${_(e, this.language)}</small>
                       </div>
-                    </div>`) : H`<p class="empty">${this.tr("noWindows")}</p>`}
+                    </div>`) : V`<p class="empty">${this.tr("noWindows")}</p>`}
         </section>
         <section class="panel">
           <div class="section-head">
             <h2>${this.tr("upcoming")}</h2>
-            ${this.editable ? H`<button class="icon" aria-label=${this.tr("newTask")} @click=${() => this.startEditor("tasks")}>${$("plus")}</button>` : U}
+            ${this.editable ? V`<button class="icon" aria-label=${this.tr("newTask")} @click=${() => this.startEditor("tasks")}>${$("plus")}</button>` : U}
           </div>
           ${this.renderTasks(!1)}
         </section>
@@ -4439,7 +4538,7 @@ var Bn = class extends Ye {
 	}
 	renderTasks(e = !0) {
 		let n = this.tables.tasks.filter((t) => e || !t.data.completed).sort((e, n) => t(e, "date").localeCompare(t(n, "date")));
-		return H`${n.length ? (e ? n : n.slice(0, 6)).map((e) => H`<article class="item">
+		return V`${n.length ? (e ? n : n.slice(0, 6)).map((e) => V`<article class="item">
                 <div class="date-tile">
                   <strong>${t(e, "date").slice(8)}</strong
                   ><small
@@ -4451,15 +4550,15 @@ var Bn = class extends Ye {
                   <small
                     >${this.lab(t(e, "activity"))} ·
                     ${h(t(e, "date"), this.language)}</small
-                  >${t(e, "notes") ? H`<p>${t(e, "notes")}</p>` : U}${e.data.completed ? H`<span class="badge">${this.tr("completed")}</span>` : U}
+                  >${t(e, "notes") ? V`<p>${t(e, "notes")}</p>` : U}${e.data.completed ? V`<span class="badge">${this.tr("completed")}</span>` : U}
                 </div>
-                ${this.editable ? H`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", {
+                ${this.editable ? V`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", {
 			table: "tasks",
 			id: e.id,
 			revision: e.revision,
 			data: { completed: !e.data.completed }
 		})}>${$("check")}</button><button @click=${() => this.startEditor("tasks", e)}>${this.tr("edit")}</button>` : U}
-              </article>`) : H`<p class="empty">${this.tr("noTasks")}</p>`}`;
+              </article>`) : V`<p class="empty">${this.tr("noTasks")}</p>`}`;
 	}
 	calendarWindows() {
 		let e = new Set(this.filteredPlants(!0).map((e) => e.id));
@@ -4475,14 +4574,14 @@ var Bn = class extends Ye {
 	}
 	renderCalendar() {
 		let e = this.calendarWindows(), n = Array.from({ length: 12 }, (e, t) => t + 1);
-		return H`${this.renderFilters(!0)}
+		return V`${this.renderFilters(!0)}
       <div class="toolbar">
         <div class="segmented" aria-label=${this.tr("calendar")}>
           ${[
 			"year",
 			"month",
 			"week"
-		].map((e) => H`<button
+		].map((e) => V`<button
                 aria-pressed=${this.calendarMode === e}
                 @click=${() => {
 			this.calendarMode = e;
@@ -4498,7 +4597,7 @@ var Bn = class extends Ye {
             @click=${() => this.shiftCalendar(-1)}
           >
             ‹</button
-          >${this.calendarMode === "year" ? H`<label
+          >${this.calendarMode === "year" ? V`<label
                   >${this.tr("selectedYear")}<input
                     type="number"
                     min="1"
@@ -4508,7 +4607,7 @@ var Bn = class extends Ye {
 			let t = Number(e.target.value);
 			t >= 1 && t <= 9998 && (this.anchor = `${String(t).padStart(4, "0")}-01-01`);
 		}}
-                /></label>` : H`<label
+                /></label>` : V`<label
                   >${this.tr(this.calendarMode === "month" ? "selectedMonth" : "selectedWeek")}<input
                     type=${this.calendarMode === "month" ? "month" : "date"}
                     .value=${this.calendarMode === "month" ? (this.anchor || this.today).slice(0, 7) : this.anchor || this.today}
@@ -4532,9 +4631,9 @@ var Bn = class extends Ye {
         </div>
       </div>
       <div class="legend">
-        ${Ln.map((e) => H`<span class=${e}><span class="dot"></span>${this.lab(e)}</span>`)}
+        ${Q.map((e) => V`<span class=${e}><span class="dot"></span>${this.lab(e)}</span>`)}
       </div>
-      ${this.calendarMode === "year" ? H`<p class="muted">${this.tr("yearlyHint")}</p>
+      ${this.calendarMode === "year" ? V`<p class="muted">${this.tr("yearlyHint")}</p>
               <div
                 class="year-scroll"
                 tabindex="0"
@@ -4544,8 +4643,8 @@ var Bn = class extends Ye {
                   <div class="month-head">
                     ${this.tr("plants")} · ${this.year}
                   </div>
-                  ${n.map((e) => H`<div class="month-head">${g(this.year, e, this.language, !0)}</div>`)}
-                  ${e.map((e) => H`<button
+                  ${n.map((e) => V`<div class="month-head">${g(this.year, e, this.language, !0)}</div>`)}
+                  ${e.map((e) => V`<button
                           class="row-title"
                           @click=${() => {
 			this.selected = {
@@ -4558,7 +4657,7 @@ var Bn = class extends Ye {
                             >${this.lab(t(e, "activity"))} ·
                             ${this.lab(t(e, "environment"))}</small
                           ></button
-                        >${n.map((n) => f(e, this.year, n) ? H`<button
+                        >${n.map((n) => f(e, this.year, n) ? V`<button
                                 class=${`year-cell ${t(e, "activity")}`}
                                 aria-label=${`${this.nameFor(t(e, "plant_id"), "plants")}, ${this.lab(t(e, "activity"))}, ${g(this.year, n, this.language)}`}
                                 title=${this.windowTooltip(e)}
@@ -4570,18 +4669,18 @@ var Bn = class extends Ye {
 		}}
                               >
                                 <span aria-hidden="true"
-                                  >${d(e, this.year, n).map((e) => H`<span class="bar" style=${`left:${e.offset}%;width:${e.width}%`}></span>`)}</span
+                                  >${d(e, this.year, n).map((e) => V`<span class="bar" style=${`left:${e.offset}%;width:${e.width}%`}></span>`)}</span
                                 >
-                              </button>` : H`<div class="year-cell"></div>`)}`)}
+                              </button>` : V`<div class="year-cell"></div>`)}`)}
                 </div>
               </div>
-              ${e.length ? U : this.empty("noAllWindows")}` : this.calendarMode === "month" ? H`<section class="panel">
+              ${e.length ? U : this.empty("noAllWindows")}` : this.calendarMode === "month" ? V`<section class="panel">
                 <div class="section-head">
                   <h2>${g(this.year, this.month, this.language)}</h2>
                 </div>
                 <p class="muted">${this.tr("recommendation")}</p>
                 <div class="month-list">
-                  ${e.filter((e) => f(e, this.year, this.month)).map((e) => H`<button
+                  ${e.filter((e) => f(e, this.year, this.month)).map((e) => V`<button
                           type="button"
                           class=${`month-event plant activity ${t(e, "activity")}`}
                           aria-label=${`${this.nameFor(t(e, "plant_id"), "plants")}, ${this.lab(t(e, "activity"))}, ${_(e, this.language)}`}
@@ -4605,7 +4704,7 @@ var Bn = class extends Ye {
                             >${_(e, this.language)} ·
                             ${this.lab(t(e, "environment"))}</small
                           >
-                          ${t(e, "regional_notes") ? H`<span class="month-region-note">${t(e, "regional_notes")}</span>` : U}
+                          ${t(e, "regional_notes") ? V`<span class="month-region-note">${t(e, "regional_notes")}</span>` : U}
                         </button>`)}
                 </div>
                 ${e.some((e) => f(e, this.year, this.month)) ? U : this.empty("noWindows")}
@@ -4620,11 +4719,11 @@ var Bn = class extends Ye {
 			window: e,
 			segments: x(e, this.anchor || this.today)
 		})).filter(({ segments: e }) => e.length);
-		return H`<section class="panel" aria-labelledby="week-windows-title">
+		return V`<section class="panel" aria-labelledby="week-windows-title">
         <h2 id="week-windows-title">${this.tr("possibleThisWeek")}</h2>
         <p class="muted">${this.tr("recommendation")}</p>
         <div class="week-windows">
-          ${r.map(({ window: e, segments: n }) => H`<button
+          ${r.map(({ window: e, segments: n }) => V`<button
                 class=${`week-window ${t(e, "activity")}`}
                 title=${this.windowTooltip(e)}
                 @click=${() => {
@@ -4648,14 +4747,14 @@ var Bn = class extends Ye {
                 >
               </button>`)}
         </div>
-        ${r.length ? U : H`<p class="muted">${this.tr("noWeekWindows")}</p>`}
+        ${r.length ? U : V`<p class="muted">${this.tr("noWeekWindows")}</p>`}
       </section>
       <h2 class="week-heading">${this.tr("actualWork")}</h2>
       <div class="scroll" tabindex="0" aria-label=${this.tr("week")}>
         <div class="week-grid">
           ${e.map((e) => {
 			let r = this.tables.tasks.filter((r) => t(r, "date") === e && this.calendarActivityMatches(t(r, "activity")) && (!t(r, "plant_id") || n.has(t(r, "plant_id"))));
-			r.sort((e, n) => Ln.indexOf(t(e, "activity")) - Ln.indexOf(t(n, "activity")));
+			r.sort((e, n) => Q.indexOf(t(e, "activity")) - Q.indexOf(t(n, "activity")));
 			let i = this.tables.cultivation_events.filter((r) => t(r, "date") === e && this.tables.cultivations.some((e) => e.id === t(r, "cultivation_id") && n.has(t(e, "plant_id")) && this.calendarActivityMatches(this.eventActivity(r, e)))), a = [...r.map((e) => ({
 				kind: "task",
 				record: e,
@@ -4664,8 +4763,8 @@ var Bn = class extends Ye {
 				kind: "event",
 				record: e,
 				activity: this.eventActivity(e, this.tables.cultivations.find((n) => n.id === t(e, "cultivation_id")))
-			}))].sort((e, t) => Ln.indexOf(e.activity) - Ln.indexOf(t.activity) || e.record.id.localeCompare(t.record.id));
-			return H`<section
+			}))].sort((e, t) => Q.indexOf(e.activity) - Q.indexOf(t.activity) || e.record.id.localeCompare(t.record.id));
+			return V`<section
               class=${`week-day ${e === this.today ? "today" : ""}`}
             >
               <h3>
@@ -4674,9 +4773,9 @@ var Bn = class extends Ye {
 				timeZone: "UTC"
 			}).format(/* @__PURE__ */ new Date(`${e}T12:00:00Z`))}<br />${h(e, this.language)}
               </h3>
-              ${!r.length && !i.length ? H`<p class="muted week-empty">${this.tr("noAppointments")}</p>` : U}
+              ${!r.length && !i.length ? V`<p class="muted week-empty">${this.tr("noAppointments")}</p>` : U}
               ${a.map((e) => {
-				if (e.kind === "task") return H`<button
+				if (e.kind === "task") return V`<button
                     class=${`week-event ${e.activity}`}
                     ?disabled=${!this.editable}
                     @click=${() => this.startEditor("tasks", e.record)}
@@ -4684,7 +4783,7 @@ var Bn = class extends Ye {
                     ${t(e.record, "title")}${e.record.data.completed ? " ✓" : ""}
                   </button>`;
 				let n = this.tables.cultivations.find((n) => n.id === t(e.record, "cultivation_id"));
-				return H`<button
+				return V`<button
                   class=${`week-event ${e.activity}`}
                   @click=${() => {
 					this.selected = {
@@ -4704,8 +4803,8 @@ var Bn = class extends Ye {
 	}
 	renderCultures() {
 		let e = this.tables.cultivations.filter((e) => !["completed", "failed"].includes(this.status(e)));
-		return H`${e.length ? H`<div class="grid">
-              ${e.map((e) => H`<article class="plant">
+		return V`${e.length ? V`<div class="grid">
+              ${e.map((e) => V`<article class="plant">
                     <div class="plant-title">
                       <span class="plant-symbol">${$("cultures")}</span>
                       <h3>${this.plantName(e)}</h3>
@@ -4732,21 +4831,21 @@ var Bn = class extends Ye {
 		}}
                       >
                         ${this.tr("details")}${$("arrow")}</button
-                      >${this.editable ? H`<button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(e)}`} @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: e.id })}>${$("plus")}</button>` : U}
+                      >${this.editable ? V`<button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(e)}`} @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: e.id })}>${$("plus")}</button>` : U}
                     </div>
                   </article>`)}
             </div>` : this.empty("emptyCultures")}
       <section class="panel" style="margin-top:24px">
         <div class="section-head">
           <h2>${this.tr("allTasks")}</h2>
-          ${this.editable ? H`<button @click=${() => this.startEditor("tasks")}>${$("plus")}${this.tr("newTask")}</button>` : U}
+          ${this.editable ? V`<button @click=${() => this.startEditor("tasks")}>${$("plus")}${this.tr("newTask")}</button>` : U}
         </div>
         ${this.renderTasks()}
       </section>`;
 	}
 	renderHistory(e = this.tables.cultivations, n = !1) {
 		let r = [...new Set(e.map((e) => (b(e, this.tables.cultivation_events) || t(e, "date")).slice(0, 4)))].sort().reverse(), i = e.filter((e) => (n || !this.historyPlant || t(e, "plant_id") === this.historyPlant) && (n || !this.historyYear || (b(e, this.tables.cultivation_events) || t(e, "date")).startsWith(this.historyYear))).sort((e, n) => (b(n, this.tables.cultivation_events) || t(n, "date")).localeCompare(b(e, this.tables.cultivation_events) || t(e, "date")));
-		return H`${n ? U : H`<p class="notice">${this.tr("observationHint")}</p>
+		return V`${n ? U : V`<p class="notice">${this.tr("observationHint")}</p>
             <div class="filters">
               <label
                 >${this.tr("plant_id")}<select
@@ -4755,7 +4854,7 @@ var Bn = class extends Ye {
 		}}
                 >
                   <option value="">${this.tr("allPlants")}</option>
-                  ${this.tables.plants.map((e) => H`<option value=${e.id} .selected=${this.historyPlant === e.id}>${t(e, "name")}</option>`)}
+                  ${this.tables.plants.map((e) => V`<option value=${e.id} .selected=${this.historyPlant === e.id}>${t(e, "name")}</option>`)}
                 </select></label
               ><label
                 >${this.tr("year")}<select
@@ -4764,11 +4863,11 @@ var Bn = class extends Ye {
 		}}
                 >
                   <option value="">${this.tr("history")}</option>
-                  ${r.map((e) => H`<option value=${e} .selected=${this.historyYear === e}>${e}</option>`)}
+                  ${r.map((e) => V`<option value=${e} .selected=${this.historyYear === e}>${e}</option>`)}
                 </select></label
               >
             </div>`}
-    ${i.length ? H`<div class="table-wrap">
+    ${i.length ? V`<div class="table-wrap">
             <table>
               <thead>
                 <tr>
@@ -4781,10 +4880,10 @@ var Bn = class extends Ye {
                 </tr>
               </thead>
               <tbody>
-                ${i.map((e) => H`<tr>
+                ${i.map((e) => V`<tr>
                       <td>${this.plantName(e)}</td>
                       <td>
-                        ${h(b(e, this.tables.cultivation_events), this.language)}${b(e, this.tables.cultivation_events) ? U : H`<small> ${this.tr("planned")}</small>`}
+                        ${h(b(e, this.tables.cultivation_events), this.language)}${b(e, this.tables.cultivation_events) ? U : V`<small> ${this.tr("planned")}</small>`}
                       </td>
                       <td>${this.lab(t(e, "method"))}</td>
                       <td>
@@ -4812,9 +4911,105 @@ var Bn = class extends Ye {
             </table>
           </div>` : this.empty("emptyHistory")}`;
 	}
+	async loadPersonalReminders() {
+		if (!this.api || !this.capabilities?.reminders || this.busy) return;
+		let e = ++this.preferencesGeneration, t = this.connectionGeneration;
+		try {
+			let n = await this.api.command("get_user_reminders");
+			e === this.preferencesGeneration && t === this.connectionGeneration && this.isConnected && (this.personalReminders = n);
+		} catch (n) {
+			e === this.preferencesGeneration && t === this.connectionGeneration && (this.error = xt(this.language, n));
+		}
+	}
+	async setPersonalReminder(e, t, n) {
+		if (!this.api || this.busy) return;
+		let r = this.personalReminders;
+		r && (this.personalReminders = {
+			...r,
+			cells: {
+				...r.cells,
+				[e]: {
+					...r.cells[e],
+					[t]: n
+				}
+			}
+		}), this.busy = !0, this.error = "";
+		let i = this.connectionGeneration, a = ++this.preferencesGeneration;
+		try {
+			let r = await this.api.command("set_user_reminder", {
+				plant_id: e,
+				activity: t,
+				enabled: n
+			});
+			i === this.connectionGeneration && a === this.preferencesGeneration && (this.personalReminders = r, this.announce("saved"));
+		} catch (e) {
+			i === this.connectionGeneration && a === this.preferencesGeneration && (this.personalReminders = r, this.error = xt(this.language, e));
+		} finally {
+			i === this.connectionGeneration && (this.busy = !1);
+		}
+	}
+	renderPersonalReminders() {
+		let e = this.personalReminders;
+		if (!this.capabilities?.reminders) return V`<p class="notice">${this.tr("personalUnavailable")}</p>`;
+		if (!e) return V`<p role="status">${this.tr("loading")}</p>`;
+		let n = this.plantList.filter((e) => t(e, "name").toLocaleLowerCase(this.language).includes(this.reminderQuery.toLocaleLowerCase(this.language))).sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language));
+		return V`<section class="panel">
+      <p>${this.tr("personalIntro")}</p>
+      <p class="notice">
+        ${this.tr(e.global_enabled ? "personalGlobalOn" : "personalGlobalOff")}
+        ${this.tr(e.personal_destinations ? "personalChannelOn" : "personalChannelOff")}
+      </p>
+      ${e.shared_channel_enabled ? V`<p class="notice">${this.tr("personalSharedHint")}</p>` : U}
+      <label
+        >${this.tr("search")}<input
+          type="search"
+          .value=${this.reminderQuery}
+          @input=${(e) => {
+			this.reminderQuery = e.target.value;
+		}}
+      /></label>
+      <div
+        class="reminders-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("reminders")}
+      >
+        <table class="reminders-table">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("plants")}</th>
+              ${Q.map((e) => V`<th scope="col">${this.lab(e)}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${n.map((n) => V`<tr>
+                  <th scope="row">${t(n, "name")}</th>
+                  ${Q.map((r) => {
+			let i = e.cells[n.id]?.[r] !== void 0, a = e.cells[n.id]?.[r] ?? !1;
+			return V`<td
+                      class=${i ? "" : "reminder-unavailable"}
+                      title=${i ? "" : this.tr("personalNoWindow")}
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label=${`${t(n, "name")}: ${this.lab(r)}`}
+                        .checked=${ft(a)}
+                        ?disabled=${!i || this.busy}
+                        @change=${(e) => void this.setPersonalReminder(n.id, r, e.target.checked)}
+                      />
+                    </td>`;
+		})}
+                </tr>`)}
+          </tbody>
+        </table>
+      </div>
+      ${n.length ? U : V`<p class="muted">${this.tr("noResults")}</p>`}
+      <p class="muted">${this.tr("personalHint")}</p>
+    </section>`;
+	}
 	renderLocations() {
-		return H`${this.tables.locations.length ? H`<div class="grid">
-            ${this.tables.locations.map((e) => H`<article class="plant">
+		return V`${this.tables.locations.length ? V`<div class="grid">
+            ${this.tables.locations.map((e) => V`<article class="plant">
                   <div class="plant-title">
                     <span class="plant-symbol">${$("locations")}</span>
                     <h3>${t(e, "name")}</h3>
@@ -4826,12 +5021,12 @@ var Bn = class extends Ye {
                   <p>
                     ${t(e, "description") || t(e, "soil") || this.tr("noNotes")}
                   </p>
-                  ${t(e, "sensor_entity_id") ? H`<p class="break">
+                  ${t(e, "sensor_entity_id") ? V`<p class="break">
                           <small
                             >${this.lab(t(e, "measurement_kind"))}<br />${t(e, "sensor_entity_id")}</small
                           >
                         </p>` : U}${t(e, "sensor_entity_id") ? this.renderTemperature(e) : U}
-                  ${e.data.archived ? H`<span class="badge unknown">${this.tr("archived")}</span>` : U}${this.editable ? H`<div class="actions">
+                  ${e.data.archived ? V`<span class="badge unknown">${this.tr("archived")}</span>` : U}${this.editable ? V`<div class="actions">
                           <button
                             @click=${() => this.startEditor("locations", e)}
                           >
@@ -4856,8 +5051,8 @@ var Bn = class extends Ye {
           </div>` : this.empty("emptyLocations", "", "newLocation", () => this.startEditor("locations"))}`;
 	}
 	renderData(e, t = []) {
-		return H`<dl>
-      ${Object.entries(e).filter(([e, n]) => !t.includes(e) && n != null && n !== "" && !e.endsWith("_id") && typeof n != "object").map(([e, t]) => H`<dt>${this.tr(e)}</dt>
+		return V`<dl>
+      ${Object.entries(e).filter(([e, n]) => !t.includes(e) && n != null && n !== "" && !e.endsWith("_id") && typeof n != "object").map(([e, t]) => V`<dt>${this.tr(e)}</dt>
               <dd>
                 ${[
 			"category",
@@ -4882,7 +5077,7 @@ var Bn = class extends Ye {
 			"source",
 			"source_url"
 		].some((e) => t(n, e));
-		return H`<dialog
+		return V`<dialog
       id="detail-dialog"
       aria-labelledby="detail-title"
       @close=${() => {
@@ -4907,8 +5102,8 @@ var Bn = class extends Ye {
         </button>
       </div>
       <div class="dialog-body calendar-detail-body">
-        ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
-        ${n && r ? H` <section
+        ${this.error ? V`<p class="notice error" role="alert">${this.error}</p>` : U}
+        ${n && r ? V` <section
                   class=${`calendar-window-card ${t(n, "activity")}`}
                   aria-label=${this.tr("windowDetail")}
                 >
@@ -4920,19 +5115,19 @@ var Bn = class extends Ye {
                     <span class="badge"
                       >${this.lab(t(n, "environment"))}</span
                     >
-                    ${t(n, "method") && t(n, "method") !== t(n, "activity") ? H`<span class="badge">${this.lab(t(n, "method"))}</span>` : U}
+                    ${t(n, "method") && t(n, "method") !== t(n, "activity") ? V`<span class="badge">${this.lab(t(n, "method"))}</span>` : U}
                   </div>
-                  ${i ? H`<div class="calendar-window-note">
+                  ${i ? V`<div class="calendar-window-note">
                           <h3>${this.tr("notes")}</h3>
                           <p>${a}</p>
-                          ${i.length > 360 ? H`<details>
+                          ${i.length > 360 ? V`<details>
                                   <summary>
                                     ${this.tr("fullWindowNote")}
                                   </summary>
                                   <p>${i}</p>
                                 </details>` : U}
                         </div>` : U}
-                  ${o ? H`<details>
+                  ${o ? V`<details>
                           <summary>${this.tr("windowExtra")}</summary>
                           ${this.renderData({
 			regional_notes: n.data.regional_notes,
@@ -4940,7 +5135,7 @@ var Bn = class extends Ye {
 			source_url: n.data.source_url
 		})}
                         </details>` : U}
-                  ${this.editable ? H`<button type="button" @click=${() => this.startEditor("growing_windows", n)}>${$("edit")}${this.tr("editWindow")}</button>` : U}
+                  ${this.editable ? V`<button type="button" @click=${() => this.startEditor("growing_windows", n)}>${$("edit")}${this.tr("editWindow")}</button>` : U}
                 </section>
                 <section
                   class="calendar-plant-profile"
@@ -4971,7 +5166,7 @@ var Bn = class extends Ye {
                     <summary>${this.tr("allPlantInformation")}</summary>
                     ${this.renderData(r.data, ["name", "botanical_name"])}
                   </details>
-                </section>` : H`<p role="alert">${this.tr("not_found")}</p>`}
+                </section>` : V`<p role="alert">${this.tr("not_found")}</p>`}
       </div>
     </dialog>`;
 	}
@@ -4979,14 +5174,14 @@ var Bn = class extends Ye {
 		let e = this.selected;
 		if (e?.kind === "window") return this.renderWindowDetail(e.id);
 		let n = e ? this.tables[e.kind === "plant" ? "plants" : "cultivations"].find((t) => t.id === e.id) : void 0;
-		return H`<dialog
+		return V`<dialog
       id="detail-dialog"
       aria-labelledby="detail-title"
       @close=${() => {
 			this.selected = null;
 		}}
     >
-      ${e && n ? H`<div class="dialog-head">
+      ${e && n ? V`<div class="dialog-head">
                 <div>
                   <small
                     >${this.tr(e.kind === "plant" ? "plantDetail" : "cultivationDetail")}</small
@@ -5006,15 +5201,15 @@ var Bn = class extends Ye {
                 </button>
               </div>
               <div class="dialog-body">
-                ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
-                ${this.editable ? H`<div
+                ${this.error ? V`<p class="notice error" role="alert">${this.error}</p>` : U}
+                ${this.editable ? V`<div
                         class=${e.kind === "plant" ? "actions plant-detail-actions" : "actions"}
                       >
                         <button
                           @click=${() => this.startEditor(e.kind === "plant" ? "plants" : "cultivations", n)}
                         >
                           ${this.tr("edit")}</button
-                        >${e.kind === "plant" ? H`<button @click=${() => this.duplicate(n)} ?disabled=${this.busy}>${this.tr("duplicate")}</button><button @click=${() => this.archive(n, "plants")} ?disabled=${this.busy}>${this.tr(n.data.archived ? "unarchive" : "archive")}</button>` : H`<button class="primary" @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: n.id })}>${$("plus")}${this.tr("newEvent")}</button>`}<button
+                        >${e.kind === "plant" ? V`<button @click=${() => this.duplicate(n)} ?disabled=${this.busy}>${this.tr("duplicate")}</button><button @click=${() => this.archive(n, "plants")} ?disabled=${this.busy}>${this.tr(n.data.archived ? "unarchive" : "archive")}</button>` : V`<button class="primary" @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: n.id })}>${$("plus")}${this.tr("newEvent")}</button>`}<button
                           class="danger"
                           @click=${() => {
 			this.deleting = {
@@ -5027,7 +5222,7 @@ var Bn = class extends Ye {
                         </button>
                       </div>` : U}
                 ${e.kind === "plant" ? this.renderPlantDetail(n) : this.renderCultureDetail(n)}
-              </div>` : e ? H`<div class="dialog-body">
+              </div>` : e ? V`<div class="dialog-body">
                 <p role="alert">${this.tr("not_found")}</p>
                 <button
                   @click=${() => {
@@ -5048,12 +5243,12 @@ var Bn = class extends Ye {
 			["cultivationDuration", i("duration_days_min", "duration_days_max", a)],
 			["site", t(e, "site")]
 		];
-		return H`<div class="plant-summary-heading">
-        ${t(e, "botanical_name") ? H`<p><i>${t(e, "botanical_name")}</i></p>` : U}
-        ${t(e, "category") ? H`<span class="badge">${this.lab(t(e, "category"))}</span>` : U}
+		return V`<div class="plant-summary-heading">
+        ${t(e, "botanical_name") ? V`<p><i>${t(e, "botanical_name")}</i></p>` : U}
+        ${t(e, "category") ? V`<span class="badge">${this.lab(t(e, "category"))}</span>` : U}
       </div>
       <dl class="plant-quick-facts">
-        ${s.filter(([, e]) => e).map(([e, t]) => H`<div>
+        ${s.filter(([, e]) => e).map(([e, t]) => V`<div>
                 <dt>${this.tr(e)}</dt>
                 <dd>${t}</dd>
               </div>`)}
@@ -5061,7 +5256,7 @@ var Bn = class extends Ye {
 	}
 	renderPlantDetail(e) {
 		let n = this.tables.varieties.filter((n) => t(n, "plant_id") === e.id);
-		return H`${this.renderPlantSummary(e)}
+		return V`${this.renderPlantSummary(e)}
       <div
         class="detail-jumps"
         role="group"
@@ -5071,7 +5266,7 @@ var Bn = class extends Ye {
 			"varieties",
 			"windows",
 			"observations"
-		].map((e) => H`<button
+		].map((e) => V`<button
               type="button"
               @click=${() => {
 			let t = this.renderRoot.querySelector("#detail-dialog"), n = t?.querySelector(`#plant-${e}`);
@@ -5091,15 +5286,15 @@ var Bn = class extends Ye {
       </details>
       <div class="section-head">
         <h3 id="plant-varieties" tabindex="-1">${this.tr("varieties")}</h3>
-        ${this.editable ? H`<button @click=${() => this.startEditor("varieties", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newVariety")}</button>` : U}
+        ${this.editable ? V`<button @click=${() => this.startEditor("varieties", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newVariety")}</button>` : U}
       </div>
-      ${n.length ? n.map((e) => H`<article class="item">
+      ${n.length ? n.map((e) => V`<article class="item">
                   <div class="item-content">
                     <h3>
-                      ${t(e, "name")}${t(e, "botanical_name") ? H` <span style="font-weight: normal">(${t(e, "botanical_name")})</span>` : U}
+                      ${t(e, "name")}${t(e, "botanical_name") ? V` <span style="font-weight: normal">(${t(e, "botanical_name")})</span>` : U}
                     </h3>
                   </div>
-                  ${this.editable ? H`<button
+                  ${this.editable ? V`<button
                             @click=${() => this.startEditor("varieties", e)}
                           >
                             ${this.tr("edit")}</button
@@ -5114,20 +5309,20 @@ var Bn = class extends Ye {
                           >
                             ${this.tr("delete")}
                           </button>` : U}
-                </article>`) : H`<p class="muted">${this.tr("noVarieties")}</p>`}
+                </article>`) : V`<p class="muted">${this.tr("noVarieties")}</p>`}
       <div class="section-head">
         <h3 id="plant-windows" tabindex="-1">${this.tr("windows")}</h3>
-        ${this.editable ? H`<button @click=${() => this.startEditor("growing_windows", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newWindow")}</button>` : U}
+        ${this.editable ? V`<button @click=${() => this.startEditor("growing_windows", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newWindow")}</button>` : U}
       </div>
-      ${this.plantWindows(e.id).length ? this.plantWindows(e.id).map((e) => H`<article class="item">
+      ${this.plantWindows(e.id).length ? this.plantWindows(e.id).map((e) => V`<article class="item">
                   <div class="item-content">
                     <h3>
                       ${this.lab(t(e, "activity"))}${t(e, "variety_id") ? ` (${this.nameFor(t(e, "variety_id"), "varieties")})` : ""}
                       · ${_(e, this.language)}
                     </h3>
-                    ${t(e, "notes") ? H`<p style="white-space: pre-wrap">${t(e, "notes")}</p>` : U}
+                    ${t(e, "notes") ? V`<p style="white-space: pre-wrap">${t(e, "notes")}</p>` : U}
                   </div>
-                  ${this.editable ? H`<button
+                  ${this.editable ? V`<button
                             @click=${() => this.startEditor("growing_windows", e)}
                           >
                             ${this.tr("edit")}</button
@@ -5142,18 +5337,18 @@ var Bn = class extends Ye {
                           >
                             ${this.tr("delete")}
                           </button>` : U}
-                </article>`) : H`<p class="muted">${this.tr("noAllWindows")}</p>`}
+                </article>`) : V`<p class="muted">${this.tr("noAllWindows")}</p>`}
       <div class="section-head">
         <h3 id="plant-observations" tabindex="-1">
           ${this.tr("observations")}
         </h3>
-        ${this.editable && !e.data.archived ? H`<button class="primary" @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newSowing")}</button>` : U}
+        ${this.editable && !e.data.archived ? V`<button class="primary" @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newSowing")}</button>` : U}
       </div>
       ${this.renderHistory(this.tables.cultivations.filter((n) => t(n, "plant_id") === e.id), !0)}`;
 	}
 	renderCultureDetail(e) {
 		let n = e.data.snapshot, r = n && typeof n == "object" && !Array.isArray(n) ? n : void 0;
-		return H`<p>
+		return V`<p>
         <span class="badge">${this.lab(this.status(e))}</span>
       </p>
       <dl>
@@ -5170,7 +5365,7 @@ var Bn = class extends Ye {
       ${this.tables.locations.find((n) => n.id === t(e, "location_id")) ? this.renderTemperature(this.tables.locations.find((n) => n.id === t(e, "location_id")), e) : U}
       <h3>${this.tr("timeline")}</h3>
       <div class="timeline">
-        ${v(e, this.tables.cultivation_events).map((e) => H`<article>
+        ${v(e, this.tables.cultivation_events).map((e) => V`<article>
               <div class="row">
                 <div>
                   <strong>${this.lab(t(e, "status"))}</strong
@@ -5178,12 +5373,12 @@ var Bn = class extends Ye {
                     >${h(t(e, "date"), this.language)}</small
                   >
                 </div>
-                ${this.editable ? H`<div class="actions">
+                ${this.editable ? V`<div class="actions">
                         <button
                           @click=${() => this.startEditor("cultivation_events", e)}
                         >
                           ${this.tr("edit")}</button
-                        >${e.data.origin === "initial" ? U : H`<button
+                        >${e.data.origin === "initial" ? U : V`<button
                                 class="danger"
                                 @click=${() => {
 			this.deleting = {
@@ -5208,11 +5403,11 @@ var Bn = class extends Ye {
 			"location"
 		].map((e) => {
 			let t = r?.[e];
-			return t && typeof t == "object" && !Array.isArray(t) ? H`<h3>
+			return t && typeof t == "object" && !Array.isArray(t) ? V`<h3>
                   ${this.tr(e === "plant" ? "plant_id" : e === "variety" ? "variety" : "location_id")}
                 </h3>
                 ${this.renderData(t)}` : U;
-		})}${Array.isArray(r?.windows) ? H`<h3>${this.tr("windows")}</h3>
+		})}${Array.isArray(r?.windows) ? V`<h3>${this.tr("windows")}</h3>
                 ${r.windows.map((e) => e && typeof e == "object" && !Array.isArray(e) ? this.renderData(e) : U)}` : U}
       </details>`;
 	}
@@ -5222,7 +5417,7 @@ var Bn = class extends Ye {
 			let n = await e.command("backups");
 			t === this.connectionGeneration && (this.backups = n);
 		} catch (e) {
-			t === this.connectionGeneration && (this.error = yt(this.language, e));
+			t === this.connectionGeneration && (this.error = xt(this.language, e));
 		}
 	}
 	async exportFile(e) {
@@ -5233,14 +5428,14 @@ var Bn = class extends Ye {
 			if (e === "json") {
 				let r = await t.command("export", { format: e });
 				if (n !== this.connectionGeneration) return;
-				Mn(JSON.stringify(r, null, 2), `garden-planner-${this.today}.json`, "application/json");
+				Fn(JSON.stringify(r, null, 2), `garden-planner-${this.today}.json`, "application/json");
 			} else {
 				let r = await t.command("export", { format: e });
 				if (n !== this.connectionGeneration) return;
-				Mn(Nn(r).slice().buffer, `garden-planner-csv-${this.today}.zip`, "application/zip");
+				Fn(In(r).slice().buffer, `garden-planner-csv-${this.today}.zip`, "application/zip");
 			}
 		} catch (e) {
-			n === this.connectionGeneration && (this.error = yt(this.language, e));
+			n === this.connectionGeneration && (this.error = xt(this.language, e));
 		} finally {
 			n === this.connectionGeneration && (this.busy = !1);
 		}
@@ -5254,7 +5449,7 @@ var Bn = class extends Ye {
 			if (n.size > 20971520) throw Error("invalid_file");
 			let e = new Uint8Array(await n.arrayBuffer());
 			if (i !== this.connectionGeneration) return;
-			let t = e[0] === 80 && e[1] === 75 ? "csv" : "json", a = t === "csv" ? Pn(e) : JSON.parse(new TextDecoder("utf-8", { fatal: !0 }).decode(e)), o = await r.command("preview_import", {
+			let t = e[0] === 80 && e[1] === 75 ? "csv" : "json", a = t === "csv" ? Ln(e) : JSON.parse(new TextDecoder("utf-8", { fatal: !0 }).decode(e)), o = await r.command("preview_import", {
 				payload: a,
 				format: t,
 				mode: this.importMode
@@ -5267,7 +5462,7 @@ var Bn = class extends Ye {
 			};
 		} catch (e) {
 			if (i !== this.connectionGeneration) return;
-			this.error = e instanceof SyntaxError || e instanceof Error && e.message === "invalid_file" ? this.tr("invalidFile") : yt(this.language, e);
+			this.error = e instanceof SyntaxError || e instanceof Error && e.message === "invalid_file" ? this.tr("invalidFile") : xt(this.language, e);
 		} finally {
 			t.value = "", i === this.connectionGeneration && (this.busy = !1);
 		}
@@ -5284,7 +5479,7 @@ var Bn = class extends Ye {
 				backup: e
 			};
 		} catch (e) {
-			n === this.connectionGeneration && (this.error = yt(this.language, e));
+			n === this.connectionGeneration && (this.error = xt(this.language, e));
 		} finally {
 			n === this.connectionGeneration && (this.busy = !1);
 		}
@@ -5305,7 +5500,7 @@ var Bn = class extends Ye {
 	}
 	renderReview() {
 		let e = this.reviewed;
-		return H`<dialog
+		return V`<dialog
       id="review-dialog"
       aria-labelledby="review-title"
       @cancel=${(e) => {
@@ -5315,7 +5510,7 @@ var Bn = class extends Ye {
 			this.reviewed = null;
 		}}
     >
-      ${e ? H`<div class="dialog-head">
+      ${e ? V`<div class="dialog-head">
                 <h2 id="review-title">${this.tr("importPreview")}</h2>
                 <button
                   class="icon"
@@ -5329,21 +5524,21 @@ var Bn = class extends Ye {
                 </button>
               </div>
               <div class="dialog-body">
-                ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
+                ${this.error ? V`<p class="notice error" role="alert">${this.error}</p>` : U}
                 <dl>
                   ${[
 			"inserted",
 			"updated",
 			"skipped",
 			"deleted"
-		].map((t) => H`<dt>
+		].map((t) => V`<dt>
                           ${this.tr(t === "deleted" ? "removed" : t)}
                         </dt>
                         <dd>${e.plan[t]}</dd>`)}
                   <dt>${this.tr("conflicts")}</dt>
                   <dd>${e.plan.conflicts.length}</dd>
                 </dl>
-                ${e.plan.mode === "replace" ? H`<p class="notice error">
+                ${e.plan.mode === "replace" ? V`<p class="notice error">
                           ${this.tr("replaceWarning")}
                         </p>
                         <label class="check"
@@ -5381,13 +5576,13 @@ var Bn = class extends Ye {
 			if (t !== this.connectionGeneration) return;
 			this.hostSettings = r, n === this.hostDraftRevision && (this.hostDraft = structuredClone(r.settings)), this.deliveries = i;
 		} catch (e) {
-			t === this.connectionGeneration && (this.error = yt(this.language, e));
+			t === this.connectionGeneration && (this.error = xt(this.language, e));
 		}
 	}
 	renderTemperature(e, n) {
 		if (!t(e, "sensor_entity_id")) return U;
 		let r = w(this.hass, e, n ? C(n) : void 0);
-		return H`<div
+		return V`<div
       class="notice ${r.state === "outside" ? "error" : ""}"
     >
       <strong
@@ -5397,7 +5592,7 @@ var Bn = class extends Ye {
       <p>
         ${r.value === void 0 ? this.tr(r.state === "unit" ? "badTemperatureUnit" : "noSensor") : `${r.value.toLocaleString(this.language, { maximumFractionDigits: 1 })} °C`}
       </p>
-      ${r.state === "outside" ? H`<p>${this.tr("outsideRange")}</p>` : r.state === "information" && t(e, "measurement_kind") !== "substrate" ? H`<small>${this.tr("notComparable")}</small>` : U}
+      ${r.state === "outside" ? V`<p>${this.tr("outsideRange")}</p>` : r.state === "information" && t(e, "measurement_kind") !== "substrate" ? V`<small>${this.tr("notComparable")}</small>` : U}
     </div>`;
 	}
 	setUserPermission(e, t, n) {
@@ -5441,7 +5636,7 @@ var Bn = class extends Ye {
 	}
 	renderRoute(e, t, n) {
 		let r = this.hostSettings, i = this.hostDraft.notification_routes.find((n) => n.user_id === e.id && n.kind === t), a = `${e.name}: ${this.tr(t)}`, o = i?.service === "notify.send_message" ? `entity:${i.entity}` : i?.service || "";
-		return H`<td>
+		return V`<td>
       <label class="check"
         ><input
           type="checkbox"
@@ -5451,7 +5646,7 @@ var Bn = class extends Ye {
           @change=${(n) => this.updateRoute(e.id, t, { enabled: n.target.checked })}
         />${this.tr(t)}</label
       >
-      ${i?.enabled ? H`<label
+      ${i?.enabled ? V`<label
                 >${this.tr("routeDestination")}<select
                   aria-label=${`${a}: ${this.tr("routeDestination")}`}
                   required
@@ -5471,12 +5666,12 @@ var Bn = class extends Ye {
                   <option value="" .selected=${!o}>
                     ${this.tr("noChannel")}
                   </option>
-                  ${r.channels.filter((e) => e !== "notify.send_message").map((e) => H`<option value=${e} .selected=${o === e}>${e}</option>`)}
-                  ${(r.notify_entities ?? []).map((e) => H`<option value=${`entity:${e.id}`} .selected=${o === `entity:${e.id}`}>${e.name} (${e.id})</option>`)}
-                  ${o && !r.channels.includes(o) && !(r.notify_entities ?? []).some((e) => o === `entity:${e.id}`) ? H`<option value=${o} selected>${o} · ${this.tr("missingDestination")}</option>` : U}
+                  ${r.channels.filter((e) => e !== "notify.send_message").map((e) => V`<option value=${e} .selected=${o === e}>${e}</option>`)}
+                  ${(r.notify_entities ?? []).map((e) => V`<option value=${`entity:${e.id}`} .selected=${o === `entity:${e.id}`}>${e.name} (${e.id})</option>`)}
+                  ${o && !r.channels.includes(o) && !(r.notify_entities ?? []).some((e) => o === `entity:${e.id}`) ? V`<option value=${o} selected>${o} · ${this.tr("missingDestination")}</option>` : U}
                 </select></label
               >
-              ${t === "email" && i.service && i.service !== "notify.send_message" ? H`<label
+              ${t === "email" && i.service && i.service !== "notify.send_message" ? V`<label
                       >${this.tr("emailRecipient")}<input
                         type="email"
                         required
@@ -5488,7 +5683,7 @@ var Bn = class extends Ye {
     </td>`;
 	}
 	renderUserRoles(e, t) {
-		return H`<h3>${this.tr("userRoles")}</h3>
+		return V`<h3>${this.tr("userRoles")}</h3>
       <p class="muted">${this.tr("rolesHint")} ${this.tr("sidebarHint")}</p>
       <div class="roles-scroll" tabindex="0" aria-label=${this.tr("userRoles")}>
         <table class="roles-table">
@@ -5504,9 +5699,9 @@ var Bn = class extends Ye {
           <tbody>
             ${e.users.map((e) => {
 			let n = !!e.is_admin || t.readers === null || t.readers.includes(e.id);
-			return H`<tr>
+			return V`<tr>
                 <th scope="row">
-                  ${e.name}${e.is_admin ? H`<small>${this.tr("administrator")}</small>` : U}
+                  ${e.name}${e.is_admin ? V`<small>${this.tr("administrator")}</small>` : U}
                 </th>
                 <td>
                   <input
@@ -5537,7 +5732,7 @@ var Bn = class extends Ye {
 	renderHostSettings() {
 		if (!this.capabilities?.reminders || !this.admin) return U;
 		let e = this.hostSettings, t = this.hostDraft;
-		if (!e || !t) return H`<section class="panel">
+		if (!e || !t) return V`<section class="panel">
         <button @click=${this.loadHostSettings}>
           ${this.tr("integrationSettings")}
         </button>
@@ -5548,7 +5743,7 @@ var Bn = class extends Ye {
 				[e]: t
 			};
 		};
-		return H`<section class="panel">
+		return V`<section class="panel">
       <h2>${this.tr("integrationSettings")}</h2>
       <form
         @submit=${async (e) => {
@@ -5611,7 +5806,7 @@ var Bn = class extends Ye {
               <option value="" .selected=${!t.notify_service}>
                 ${this.tr("noChannel")}
               </option>
-              ${[.../* @__PURE__ */ new Set([...e.channels, ...t.notify_service ? [t.notify_service] : []])].map((e) => H`<option value=${e} .selected=${t.notify_service === e}>${e}</option>`)}
+              ${[.../* @__PURE__ */ new Set([...e.channels, ...t.notify_service ? [t.notify_service] : []])].map((e) => V`<option value=${e} .selected=${t.notify_service === e}>${e}</option>`)}
             </select></label
           >
           <label
@@ -5649,12 +5844,12 @@ var Bn = class extends Ye {
       </form>
       <details>
         <summary>${this.tr("deliveryLog")}</summary>
-        ${this.deliveries.length ? this.deliveries.map((e) => H`<p><span class="badge">${this.tr(e.state)}</span> ${e.description}</p>`) : H`<p>${this.tr("noDeliveries")}</p>`}
+        ${this.deliveries.length ? this.deliveries.map((e) => V`<p><span class="badge">${this.tr(e.state)}</span> ${e.description}</p>`) : V`<p>${this.tr("noDeliveries")}</p>`}
       </details>
     </section>`;
 	}
 	renderSettings() {
-		return H`<div class="settings-grid">
+		return V`<div class="settings-grid">
       <section class="panel">
         <h2>${this.tr("language")}</h2>
         <p class="muted">${this.tr("languageHint")}</p>
@@ -5687,7 +5882,7 @@ var Bn = class extends Ye {
       <section class="panel">
         <h2>${this.tr("dataSafety")}</h2>
         <p class="muted">${this.tr("dataSafetyBody")}</p>
-        ${this.admin ? H`<div class="actions" style="justify-content:flex-start">
+        ${this.admin ? V`<div class="actions" style="justify-content:flex-start">
                   <button
                     ?disabled=${this.busy}
                     @click=${() => this.exportFile("json")}
@@ -5728,7 +5923,7 @@ var Bn = class extends Ye {
                 </div>
                 <p class="muted">${this.tr("limitedTransport")}</p>
                 <h3>${this.tr("backups")}</h3>
-                ${this.backups.map((e) => H`<div class="item"><small class="item-content break">${e}</small><button ?disabled=${this.busy} @click=${() => this.previewRestore(e)}>${this.tr("restorePreview")}</button></div>`)}` : H`<p class="notice">${this.tr("adminOnly")}</p>`}
+                ${this.backups.map((e) => V`<div class="item"><small class="item-content break">${e}</small><button ?disabled=${this.busy} @click=${() => this.previewRestore(e)}>${this.tr("restorePreview")}</button></div>`)}` : V`<p class="notice">${this.tr("adminOnly")}</p>`}
       </section>
       ${this.renderHostSettings()}
       <section class="panel" ?hidden=${this.capabilities?.reminders === !0}>
@@ -5739,7 +5934,7 @@ var Bn = class extends Ye {
 	}
 	render() {
 		let e = this.page === "plants" ? ["newPlant", "plants"] : this.page === "locations" ? ["newLocation", "locations"] : ["newSowing", "cultivations"];
-		return H`<header class="ha-navigation">
+		return V`<header class="ha-navigation">
         <button
           type="button"
           class="icon"
@@ -5766,7 +5961,7 @@ var Bn = class extends Ye {
             </div>
           </div>
           <nav aria-label="Garden Planner">
-            ${In.map((e) => H`<button aria-current=${this.page === e ? "page" : U} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
+            ${zn.map((e) => V`<button aria-current=${this.page === e ? "page" : U} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
@@ -5775,7 +5970,9 @@ var Bn = class extends Ye {
             <div>
               <div class="eyebrow">Garden Planner</div>
               <h1>${this.tr(this.page)}</h1>
-              <p class="muted">${this.tr("overviewIntro")}</p>
+              <p class="muted">
+                ${this.tr(this.page === "reminders" ? "personalSubtitle" : "overviewIntro")}
+              </p>
             </div>
             <div class="actions">
               <button
@@ -5785,16 +5982,16 @@ var Bn = class extends Ye {
                 @click=${() => this.refresh()}
               >
                 ${$("refresh")}</button
-              >${this.editable && this.page !== "settings" ? H`<button class="primary" ?disabled=${this.busy || !this.loaded || e[1] === "cultivations" && !this.plantList.length} @click=${() => this.startEditor(e[1])}>${$("plus")}${this.tr(e[0])}</button>` : U}
+              >${this.editable && this.page !== "settings" && this.page !== "reminders" ? V`<button class="primary" ?disabled=${this.busy || !this.loaded || e[1] === "cultivations" && !this.plantList.length} @click=${() => this.startEditor(e[1])}>${$("plus")}${this.tr(e[0])}</button>` : U}
             </div>
           </header>
-          ${this.error ? H`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : U}
-          ${this.loaded && !this.editable ? H`<p class="notice">${this.tr("readOnly")}</p>` : U}
-          ${this.loaded ? this.page === "overview" ? this.renderOverview() : this.page === "calendar" ? this.renderCalendar() : this.page === "plants" ? H`${this.renderFilters()}${this.tables.plants.length ? this.filteredPlants().length ? H`<div class="grid">
-                                ${ut(this.filteredPlants(), (e) => e.id, (e) => this.renderPlantCard(e))}
-                              </div>` : this.empty("noResults") : this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}` : this.page === "cultures" ? this.renderCultures() : this.page === "history" ? H`<section class="panel">
+          ${this.error ? V`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : U}
+          ${this.loaded && !this.editable && this.page !== "reminders" ? V`<p class="notice">${this.tr("readOnly")}</p>` : U}
+          ${this.loaded ? this.page === "overview" ? this.renderOverview() : this.page === "calendar" ? this.renderCalendar() : this.page === "plants" ? V`${this.renderFilters()}${this.tables.plants.length ? this.filteredPlants().length ? V`<div class="grid">
+                                ${dt(this.filteredPlants(), (e) => e.id, (e) => this.renderPlantCard(e))}
+                              </div>` : this.empty("noResults") : this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}` : this.page === "cultures" ? this.renderCultures() : this.page === "history" ? V`<section class="panel">
                             ${this.renderHistory()}
-                          </section>` : this.page === "locations" ? this.renderLocations() : this.renderSettings() : H`<p role="status">${this.tr("loading")}</p>`}
+                          </section>` : this.page === "locations" ? this.renderLocations() : this.page === "reminders" ? this.renderPersonalReminders() : this.renderSettings() : V`<p role="status">${this.tr("loading")}</p>`}
         </main>
       </div>
       ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}
@@ -5813,7 +6010,7 @@ var Bn = class extends Ye {
         </div>
         <div class="dialog-body">
           <p>${this.tr("deleteBody")}</p>
-          ${this.error ? H`<p class="notice error" role="alert">${this.error}</p>` : U}
+          ${this.error ? V`<p class="notice error" role="alert">${this.error}</p>` : U}
         </div>
         <div class="dialog-foot">
           <button
@@ -5833,9 +6030,9 @@ var Bn = class extends Ye {
         </div>
       </dialog>
       <div role="status" aria-live="polite">
-        ${this.toast ? H`<div class="toast">${this.toast}</div>` : U}
+        ${this.toast ? V`<div class="toast">${this.toast}</div>` : U}
       </div>`;
 	}
 };
-customElements.get("garden-planner-panel") || customElements.define("garden-planner-panel", Bn);
-export { Bn as GardenPlannerPanel };
+customElements.get("garden-planner-panel") || customElements.define("garden-planner-panel", Hn);
+export { Hn as GardenPlannerPanel };

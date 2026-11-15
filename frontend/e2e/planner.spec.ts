@@ -1547,3 +1547,128 @@ test("year headings stay visible while scrolling vertically and the corner stays
     scale: "css",
   });
 });
+
+test("personal reminder matrix works for readers and defaults newly available activities on", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  const navigation = page.getByRole("navigation");
+  const names = await navigation.getByRole("button").allTextContents();
+  expect(names.indexOf("Erinnerungen")).toBe(
+    names.indexOf("Beete & Standorte") + 1,
+  );
+  await navigate(page, "Erinnerungen");
+  const matrix = page.getByRole("table");
+  const direct = matrix.getByRole("checkbox", {
+    name: "Blattkultur · Beispiel: Direktsaat",
+    exact: true,
+  });
+  const care = matrix.getByRole("checkbox", {
+    name: "Blattkultur · Beispiel: Pflege",
+    exact: true,
+  });
+  await expect(direct).toBeChecked();
+  await expect(care).toBeDisabled();
+  await expect(care).not.toBeChecked();
+  await expect(matrix.locator("input:checked")).toHaveCount(4);
+  await expect(
+    page.getByText(/Der Erinnerungsversand ist global ausgeschaltet/),
+  ).toBeVisible();
+  await direct.uncheck();
+  await expect(direct).not.toBeChecked();
+  await expect(direct).toBeEnabled();
+  await navigate(page, "Übersicht");
+  await navigate(page, "Erinnerungen");
+  await expect(direct).not.toBeChecked();
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  await expect(direct).not.toBeChecked();
+  const session = new URL(page.url()).searchParams.get("session");
+  async function command(
+    operation: string,
+    parameters: Record<string, unknown>,
+  ) {
+    const response = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role: "admin", host: true },
+    });
+    expect(response.ok()).toBe(true);
+    return response.json();
+  }
+  const plants = await command("list", { table: "plants" });
+  const plant = plants.find(
+    (p: { data: { name: string } }) => p.data.name === "Blattkultur · Beispiel",
+  );
+  const data = {
+    plant_id: plant.id,
+    activity: "care",
+    environment: "outdoors",
+    start_month: 11,
+    start_day: 1,
+    end_month: 11,
+    end_day: 30,
+  };
+  let window = await command("create", { table: "growing_windows", data });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await expect(care).toBeEnabled();
+  await expect(care).toBeChecked();
+  await care.uncheck();
+  await expect(care).toBeEnabled();
+  await expect(care).not.toBeChecked();
+  await command("delete", {
+    table: "growing_windows",
+    id: window.id,
+    revision: window.revision,
+    confirm: true,
+  });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await expect(care).toBeDisabled();
+  window = await command("create", { table: "growing_windows", data });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await expect(care).toBeEnabled();
+  await expect(care).toBeChecked();
+  await expect(direct).not.toBeChecked();
+  const owner = await command("get_user_reminders", {});
+  expect(owner.cells[plant.id].direct).toBe(true);
+  const a11y = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(a11y.violations).toEqual([]);
+  await matrix.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: testInfo.outputPath("personal-reminders.png"),
+    scale: "css",
+  });
+});
+
+test("failed personal reminder save preserves the previous checkbox state", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  await navigate(page, "Erinnerungen");
+  const input = page.getByRole("checkbox", {
+    name: "Blattkultur · Beispiel: Direktsaat",
+    exact: true,
+  });
+  await expect(input).toBeChecked();
+  await page.route("**/__test_api/**", async (route) => {
+    const data = route.request().postDataJSON();
+    if (data.operation === "set_user_reminder")
+      await route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "invalid_data" }),
+      });
+    else await route.continue();
+  });
+  await input.click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(input).toBeChecked();
+  await expect(input).toBeEnabled();
+});

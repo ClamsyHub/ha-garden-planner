@@ -157,3 +157,18 @@ the data directory in your own protected external backup strategy and monitor
 space. Do not commit these files or assume an integration update is a backup.
 Integration removal does not erase the data directory. No deletion-on-uninstall
 hook or production deployment exists.
+
+
+## Personal reminder preferences (v0.1.7)
+
+`get_user_reminders` returns only the authenticated actor's cells and delivery
+readiness flags. `set_user_reminder` accepts exactly `plant_id`, `activity`,
+`enabled`; no user ID is accepted. Authorized read-only actors can update these
+personal preferences without obtaining garden write/admin permissions. Missing
+cells and non-boolean activation values are rejected. No preference payload is
+broadcast to other users.
+
+Native HA `frontend` user storage key `garden_planner_reminders` persists opt-outs
+with their current window IDs. A changed generation with no surviving old window
+IDs defaults back on. Garden schema/export versions remain unchanged. HA profile
+preferences are included in HA configuration backups, not in garden data exports.

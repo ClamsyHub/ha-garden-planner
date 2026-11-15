@@ -185,3 +185,19 @@ Link weiterhin an der Datenberechtigung scheitert. Ältere Clients neu laden.
 Offizielle Schnittstellen/Implementierungen, geprüft am 2026-11-09:
 - https://github.com/home-assistant/core/blob/2026.11.0/homeassistant/components/frontend/storage.py
 - https://github.com/home-assistant/frontend/blob/dev/src/components/ha-sidebar.ts
+
+
+## Persönliche Erinnerungen ab v0.1.7
+
+Der Menüpunkt **Erinnerungen** liegt zwischen Beete & Standorte und Einstellungen.
+Die Matrix zeigt nicht archivierte Pflanzen mit Vorziehen, Direktsaat, Pikieren,
+Auspflanzen, Pflege, Ernte und Sonstige. Fehlende Anbauzeiträume ergeben eine
+ausgegraute Checkbox, vorhandene starten aktiviert. Neue Tätigkeiten starten
+aktiviert; bestehende Abwahlen bleiben erhalten, solange ein bisheriger Zeitraum
+für diese Pflanze/Tätigkeit weiterbesteht. Änderungen speichern automatisch,
+auch für Personen mit reinem Leserecht. Eine Suche und fixierte Tabellenköpfe/
+Pflanzenspalte unterstützen große Listen und kleine Bildschirme.
+
+Die persönlichen Einstellungen gelten für eigene Push-/E-Mail-Ziele und ersetzen
+keine globale Versandfreigabe. Fehlende Voraussetzungen und ein separat aktiver
+ungefilterter gemeinsamer Kanal werden angezeigt. [Details](notifications.md).

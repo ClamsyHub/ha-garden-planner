@@ -15,6 +15,11 @@ from typing import Any
 
 from custom_components.garden_planner.models import PlannerError, ValidationError
 from custom_components.garden_planner.options import validate_options
+from custom_components.garden_planner.reminder_preferences import (
+    availability,
+    selections,
+    updated,
+)
 from custom_components.garden_planner.service import Actor, PlannerService
 from custom_components.garden_planner.storage import PlannerWorker
 
@@ -123,6 +128,7 @@ async def main() -> None:
                 service = PlannerService(worker)
                 if body.get("host"):
                     settings_state = validate_options({})
+                    personal: dict[str, Any] = {}
 
                     async def test_host(
                         operation: str, parameters: dict[str, Any], actor: Actor
@@ -130,6 +136,28 @@ async def main() -> None:
                         nonlocal settings_state
                         if operation == "capabilities":
                             return {"reminders": True, "http_transfer": False}
+                        if operation in {"get_user_reminders", "set_user_reminder"}:
+                            plants = await worker.async_call("list_records", "plants")
+                            windows = await worker.async_call(
+                                "list_records", "growing_windows"
+                            )
+                            available = availability(plants, windows)
+                            stored = personal.get(actor.user_id, {})
+                            if operation == "set_user_reminder":
+                                stored = updated(
+                                    available,
+                                    stored,
+                                    parameters["plant_id"],
+                                    parameters["activity"],
+                                    parameters["enabled"],
+                                )
+                                personal[actor.user_id] = stored
+                            return {
+                                "cells": selections(available, stored),
+                                "global_enabled": settings_state["reminders_enabled"],
+                                "personal_destinations": 0,
+                                "shared_channel_enabled": False,
+                            }
                         if operation == "get_settings":
                             return {
                                 "settings": settings_state,

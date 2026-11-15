@@ -25,7 +25,7 @@ wurde am 9. November 2026 von Frenck akzeptiert und zusammengeführt. [Status](d
 
 ![Garden Planner im nativen Home Assistant](docs/screenshots/native-marketplace.png)
 
-Eine zusammenhängende Anwendung mit sieben Bereichen:
+Eine zusammenhängende Anwendung mit acht Bereichen:
 
 1. **Übersicht:** hinterlegte Anbauzeiträume des aktuellen Monats, Aufgaben und Kennzahlen.
 2. **Aussaatkalender:** Jahr, Monat und Woche mit Tagesgrenzen, Filtern, Notiz-Tooltips und Zeitraum-/Pflanzendetails.
@@ -33,7 +33,8 @@ Eine zusammenhängende Anwendung mit sieben Bereichen:
 4. **Aktuelle Kulturen:** Aussaat erfassen, bearbeiten und datierte Ereignisse dokumentieren; Aufgaben erledigen.
 5. **Aussaat-Historie:** tatsächliche Aussaattermine und Ergebnisse über mehrere Jahre vergleichen.
 6. **Beete & Standorte:** Standorte verwalten, optional Temperatursensor und Messart zuordnen.
-7. **Einstellungen:** Sprache, Bearbeitungsrechte, optionale Erinnerungen, JSON-/CSV-Export, Importvorschau und Sicherungen.
+7. **Erinnerungen (ab v0.1.7):** persönliche Pflanzen-/Tätigkeiten-Auswahl für alle berechtigten Nutzer, auch mit reinem Leserecht.
+8. **Einstellungen:** Sprache, Bearbeitungsrechte, optionale Erinnerungen, JSON-/CSV-Export, Importvorschau und Sicherungen.
 
 Deutsch und Englisch, Hell-/Dunkelmodus, Smartphone-/Tablet-/Desktop-Layout,
 native zugängliche Dialoge, Tastaturbedienung und übersetzte Fehlerzustände.

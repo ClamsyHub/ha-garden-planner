@@ -625,6 +625,61 @@ export const styles = css`
     margin-top: 0;
     font-size: 12px;
   }
+  .reminders-scroll {
+    overflow: auto;
+    max-height: 65dvh;
+    margin-top: 20px;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+  }
+  .reminders-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 850px;
+    width: 100%;
+  }
+  .reminders-table th,
+  .reminders-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--gp-border);
+    border-right: 1px solid var(--gp-border);
+  }
+  .reminders-table th {
+    background: var(--gp-card);
+  }
+  .reminders-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-soft);
+  }
+  .reminders-table th:first-child {
+    position: sticky;
+    left: 0;
+    min-width: 180px;
+    text-align: left;
+    z-index: 1;
+  }
+  .reminders-table thead th:first-child {
+    z-index: 3;
+  }
+  .reminders-table td {
+    text-align: center;
+  }
+  .reminders-table input {
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    accent-color: var(--gp-accent);
+    cursor: pointer;
+  }
+  .reminders-table .reminder-unavailable {
+    background: var(--gp-soft);
+  }
+  .reminders-table input:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
   .year-scroll {
     overflow: auto;
     max-height: min(65dvh, 720px);

@@ -13,6 +13,14 @@ Push und E-Mail separat je Benutzer aktivieren und das **tatsächliche Ziel** au
 
 Erinnerungen bleiben global ausgeschaltet, bis sie ausdrücklich aktiviert werden. Eine Tabellen-Checkbox allein versendet noch nichts. Keine Testnachrichten werden automatisch versendet. Dieselbe Kombination aus Dienst, Entität und Empfänger wird pro Termin nur einmal versucht, auch wenn mehrere Benutzer dasselbe Ziel auswählen. Unklare oder fehlgeschlagene Versuche werden nicht wiederholt; andere Ziele laufen weiter. Neue Ziele können noch nicht versuchte Termine der letzten sieben Tage erhalten. HA-Konfiguration mit sichern: Rollen und Empfänger gehören nicht zum Garten-JSON/CSV-Export.
 
+### Meine Erinnerungen ab v0.1.7
+
+Der eigenständige Menüpunkt **Erinnerungen** liegt zwischen **Beete & Standorte** und **Einstellungen**. Jede Person mit Leserecht kann hier ausschließlich ihre eigene Matrix ändern; Garten-Bearbeitungsrechte sind dafür nicht nötig. Pro Pflanze/Tätigkeit gilt die Auswahl für sämtliche zugehörigen Anbauzeiträume. Vorhandene Tätigkeiten starten aktiviert; fehlende sind ausgegraut. Neu hinzukommende Tätigkeiten sind zunächst aktiviert. Bestehende Abwahlen bleiben bei weiteren Zeiträumen derselben Tätigkeit erhalten, solange mindestens ein bisheriger Zeitraum bestehen bleibt. Sind alle bisherigen Zeiträume verschwunden und wird später neu angelegt, startet die Tätigkeit wieder aktiviert.
+
+Die globale Erinnerungsfreigabe und ein vom Administrator eingerichtetes persönliches Versandziel bleiben erforderlich. Die Seite zeigt fehlende Voraussetzungen an. Manuelle Aufgaben werden weiterhin erinnert. Der gemeinsame Kanal ist nicht personenbezogen und bleibt unabhängig von der persönlichen Auswahl; für ausschließlich persönliche Zustellung ausgeschaltet lassen. Wer dieselbe Adresse/dasselbe Gerät mit anderen teilt, kann dort weiterhin deren gewünschte Erinnerungen sehen. Identische Ziele werden erst nach der persönlichen Auswahl pro Termin dedupliziert.
+
+Die Auswahl liegt im nativen HA-Benutzerprofil und gehört zur HA-Konfigurationssicherung, nicht zum Gartenexport. Sie gilt bei der nächsten Versandprüfung; bereits laufende Sendungen können nicht zurückgerufen werden. Eine erneute Aktivierung kann noch nicht versuchte Termine im bestehenden Sieben-Tage-Nachholfenster einschließen.
+
 ## English
 
 The settings table lists active HA users. Editing includes viewing; administrators retain full access. Permissions cover the Garden Planner panel and data API; native HA entities retain HA permissions. Existing viewing access is preserved until explicitly changed; new users need approval once an explicit reader list is saved.
@@ -25,3 +33,7 @@ Global reminder activation remains opt-in. No test messages are sent. Identical 
 
 - https://www.home-assistant.io/integrations/notify/
 - https://www.home-assistant.io/integrations/smtp/
+
+### My reminders from v0.1.7
+
+Every authorized viewer can change only their own plant/activity matrix. Missing windows disable cells, while new activities default on. Choices persist in native HA user profiles and require HA configuration backups; garden exports do not include them. Personal notification routes and global delivery opt-in remain administrator-managed. Manual tasks and an explicitly enabled shared channel remain independent. Shared physical destinations can still receive another user's opted-in events; deduplication runs after personal filtering. Already-started sends cannot be recalled.
