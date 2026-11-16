@@ -1,4 +1,4 @@
-> Current: [latest public release](https://github.com/ClamsyHub/ha-garden-planner/releases/latest); [catalog PR #13526](https://github.com/hacs/default/pull/13526) was accepted and merged on 2026-11-09. See [current evidence](catalog/README.md). The v0.1.0 evidence below is historical.
+> Current: [latest public release](https://github.com/ClamsyHub/ha-garden-planner/releases/latest). Garden Planner is available in the official community catalog. The v0.1.0 evidence below is historical.
 
 # Publication report — v0.1.0
 

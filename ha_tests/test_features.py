@@ -160,6 +160,93 @@ class FeatureTests(IntegrationHarness):
         self.assertTrue(late.is_admin)
         self.assertNotIn("garden-planner", store.data["sidebar"]["hiddenPanels"])
 
+    async def test_perennial_activity_preferences_tasks_and_push_email_delivery(
+        self,
+    ) -> None:
+        instant = datetime(2026, 11, 6, 12, tzinfo=UTC)
+        plant = (
+            await self.request(
+                "create", {"table": "plants", "data": {"name": "Synthetic fruit tree"}}
+            )
+        )["result"]
+        for activity in ("fertilize", "prune"):
+            response = await self.request(
+                "create",
+                {
+                    "table": "growing_windows",
+                    "data": {
+                        "plant_id": plant["id"],
+                        "activity": activity,
+                        "environment": "outdoors",
+                        "start_month": 11,
+                        "start_day": 6,
+                        "end_month": 11,
+                        "end_day": 30,
+                    },
+                },
+            )
+            self.assertTrue(response["success"], response)
+        settings = {
+            **DEFAULT_OPTIONS,
+            "reminders_enabled": True,
+            "lead_days": 0,
+            "notification_routes": [
+                {
+                    "user_id": self.editor.id,
+                    "kind": kind,
+                    "enabled": True,
+                    "service": "notify.test_local",
+                    "entity": "",
+                    "target": "synthetic@example.invalid" if kind == "email" else "",
+                }
+                for kind in ("push", "email")
+            ],
+        }
+        response = await self.request(
+            "set_settings", {"settings": settings, "confirm": True}
+        )
+        self.assertTrue(response["success"], response)
+        self.connection.user = self.editor
+        cells = (await self.request("get_user_reminders"))["result"]["cells"][
+            plant["id"]
+        ]
+        self.assertEqual(cells, {"fertilize": True, "prune": True})
+        response = await self.request(
+            "set_user_reminders",
+            {
+                "changes": [
+                    {"plant_id": plant["id"], "activity": "prune", "enabled": False}
+                ]
+            },
+        )
+        self.assertTrue(response["success"], response)
+        runtime: Runtime = self.hass.data[f"{DOMAIN}_runtime"]
+        await runtime.reminders.async_check(instant)
+        self.assertEqual(len(self.delivered), 2)
+        self.assertTrue(all("Düngen" in message for message in self.delivered))
+        response = await self.request(
+            "set_user_reminder",
+            {"plant_id": plant["id"], "activity": "prune", "enabled": True},
+        )
+        self.assertTrue(response["success"], response)
+        await runtime.reminders.async_check(instant + timedelta(minutes=15))
+        self.assertEqual(len(self.delivered), 4)
+        self.assertTrue(all("Rückschnitt" in message for message in self.delivered[2:]))
+        await runtime.reminders.async_check(instant + timedelta(minutes=30))
+        self.assertEqual(len(self.delivered), 4)
+        restored = PersonalTasks(self.hass, self.hass.data[DOMAIN].worker)
+        records = await restored.async_tasks(self.editor.id, instant.date(), "de")
+        self.assertEqual(
+            {r["data"]["activity"] for r in records}, {"fertilize", "prune"}
+        )
+        exported = (await self.hass.data[DOMAIN].worker.async_call("export_data"))[
+            "tables"
+        ]
+        self.assertEqual(
+            {r["data"]["activity"] for r in exported["growing_windows"]},
+            {"fertilize", "prune"},
+        )
+
     async def test_batch_preferences_save_once_and_regenerate_once_for_reader(
         self,
     ) -> None:

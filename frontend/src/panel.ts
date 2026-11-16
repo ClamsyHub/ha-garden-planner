@@ -81,6 +81,8 @@ const activities = [
   "prick_out",
   "transplant",
   "care",
+  "fertilize",
+  "prune",
   "harvest",
   "other",
 ];

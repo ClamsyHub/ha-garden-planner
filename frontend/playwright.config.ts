@@ -5,7 +5,11 @@ export default defineConfig({
   retries: 0,
   workers: 2,
   reporter: "list",
-  use: { baseURL: "http://127.0.0.1:5173", trace: "retain-on-failure" },
+  use: {
+    baseURL: "http://127.0.0.1:5173",
+    locale: "de-DE",
+    trace: "retain-on-failure",
+  },
   webServer: [
     {
       command: "python3 -m scripts.browser_test_server",

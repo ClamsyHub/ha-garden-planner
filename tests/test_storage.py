@@ -56,6 +56,35 @@ class StorageTests(unittest.TestCase):
             },
         )
 
+    def test_perennial_periods_and_tasks_survive_restart_and_exchange(self) -> None:
+        for activity in ("fertilize", "prune"):
+            self.db.create(
+                "growing_windows",
+                {
+                    "plant_id": self.plant["id"],
+                    "activity": activity,
+                    "environment": "outdoors",
+                    "start_month": 11,
+                    "start_day": 1,
+                    "end_month": 2,
+                    "end_day": 28,
+                },
+            )
+            self.db.create(
+                "tasks", {"title": activity, "activity": activity, "date": "2026-11-16"}
+            )
+        before = self.db.export_data()["tables"]
+        self.db.close()
+        self.db.open()
+        self.assertEqual(self.db.export_data()["tables"], before)
+        payload = import_csv(export_csv(self.db.export_data()))
+        target = Database(self.directory / "perennial-roundtrip")
+        target.open()
+        self.addCleanup(target.close)
+        preview = target.preview_import(payload)
+        target.import_data(payload, preview["token"])
+        self.assertEqual(target.export_data()["tables"], before)
+
     def test_multiple_sowings_and_restart_keep_history(self) -> None:
         self.culture()
         self.culture("2026-09-20")

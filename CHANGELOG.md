@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9 — 2026-11-16
+
+- Rename the calendar and periods to Garden calendar / activity periods (Gartenkalender / Tätigkeitszeiträume), retaining stored identifiers and existing data.
+- Add Fertilize and Prune activities to period/task forms, calendar views, filters, distinct colors and personal reminder selections.
+- Generate private tasks for the new activities and notify them through existing opt-in push/email routes.
+- Contain native iOS date/month controls within an explicitly sized column, remove native appearance sizing and preserve space for navigation arrows.
+- Remove catalog acceptance names, dates and submission links from current documentation.
+
 ## 0.1.8 — 2026-11-16
 
 - Apply reminder selections immediately without locking the matrix; coalesce rapid changes into bounded, authenticated batches and update only affected rows.

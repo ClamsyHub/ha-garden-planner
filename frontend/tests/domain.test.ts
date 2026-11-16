@@ -330,7 +330,7 @@ it("plant-only traits remain unambiguous across several plant-wide windows", () 
   });
   expect(recommendedRange(culture)).toEqual({ min: 20, max: 25 });
 });
-it("varieties and growing windows no longer offer retired master fields", () => {
+it("varieties and activity periods no longer offer retired master fields", () => {
   const tables = emptyTables();
   const keys = fieldsFor("varieties", {}, tables, "de", false).map(
     (f) => f.key,

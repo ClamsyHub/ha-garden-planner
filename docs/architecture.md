@@ -17,7 +17,7 @@ production as part of development, tests or CI.
 SQLite at `/config/garden_planner/garden_planner.sqlite3`, owned by a dedicated
 worker outside the HA event loop. Parameterized SQL, foreign keys, transactions,
 serialized writes and optimistic record revisions. Store dates as ISO calendar
-dates; event instants as UTC with explicit display timezone. Growing windows
+dates; event instants as UTC with explicit display timezone. Activity periods
 use month/day boundaries and handle year wrap and leap years explicitly.
 
 Implemented schema v3: plants, varieties, growing_windows, locations, cultivations,
@@ -76,4 +76,4 @@ small commands and subscriptions use the native HA WebSocket connection.
 
 ## Plant-level traits (v0.1.4)
 
-Schema 3 removes retired numeric traits from live varieties and nulls variety links on growing windows. Plant traits and frozen cultivation snapshots are preserved. Legacy import/restore normalizes live masters; old numeric keys remain recognized only to validate historical snapshots and older exchange headers. New snapshots use plant traits across all varieties. Migration is transactional with a pre-migration backup; code-only downgrade to schema-2 releases is refused.
+Schema 3 removes retired numeric traits from live varieties and nulls variety links on activity periods. Plant traits and frozen cultivation snapshots are preserved. Legacy import/restore normalizes live masters; old numeric keys remain recognized only to validate historical snapshots and older exchange headers. New snapshots use plant traits across all varieties. Migration is transactional with a pre-migration backup; code-only downgrade to schema-2 releases is refused.

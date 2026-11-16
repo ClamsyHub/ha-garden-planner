@@ -579,6 +579,12 @@ export const styles = css`
   .transplant {
     --bar-color: #5986a0;
   }
+  .fertilize {
+    --bar-color: #a16c28;
+  }
+  .prune {
+    --bar-color: #ac527f;
+  }
   .harvest {
     --bar-color: #b97856;
   }
@@ -602,20 +608,50 @@ export const styles = css`
     max-width: 100%;
   }
   .calendar-navigation label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    contain: inline-size;
   }
   .calendar-navigation input {
+    display: block;
+    appearance: none;
+    -webkit-appearance: none;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    max-width: 100%;
     width: 100%;
     min-width: 0;
     height: 44px;
     box-sizing: border-box;
   }
+  .calendar-navigation input:focus {
+    outline-offset: -3px;
+  }
   .calendar-navigation input::-webkit-date-and-time-value {
     min-width: 0;
+    overflow: hidden;
     text-align: left;
   }
   .calendar-navigation button {
+    min-width: 0;
     min-height: 44px;
+  }
+  .calendar-navigation > .icon:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .calendar-navigation > label {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .calendar-navigation > .icon {
+    grid-column: 3;
+    grid-row: 1;
   }
   .filter-label {
     font-size: 12px;
@@ -705,7 +741,7 @@ export const styles = css`
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
-    min-width: 850px;
+    min-width: 1050px;
     width: 100%;
   }
   .reminders-table th,
@@ -1429,12 +1465,16 @@ export const styles = css`
       width: 100%;
       grid-template-columns: 44px minmax(0, 1fr) 44px;
     }
+    .calendar-navigation input {
+      font-size: 16px;
+    }
     .calendar-today {
+      grid-row: 2;
       grid-column: 1 / -1;
       justify-self: end;
     }
     .reminders-table {
-      min-width: 750px;
+      min-width: 950px;
     }
     .reminders-table th:first-child {
       width: 100px;

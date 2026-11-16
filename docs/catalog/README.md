@@ -1,18 +1,8 @@
-> Current release: [latest public release](https://github.com/ClamsyHub/ha-garden-planner/releases/latest). Catalog inclusion was accepted on 2026-11-09. The original submission evidence below documents v0.1.1.
+# Official community catalog
 
-# Phase 7 — accepted into the official community catalog
+Garden Planner is available in the official HACS community catalog. Search for **Garden Planner** in HACS/Marketplace and install the [latest release](https://github.com/ClamsyHub/ha-garden-planner/releases/latest). Custom repositories remain an alternative if the local catalog has not refreshed.
 
-Status verified 2026-11-09. [PR #13526](https://github.com/hacs/default/pull/13526)
-was approved and merged by `frenck` at **12:46:53 UTC / 13:46:53 Europe/Berlin**.
-`ClamsyHub/ha-garden-planner` is present in the upstream `hacs/default` integration list.
-This completes official catalog inclusion. Store clients may need to refresh their catalog.
-
-The reviewer requested catalog-search-first German/English installation instructions
-and an up-to-date release link. These are addressed in v0.1.6. Custom repositories
-remain a fallback, and existing installations keep their data.
-
-The evidence below records the original v0.1.1 installation and submission tests;
-it is historical evidence, not a statement that current catalog acceptance is pending.
+The evidence below records the original v0.1.1 installation and submission tests.
 
 ## Public release verification
 

@@ -2,11 +2,11 @@
 
 [Deutsch](../../README.md)
 
-Local sowing, planting, care and harvest planning for Home Assistant.
+Local garden calendar for sowing, planting, care, fertilizing, pruning and harvest in Home Assistant.
 
 **Public development release: [latest release](https://github.com/ClamsyHub/ha-garden-planner/releases/latest).**
 [Source](https://github.com/ClamsyHub/ha-garden-planner) is public. Not a stable 1.0
-release. Included in the official HACS community catalog since 9 November 2026. [Publication evidence](../publication.md).
+release. Available in the official HACS community catalog. [Publication evidence](../publication.md).
 
 ## Interface and features
 
@@ -29,8 +29,7 @@ YAML or extra container is required. Existing HA authentication is used througho
 4. Add Garden Planner in **Settings → Devices & services → Add integration**.
    Its sidebar panel is registered automatically.
 
-The [catalog submission #13526](https://github.com/hacs/default/pull/13526) was
-accepted and merged on 9 November 2026. Refresh the store catalog if its local
+Refresh the store catalog if its local
 search has not updated yet. Existing custom-repository installations do not need
 reinstallation. Back up HA before updates, then restart HA and reload the panel.
 
@@ -119,3 +118,5 @@ Version 0.1.6 adds calendar multi-filters, sticky year headings/corner and nativ
 Version 0.1.7 adds a personal task plan from the plant/activity matrix. Read-only users can complete their own work; existing push/email settings notify due tasks. Back up the full HA configuration to retain private choices and completion history. [Update notes](../releases/v0.1.7.md).
 
 Version **0.1.8** makes reminder selections respond immediately and saves rapid changes in batches. The mobile matrix leaves more room for activities, and calendar filters/date navigation are aligned. Filters close on outside clicks or Escape. Wait for the saving indicator before closing the page. [Update notes](../releases/v0.1.8.md).
+
+The **Garden calendar** uses **activity periods** for vegetables, fruit trees and shrubs. **Fertilize** and **Prune** have distinct colors and personal reminder selections. Existing periods remain intact. [v0.1.9 update notes](../releases/v0.1.9.md).

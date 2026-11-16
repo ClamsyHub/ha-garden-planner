@@ -2,14 +2,14 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.8
+## Stand dieser Dokumentation: v0.1.9
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
 sowie einen Kalender für konkrete Aufgaben und dokumentierte Kulturereignisse
 bereit. [Repository](https://github.com/ClamsyHub/ha-garden-planner) und
 [aktuelle Veröffentlichung](https://github.com/ClamsyHub/ha-garden-planner/releases/latest)
-sind öffentlich. Seit dem 9. November 2026 ist Garden Planner im offiziellen
+sind öffentlich. Garden Planner ist im offiziellen
 HACS-Community-Katalog aufgenommen. Entwicklung und Tests erfolgen außerhalb produktiver Dateien.
 
 ## Installation über HACS oder Marketplace
@@ -20,8 +20,7 @@ HACS-Community-Katalog aufgenommen. Entwicklung und Tests erfolgen außerhalb pr
 4. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** Garden Planner
    auswählen und bestätigen. Das Panel erscheint automatisch in der Seitenleiste.
 
-Garden Planner ist seit dem 9. November 2026 im offiziellen Community-Katalog.
-[Akzeptierter Aufnahme-PR #13526](https://github.com/hacs/default/pull/13526).
+Garden Planner ist im offiziellen Community-Katalog verfügbar.
 Bei einer verzögerten Katalogaktualisierung zunächst die Store-Liste aktualisieren.
 Eine vorhandene Custom-Repository-Installation muss nicht neu eingerichtet werden;
 Gartendaten und Einstellungen bleiben bei einem normalen Update erhalten.
@@ -146,3 +145,5 @@ Ab v0.1.6 ermöglichen die Kalenderfilter eine Mehrfachauswahl. Die Monatszeile 
 Ab v0.1.7 erzeugt **Erinnerungen** einen persönlichen Aufgabenplan. Eigene Aufgaben lassen sich auch mit Leserecht erledigen; vorhandene Push-/E-Mail-Einstellungen erinnern an fällige Aufgaben. Auswahl und Erledigtstände mit der vollständigen HA-Konfiguration sichern. [Updatehinweise](../releases/v0.1.7.md).
 
 Version **0.1.8** verbessert die Reaktionszeit der Erinnerungs-Checkboxen durch sofortige Anzeige und gebündeltes Speichern. Die mobile Matrix lässt mehr Platz für Tätigkeiten; Kalenderfilter und Datumsnavigation sind ausgerichtet. Filter schließen beim Klicken außerhalb oder mit Escape. Beim Verlassen der Seite den Speicherstatus abwarten. [Updatehinweise](../releases/v0.1.8.md).
+
+Im **Gartenkalender** bilden **Tätigkeitszeiträume** auch Arbeiten an Obstbäumen und Sträuchern ab. **Düngen** und **Rückschnitt** besitzen eigene Farben und sind in der persönlichen Erinnerungsmatrix auswählbar. Alle gespeicherten Zeiträume bleiben erhalten. [Updatehinweise v0.1.9](../releases/v0.1.9.md).

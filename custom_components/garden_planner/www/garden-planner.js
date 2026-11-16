@@ -880,20 +880,20 @@ var Qe = {
 	personalTask: "Meine geplante Gartenarbeit",
 	personalSubtitle: "Wähle, woran du erinnert werden möchtest.",
 	personalUnavailable: "Persönliche Erinnerungen sind nur in der Home-Assistant-Integration verfügbar.",
-	personalIntro: "Dein persönlicher Aufgabenplan. Markierte Anbauzeiträume erzeugen Gartenarbeiten unter „Nächste Gartenarbeiten“. Deine Auswahl wird automatisch gespeichert.",
+	personalIntro: "Dein persönlicher Aufgabenplan. Markierte Tätigkeitszeiträume erzeugen Gartenarbeiten unter „Nächste Gartenarbeiten“. Deine Auswahl wird automatisch gespeichert.",
 	personalGlobalOn: "Der Erinnerungsversand ist global aktiviert.",
 	personalGlobalOff: "Der Erinnerungsversand ist global ausgeschaltet. Deine Gartenarbeiten werden trotzdem angelegt; ein Administrator muss den Versand aktivieren.",
 	personalChannelOn: "Persönliche Versandziele sind eingerichtet.",
 	personalChannelOff: "Für dich ist noch kein persönliches Versandziel aktiviert. Bitte einen Administrator um die Einrichtung von Push oder E-Mail.",
-	personalNoWindow: "Kein Anbauzeitraum für diese Tätigkeit vorhanden.",
-	personalHint: "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl entfernt zugehörige offene Aufgaben. Erledigte Einträge bleiben erhalten. Aufgaben entstehen für die nächsten zwölf Monate und lassen sich als erledigt markieren. Push und E-Mail folgen den vorhandenen Einstellungen. Beim Speichern wird keine Testnachricht gesendet.",
+	personalNoWindow: "Kein Tätigkeitszeitraum für diese Tätigkeit vorhanden.",
+	personalHint: "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Tätigkeitszeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl entfernt zugehörige offene Aufgaben. Erledigte Einträge bleiben erhalten. Aufgaben entstehen für die nächsten zwölf Monate und lassen sich als erledigt markieren. Push und E-Mail folgen den vorhandenen Einstellungen. Beim Speichern wird keine Testnachricht gesendet.",
 	personalSharedHint: "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er erinnert weiterhin an manuelle gemeinsame Aufgaben. Persönlich erzeugte Gartenarbeiten gehen ausschließlich an deine persönlichen Versandziele.",
 	multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
-	windowDetail: "Anbauzeitraum",
+	windowDetail: "Tätigkeitszeitraum",
 	recurringWindow: "Jährlich wiederkehrender Zeitraum",
 	plantProfile: "Pflanzensteckbrief",
 	openPlant: "Alle Pflanzendetails",
-	editWindow: "Anbauzeitraum bearbeiten",
+	editWindow: "Tätigkeitszeitraum bearbeiten",
 	windowExtra: "Regionale Hinweise und Quelle",
 	fullWindowNote: "Vollständige Notiz anzeigen",
 	jumpWindows: "Zeiträume",
@@ -951,20 +951,20 @@ var Qe = {
 	personalTask: "My planned garden task",
 	personalSubtitle: "Choose what you want to be reminded about.",
 	personalUnavailable: "Personal reminders are available in the Home Assistant integration.",
-	personalIntro: "Your personal task plan. Selected growing windows create tasks under Upcoming garden work. Your choices save automatically.",
+	personalIntro: "Your personal task plan. Selected activity periods create tasks under Upcoming garden work. Your choices save automatically.",
 	personalGlobalOn: "Reminder delivery is globally enabled.",
 	personalGlobalOff: "Reminder delivery is globally disabled. Tasks are still generated; an administrator must enable notification delivery.",
 	personalChannelOn: "Personal delivery destinations are configured.",
 	personalChannelOff: "No personal delivery destination is enabled for you. Ask an administrator to configure push or email.",
-	personalNoWindow: "No growing window exists for this activity.",
+	personalNoWindow: "No activity period exists for this activity.",
 	personalHint: "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out removes related open tasks; completed history is preserved. Tasks cover the next twelve months and can be completed. Push/email use the existing settings. Saving sends no test message.",
 	personalSharedHint: "A shared channel is also enabled. It continues to notify shared manual tasks. Personal generated tasks go only to your personal delivery destinations.",
 	multiFilterHint: "Select multiple values. An empty selection shows all.",
-	windowDetail: "Growing window",
+	windowDetail: "Activity period",
 	recurringWindow: "Annually recurring window",
 	plantProfile: "Plant profile",
 	openPlant: "All plant details",
-	editWindow: "Edit growing window",
+	editWindow: "Edit activity period",
 	windowExtra: "Regional notes and source",
 	fullWindowNote: "Show complete note",
 	jumpWindows: "Windows",
@@ -1022,7 +1022,7 @@ function yt(e, t) {
 // src/i18n.ts
 var bt = {
 	overview: "Übersicht",
-	calendar: "Aussaatkalender",
+	calendar: "Gartenkalender",
 	plants: "Meine Pflanzen",
 	cultures: "Aktuelle Kulturen",
 	history: "Aussaat-Historie",
@@ -1036,23 +1036,23 @@ var bt = {
 	newPlant: "Pflanze anlegen",
 	newLocation: "Standort anlegen",
 	newTask: "Aufgabe anlegen",
-	newWindow: "Anbauzeitraum hinzufügen",
+	newWindow: "Tätigkeitszeitraum hinzufügen",
 	newVariety: "Sorte hinzufügen",
 	newEvent: "Ereignis erfassen",
 	thisMonth: "Das ist diesen Monat möglich",
 	upcoming: "Nächste Gartenarbeiten",
 	allTasks: "Alle Aufgaben",
 	allPlants: "Alle Pflanzen",
-	noWindows: "Für diesen Monat sind keine Anbauzeiträume hinterlegt.",
+	noWindows: "Für diesen Monat sind keine Tätigkeitszeiträume hinterlegt.",
 	recommendation: "Aus deinen hinterlegten Zeiträumen. Boden, Standort und Witterung vor Ort prüfen.",
 	emptyPlants: "Dein Garten beginnt mit einer Pflanze.",
-	emptyPlantsBody: "Lege deine erste Pflanze an und halte ihre Anbauzeiträume fest. Deine Beobachtungen bleiben über Jahre erhalten.",
+	emptyPlantsBody: "Lege deine erste Pflanze an und halte ihre Tätigkeitszeiträume fest. Deine Beobachtungen bleiben über Jahre erhalten.",
 	emptyCultures: "Noch keine Aussaat dokumentiert.",
 	emptyHistory: "Hier wächst deine Gartengeschichte.",
 	emptyLocations: "Gib deinen Pflanzen einen Platz.",
 	noResults: "Keine passenden Einträge gefunden.",
 	possibleThisWeek: "Diese Woche möglich",
-	noWeekWindows: "Keine passenden Anbauzeiträume in dieser Woche. Prüfe bei Bedarf die Filter oder die hinterlegten Zeiträume.",
+	noWeekWindows: "Keine passenden Tätigkeitszeiträume in dieser Woche. Prüfe bei Bedarf die Filter oder die hinterlegten Zeiträume.",
 	noAppointments: "Keine Termine",
 	noSensors: "Keine passenden Temperatursensoren. Eine Sensor-ID kann auch manuell eingegeben werden.",
 	noTasks: "Gerade steht nichts an. Zeit für einen Blick ins Grüne.",
@@ -1122,6 +1122,8 @@ var bt = {
 	harvest: "Ernte",
 	prick_out: "Pikieren",
 	careActivity: "Pflege",
+	fertilize: "Düngen",
+	prune: "Rückschnitt",
 	outdoors: "Freiland",
 	greenhouse: "Gewächshaus",
 	cold_frame: "Frühbeet",
@@ -1144,7 +1146,7 @@ var bt = {
 	allMethods: "Alle Methoden",
 	sort: "Sortierung",
 	alphabetical: "Nach Name",
-	nextSowing: "Nächster Anbauzeitraum",
+	nextSowing: "Nächster Tätigkeitszeitraum",
 	showArchived: "Archivierte anzeigen",
 	month: "Monat",
 	year: "Jahr",
@@ -1169,7 +1171,7 @@ var bt = {
 	plantDetail: "Pflanzendetails",
 	cultivationDetail: "Kulturverlauf",
 	varieties: "Sorten",
-	windows: "Anbauzeiträume",
+	windows: "Tätigkeitszeiträume",
 	observations: "Beobachtungen über die Jahre",
 	timeline: "Ereignisse & Notizen",
 	snapshot: "Angaben bei der Aussaat",
@@ -1180,7 +1182,7 @@ var bt = {
 	details: "Details ansehen",
 	noEvents: "Noch keine weiteren Ereignisse.",
 	noVarieties: "Noch keine Sorten hinterlegt.",
-	noAllWindows: "Noch keine Anbauzeiträume hinterlegt.",
+	noAllWindows: "Noch keine Tätigkeitszeiträume hinterlegt.",
 	noNotes: "Keine Notizen hinterlegt.",
 	loading: "Dein Garten wird geladen …",
 	refresh: "Aktualisieren",
@@ -1251,7 +1253,7 @@ var bt = {
 	historicalName: "Name zum Zeitpunkt der Aussaat"
 }, xt = {
 	overview: "Overview",
-	calendar: "Sowing calendar",
+	calendar: "Garden calendar",
 	plants: "My plants",
 	cultures: "Current crops",
 	history: "Sowing history",
@@ -1265,23 +1267,23 @@ var bt = {
 	newPlant: "Add a plant",
 	newLocation: "Add a location",
 	newTask: "Add a task",
-	newWindow: "Add a growing window",
+	newWindow: "Add a activity period",
 	newVariety: "Add a variety",
 	newEvent: "Record an event",
 	thisMonth: "What you can do this month",
 	upcoming: "Next garden tasks",
 	allTasks: "All tasks",
 	allPlants: "All plants",
-	noWindows: "No growing windows are recorded for this month.",
-	recommendation: "Based on your growing windows. Check local soil, location and weather.",
+	noWindows: "No activity periods are recorded for this month.",
+	recommendation: "Based on your activity periods. Check local soil, location and weather.",
 	emptyPlants: "Your garden starts with a plant.",
-	emptyPlantsBody: "Add your first plant and its growing windows. Keep your observations for years to come.",
+	emptyPlantsBody: "Add your first plant and its activity periods. Keep your observations for years to come.",
 	emptyCultures: "No sowings recorded yet.",
 	emptyHistory: "Your garden story grows here.",
 	emptyLocations: "Give your plants a place to grow.",
 	noResults: "No matching records.",
 	possibleThisWeek: "Possible this week",
-	noWeekWindows: "No matching growing windows this week. Check the filters or your recorded periods.",
+	noWeekWindows: "No matching activity periods this week. Check the filters or your recorded periods.",
 	noAppointments: "No appointments",
 	noSensors: "No matching temperature sensors. You can also enter a sensor ID manually.",
 	noTasks: "Nothing due right now. A moment to enjoy your garden.",
@@ -1351,6 +1353,8 @@ var bt = {
 	harvest: "Harvest",
 	prick_out: "Prick out",
 	careActivity: "Care",
+	fertilize: "Fertilize",
+	prune: "Prune",
 	outdoors: "Outdoors",
 	greenhouse: "Greenhouse",
 	cold_frame: "Cold frame",
@@ -1373,7 +1377,7 @@ var bt = {
 	allMethods: "All methods",
 	sort: "Sort order",
 	alphabetical: "By name",
-	nextSowing: "Next growing window",
+	nextSowing: "Next activity period",
 	showArchived: "Show archived",
 	month: "Month",
 	year: "Year",
@@ -1398,7 +1402,7 @@ var bt = {
 	plantDetail: "Plant details",
 	cultivationDetail: "Crop timeline",
 	varieties: "Varieties",
-	windows: "Growing windows",
+	windows: "Activity periods",
 	observations: "Observations across the years",
 	timeline: "Events & notes",
 	snapshot: "Details at sowing time",
@@ -1409,7 +1413,7 @@ var bt = {
 	details: "View details",
 	noEvents: "No further events yet.",
 	noVarieties: "No varieties recorded yet.",
-	noAllWindows: "No growing windows recorded yet.",
+	noAllWindows: "No activity periods recorded yet.",
 	noNotes: "No notes recorded.",
 	loading: "Loading your garden …",
 	refresh: "Refresh",
@@ -1606,6 +1610,8 @@ function Ot(e, n, r, i, a) {
 			"prick_out",
 			"transplant",
 			"care",
+			"fertilize",
+			"prune",
 			"harvest",
 			"other"
 		], !0),
@@ -1716,6 +1722,8 @@ function Ot(e, n, r, i, a) {
 			"prick_out",
 			"transplant",
 			"care",
+			"fertilize",
+			"prune",
 			"harvest",
 			"other"
 		], !0),
@@ -3071,6 +3079,12 @@ var Bn = j`
   .transplant {
     --bar-color: #5986a0;
   }
+  .fertilize {
+    --bar-color: #a16c28;
+  }
+  .prune {
+    --bar-color: #ac527f;
+  }
   .harvest {
     --bar-color: #b97856;
   }
@@ -3094,20 +3108,50 @@ var Bn = j`
     max-width: 100%;
   }
   .calendar-navigation label {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
     min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    contain: inline-size;
   }
   .calendar-navigation input {
+    display: block;
+    appearance: none;
+    -webkit-appearance: none;
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    max-width: 100%;
     width: 100%;
     min-width: 0;
     height: 44px;
     box-sizing: border-box;
   }
+  .calendar-navigation input:focus {
+    outline-offset: -3px;
+  }
   .calendar-navigation input::-webkit-date-and-time-value {
     min-width: 0;
+    overflow: hidden;
     text-align: left;
   }
   .calendar-navigation button {
+    min-width: 0;
     min-height: 44px;
+  }
+  .calendar-navigation > .icon:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .calendar-navigation > label {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .calendar-navigation > .icon {
+    grid-column: 3;
+    grid-row: 1;
   }
   .filter-label {
     font-size: 12px;
@@ -3197,7 +3241,7 @@ var Bn = j`
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
-    min-width: 850px;
+    min-width: 1050px;
     width: 100%;
   }
   .reminders-table th,
@@ -3921,12 +3965,16 @@ var Bn = j`
       width: 100%;
       grid-template-columns: 44px minmax(0, 1fr) 44px;
     }
+    .calendar-navigation input {
+      font-size: 16px;
+    }
     .calendar-today {
+      grid-row: 2;
       grid-column: 1 / -1;
       justify-self: end;
     }
     .reminders-table {
-      min-width: 750px;
+      min-width: 950px;
     }
     .reminders-table th:first-child {
       width: 100px;
@@ -3955,6 +4003,8 @@ var Bn = j`
 	"prick_out",
 	"transplant",
 	"care",
+	"fertilize",
+	"prune",
 	"harvest",
 	"other"
 ], Hn = {

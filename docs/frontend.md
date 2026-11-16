@@ -35,7 +35,7 @@ Actual compiled-frontend screenshots, with synthetic test records only.
 
 ![Jahreskalender – Desktop](screenshots/calendar-desktop.png)
 
-![Anbauzeitraum – zusammengehörige Datumsfelder](screenshots/window-date-pairs-desktop.png)
+![Tätigkeitszeitraum – zusammengehörige Datumsfelder](screenshots/window-date-pairs-desktop.png)
 
 ![Desktop – Dunkelmodus](screenshots/overview-desktop-dark.png)
 
@@ -83,7 +83,7 @@ eine Browserpräferenz; Fachdaten gehören weiterhin ins Backend.
   Umgebung, eigene Tagesgrenzen und optionale Keim-/Quellenangaben.
 - **Kalender:** Monat, Woche oder Jahr auswählen. Monats-/Jahresansichten zeigen
   gepflegte Zeitfenster; die Woche zeigt unter **Diese Woche möglich** die
-  überlappenden Anbauzeiträume mit den tatsächlich in der Woche liegenden Tagen.
+  überlappenden Tätigkeitszeiträume mit den tatsächlich in der Woche liegenden Tagen.
   Darunter stehen konkrete Aufgaben und dokumentierte Ereignisse. Jahresbalken berücksichtigen Teilmonate und den Jahreswechsel.
   Balken oder Pflanzennamen öffnen die Details. Kategorien, Tätigkeiten und Suche
   filtern die Ansichten. Im Smartphone-Jahresplan horizontal wischen.
@@ -155,12 +155,12 @@ Der Menüknopf oben öffnet die Home-Assistant-Seitenleiste über das native Men
 
 Die Ansichten stehen in der Reihenfolge Jahr, Monat und Woche. Der bestehende Monatsstart bleibt erhalten. Über Jahresbalken, Monats-Tätigkeiten und saisonalen Wochenereignissen zeigt der native Browser-Tooltip die passende Zeitraum-Notiz. Auf Touchscreens öffnen dieselben Elemente per Antippen die Detailansicht.
 
-Die Detailansicht zeigt zuerst den jährlich wiederkehrenden Anbauzeitraum mit Tätigkeit, Datum, Umgebung und Notiz. Darunter folgt ein kompakter Pflanzensteckbrief. Lange Notizen und zusätzliche Quellenangaben sind aufklappbar; alle Pflanzendetails bleiben erreichbar. Bearbeiten wird nur berechtigten Personen angeboten. Tatsächliche Aufgaben und Kulturereignisse behalten ihre eigenen Detailansichten.
+Die Detailansicht zeigt zuerst den jährlich wiederkehrenden Tätigkeitszeitraum mit Tätigkeit, Datum, Umgebung und Notiz. Darunter folgt ein kompakter Pflanzensteckbrief. Lange Notizen und zusätzliche Quellenangaben sind aufklappbar; alle Pflanzendetails bleiben erreichbar. Bearbeiten wird nur berechtigten Personen angeboten. Tatsächliche Aufgaben und Kulturereignisse behalten ihre eigenen Detailansichten.
 
 
 ## Mehrfachfilter und Jahresliste ab v0.1.6
 
-Im Aussaatkalender bieten Kategorie und Tätigkeit aufklappbare Checkbox-Listen.
+Im Gartenkalender bieten Kategorie und Tätigkeit aufklappbare Checkbox-Listen.
 Mehrere Werte innerhalb derselben Liste werden mit ODER verknüpft; Kategorie,
 Tätigkeit und Suchtext mit UND. Ohne Auswahl zeigt der jeweilige Filter alle Werte.
 Die Auswahl bleibt beim Wechsel zwischen Jahr, Monat und Woche bestehen und
@@ -191,7 +191,7 @@ Offizielle Schnittstellen/Implementierungen, geprüft am 2026-11-09:
 
 Der Menüpunkt **Erinnerungen** liegt zwischen Beete & Standorte und Einstellungen.
 Die Matrix zeigt nicht archivierte Pflanzen mit Vorziehen, Direktsaat, Pikieren,
-Auspflanzen, Pflege, Ernte und Sonstige. Fehlende Anbauzeiträume ergeben eine
+Auspflanzen, Pflege, Düngen, Rückschnitt, Ernte und Sonstige. Fehlende Tätigkeitszeiträume ergeben eine
 ausgegraute Checkbox, vorhandene starten aktiviert. Neue Tätigkeiten starten
 aktiviert; bestehende Abwahlen bleiben erhalten, solange ein bisheriger Zeitraum
 für diese Pflanze/Tätigkeit weiterbesteht. Änderungen speichern automatisch und erzeugen persönliche Aufgaben unter

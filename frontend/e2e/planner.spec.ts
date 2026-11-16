@@ -79,10 +79,10 @@ test("plant CRUD, winter window, variety and confirmed deletion", async ({
   await page.getByRole("button", { name: "Testpflanze", exact: true }).click();
   let detail = page.getByRole("dialog", { name: "Testpflanze", exact: true });
   await detail
-    .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+    .getByRole("button", { name: "Tätigkeitszeitraum hinzufügen", exact: true })
     .click();
   const window = page.getByRole("dialog", {
-    name: "Anbauzeitraum hinzufügen",
+    name: "Tätigkeitszeitraum hinzufügen",
     exact: true,
   });
   await window.getByLabel("Startmonat *").selectOption("11");
@@ -105,7 +105,7 @@ test("plant CRUD, winter window, variety and confirmed deletion", async ({
     detail.getByRole("heading", { name: "Testsorte" }),
   ).toBeVisible();
   await detail.getByRole("button", { name: "Schließen", exact: true }).click();
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Jahr", exact: true }).click();
   await page.getByLabel("Jahr auswählen").fill("2027");
   await page.getByLabel("Jahr auswählen").press("Tab");
@@ -221,7 +221,7 @@ test("locations and tasks work without temperature sensors", async ({
   await expect(
     page.getByRole("button", { name: "Wieder öffnen" }),
   ).toBeVisible();
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Woche", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Beet prüfen ✓" }),
@@ -498,7 +498,7 @@ test("light appearance and calendar visual checks", async ({
     fullPage: true,
     scale: "css",
   });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Jahr", exact: true }).click();
   expect(
     await page.evaluate(
@@ -598,10 +598,10 @@ test("growing-window date pairs share rows on wide displays", async ({
     .click();
   await page
     .getByRole("dialog", { name: "Blattkultur · Beispiel", exact: true })
-    .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+    .getByRole("button", { name: "Tätigkeitszeitraum hinzufügen", exact: true })
     .click();
   const dialog = page.getByRole("dialog", {
-    name: "Anbauzeitraum hinzufügen",
+    name: "Tätigkeitszeitraum hinzufügen",
     exact: true,
   });
   const startMonth = dialog.getByLabel("Startmonat *", { exact: true });
@@ -661,11 +661,11 @@ test("explicit reminder settings and editor grants are editable without YAML", a
   await expect(enable).not.toBeChecked();
 });
 
-test("week view includes overlapping growing windows and keeps concrete appointments", async ({
+test("week view includes overlapping activity periods and keeps concrete appointments", async ({
   page,
 }, testInfo) => {
   await open(page, { demo: "1" });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Woche", exact: true }).click();
   const possible = page.getByRole("region", { name: "Diese Woche möglich" });
   await expect(
@@ -678,7 +678,7 @@ test("week view includes overlapping growing windows and keeps concrete appointm
   ).toBeVisible();
   await calendarFilter(page, "Tätigkeit", ["Vorziehen"]);
   await expect(
-    possible.getByText(/Keine passenden Anbauzeiträume/),
+    possible.getByText(/Keine passenden Tätigkeitszeiträume/),
   ).toBeVisible();
   await calendarFilter(page, "Tätigkeit", []);
   await page.getByLabel("Woche auswählen", { exact: true }).fill("2026-10-30");
@@ -879,7 +879,10 @@ test("plant details keep varieties and chronological windows compact", async ({
     ["indoors", "2"],
   ]) {
     await detail
-      .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+      .getByRole("button", {
+        name: "Tätigkeitszeitraum hinzufügen",
+        exact: true,
+      })
       .click();
     const editor = page.locator("#editor-dialog");
     await editor
@@ -917,7 +920,7 @@ test("plant details keep varieties and chronological windows compact", async ({
   await expect(detail.getByText("Only in window editor")).toHaveCount(0);
 });
 
-test("all seven calendar activities have distinct bars and lifecycle order", async ({
+test("all nine calendar activities have distinct bars and lifecycle order", async ({
   page,
 }) => {
   await open(page);
@@ -935,12 +938,17 @@ test("all seven calendar activities have distinct bars and lifecycle order", asy
     "prick_out",
     "transplant",
     "care",
+    "fertilize",
+    "prune",
     "harvest",
     "other",
   ];
   for (const activity of [...sequence].reverse()) {
     await detail
-      .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+      .getByRole("button", {
+        name: "Tätigkeitszeitraum hinzufügen",
+        exact: true,
+      })
       .click();
     const editor = page.locator("#editor-dialog");
     await editor
@@ -956,20 +964,22 @@ test("all seven calendar activities have distinct bars and lifecycle order", asy
     await expect(editor).not.toBeVisible();
   }
   await detail.getByRole("button", { name: "Schließen", exact: true }).click();
-  await navigate(page, "Aussaatkalender");
-  await expect(page.locator(".legend > span")).toHaveCount(7);
+  await navigate(page, "Gartenkalender");
+  await expect(page.locator(".legend > span")).toHaveCount(9);
   const colors = await page
     .locator(".legend .dot")
     .evaluateAll((nodes) =>
       nodes.map((n) => getComputedStyle(n).backgroundColor),
     );
-  expect(new Set(colors).size).toBe(7);
+  expect(new Set(colors).size).toBe(9);
   const labels = [
     "Vorziehen",
     "Direktsaat",
     "Pikieren",
     "Auspflanzen",
     "Pflege",
+    "Düngen",
+    "Rückschnitt",
     "Ernte",
     "Sonstige",
   ];
@@ -977,7 +987,7 @@ test("all seven calendar activities have distinct bars and lifecycle order", asy
   await expect(page.locator(".year-grid .row-title small")).toHaveText(
     labels.map((v) => new RegExp(`^${v}`)),
   );
-  await expect(page.locator(".year-grid .bar")).toHaveCount(7);
+  await expect(page.locator(".year-grid .bar")).toHaveCount(9);
   expect(
     new Set(
       await page
@@ -986,11 +996,11 @@ test("all seven calendar activities have distinct bars and lifecycle order", asy
           nodes.map((n) => getComputedStyle(n).backgroundColor),
         ),
     ).size,
-  ).toBe(7);
+  ).toBe(9);
   await page.getByRole("button", { name: "Monat", exact: true }).click();
   await expect(page.locator(".month-list .badge")).toHaveText(labels);
   await page.getByRole("button", { name: "Woche", exact: true }).click();
-  await expect(page.locator(".week-window")).toHaveCount(7);
+  await expect(page.locator(".week-window")).toHaveCount(9);
   expect(
     await page
       .locator(".week-window")
@@ -1108,7 +1118,7 @@ test("user matrix persists separate push and email selections and viewing grants
   ).toBe(true);
 });
 
-test("growing windows are plant-wide and variety forms have no plant measurements", async ({
+test("activity periods are plant-wide and variety forms have no plant measurements", async ({
   page,
 }) => {
   await open(page, { demo: "1" });
@@ -1319,7 +1329,10 @@ test("calendar views share period-first details and show the matching note in to
     ["care", "Notiz des anderen Zeitfensters."],
   ]) {
     await plant
-      .getByRole("button", { name: "Anbauzeitraum hinzufügen", exact: true })
+      .getByRole("button", {
+        name: "Tätigkeitszeitraum hinzufügen",
+        exact: true,
+      })
       .click();
     await editor
       .getByLabel("Tätigkeit *", { exact: true })
@@ -1335,7 +1348,7 @@ test("calendar views share period-first details and show the matching note in to
     await expect(editor).not.toBeVisible();
   }
   await plant.getByRole("button", { name: "Schließen", exact: true }).click();
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await expect(page.locator(".segmented").getByRole("button")).toHaveText([
     "Jahr",
     "Monat",
@@ -1402,7 +1415,7 @@ test("read-only users can inspect calendar windows and open the full plant profi
   page,
 }) => {
   await open(page, { demo: "1", role: "reader" });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Woche", exact: true }).click();
   const entry = page.locator(".week-window.direct");
   await entry.click();
@@ -1413,7 +1426,7 @@ test("read-only users can inspect calendar windows and open the full plant profi
   await expect(detail.locator(".calendar-window-card")).toBeVisible();
   await expect(
     detail.getByRole("button", {
-      name: "Anbauzeitraum bearbeiten",
+      name: "Tätigkeitszeitraum bearbeiten",
       exact: true,
     }),
   ).toHaveCount(0);
@@ -1436,7 +1449,7 @@ test("long calendar notes remain complete behind a compact preview and editable"
   page,
 }) => {
   await open(page, { demo: "1" });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Woche", exact: true }).click();
   await page.locator(".week-window.direct").click();
   const detail = page.getByRole("dialog", {
@@ -1444,7 +1457,7 @@ test("long calendar notes remain complete behind a compact preview and editable"
     exact: true,
   });
   await detail
-    .getByRole("button", { name: "Anbauzeitraum bearbeiten", exact: true })
+    .getByRole("button", { name: "Tätigkeitszeitraum bearbeiten", exact: true })
     .click();
   const editor = page.locator("#editor-dialog");
   const note = "Lange eigene Kalendernotiz. ".repeat(80);
@@ -1462,7 +1475,7 @@ test("calendar combines multiple category and activity filters across all views"
   page,
 }) => {
   await open(page, { demo: "1" });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await calendarFilter(page, "Kategorie", ["Gemüse", "Blumen"]);
   await calendarFilter(page, "Tätigkeit", ["Direktsaat", "Auspflanzen"]);
   await page.getByRole("button", { name: "Jahr", exact: true }).click();
@@ -1517,7 +1530,7 @@ test("year headings stay visible while scrolling vertically and the corner stays
     };
     panel.requestUpdate();
   });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Jahr", exact: true }).click();
   const scroll = page.locator(".year-scroll");
   await scroll.scrollIntoViewIfNeeded();
@@ -1675,7 +1688,7 @@ test("failed personal reminder save preserves the previous checkbox state", asyn
   await expect(input).toBeEnabled();
 });
 
-test("selected growing windows become private tasks that readers can complete without regeneration", async ({
+test("selected activity periods become private tasks that readers can complete without regeneration", async ({
   page,
 }) => {
   await open(page, { demo: "1", host: "1", role: "reader" });
@@ -1705,7 +1718,7 @@ test("selected growing windows become private tasks that readers can complete wi
   await expect(
     manual.getByRole("button", { name: "Als erledigt markieren" }),
   ).toHaveCount(0);
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   await page.getByRole("button", { name: "Woche", exact: true }).click();
   await page.getByLabel("Woche auswählen", { exact: true }).fill("2026-11-01");
   await page.getByLabel("Woche auswählen", { exact: true }).press("Tab");
@@ -1833,7 +1846,7 @@ test("calendar filters keep their width and close on outside click and Escape", 
   page,
 }, testInfo) => {
   await open(page, { demo: "1" });
-  await navigate(page, "Aussaatkalender");
+  await navigate(page, "Gartenkalender");
   const group = page.getByRole("group", { name: "Tätigkeit", exact: true });
   const summary = group.locator("summary");
   const before = await summary.boundingBox();
@@ -1846,7 +1859,7 @@ test("calendar filters keep their width and close on outside click and Escape", 
   ).toBeVisible();
   await group.getByRole("checkbox", { name: "Vorziehen", exact: true }).check();
   await page
-    .getByRole("heading", { name: "Aussaatkalender", exact: true })
+    .getByRole("heading", { name: "Gartenkalender", exact: true })
     .click();
   await expect(group.locator("details")).not.toHaveAttribute("open");
   await summary.click();
@@ -2048,4 +2061,118 @@ test("large reminder matrix batches rapid changes without disabling other plants
   await expect(inputs.nth(0)).not.toBeChecked();
   await expect(inputs.nth(19)).not.toBeChecked();
   await expect(inputs.nth(20)).toBeChecked();
+});
+
+test("perennial activity reminders default on and create private tasks per selection", async ({
+  page,
+}) => {
+  await open(page, { host: "1", role: "reader" });
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(
+    operation: string,
+    parameters: Record<string, unknown> = {},
+    role = "admin",
+  ) {
+    const response = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role, host: true },
+    });
+    expect(response.ok()).toBe(true);
+    return response.json();
+  }
+  const plant = await api("create", {
+    table: "plants",
+    data: { name: "Himbeere" },
+  });
+  for (const activity of ["fertilize", "prune"])
+    await api("create", {
+      table: "growing_windows",
+      data: {
+        plant_id: plant.id,
+        activity,
+        environment: "outdoors",
+        start_month: 11,
+        start_day: 6,
+        end_month: 11,
+        end_day: 30,
+      },
+    });
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  const fertilize = page.getByRole("checkbox", {
+    name: "Himbeere: Düngen",
+    exact: true,
+  });
+  const prune = page.getByRole("checkbox", {
+    name: "Himbeere: Rückschnitt",
+    exact: true,
+  });
+  await expect(fertilize).toBeChecked();
+  await expect(prune).toBeChecked();
+  await expect(
+    page.getByRole("checkbox", { name: "Himbeere: Vorziehen", exact: true }),
+  ).toBeDisabled();
+  await prune.uncheck();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
+  let tasks = await api("list", { table: "tasks" }, "reader");
+  expect(
+    tasks.every(
+      (r: { data: { activity: string } }) => r.data.activity === "fertilize",
+    ),
+  ).toBe(true);
+  expect(tasks.length).toBeGreaterThan(0);
+  const other = await api("get_user_reminders");
+  expect(other.cells[plant.id].prune).toBe(true);
+  await prune.check();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
+  tasks = await api("list", { table: "tasks" }, "reader");
+  expect(
+    new Set(tasks.map((r: { data: { activity: string } }) => r.data.activity)),
+  ).toEqual(new Set(["fertilize", "prune"]));
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  await expect(prune).toBeChecked();
+});
+
+test("calendar native date fields remain inside their column at narrow widths", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Gartenkalender");
+  for (const width of [320, 390, 430]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const mode of ["Monat", "Woche"]) {
+      await page
+        .locator(".segmented")
+        .getByRole("button", { name: mode, exact: true })
+        .click();
+      const nav = page.locator(".calendar-navigation");
+      const label = nav.locator("label");
+      const input = nav.locator("input");
+      const next = nav.getByRole("button", { name: "Weiter", exact: true });
+      const field = await input.boundingBox(),
+        container = await label.boundingBox(),
+        arrow = await next.boundingBox();
+      expect(field!.x + field!.width).toBeLessThanOrEqual(
+        container!.x + container!.width + 0.5,
+      );
+      expect(container!.x + container!.width).toBeLessThan(arrow!.x);
+      await expect(label).toHaveCSS("overflow", "hidden");
+      await expect(label).toHaveCSS("contain", "inline-size");
+      await expect(input).toHaveCSS("appearance", "none");
+      await input.fill(mode === "Monat" ? "2026-09" : "2026-11-16");
+      await input.press("Tab");
+      const old = await input.inputValue();
+      await next.click();
+      await expect(input).not.toHaveValue(old);
+      await nav.getByRole("button", { name: "Zurück", exact: true }).click();
+      await expect(input).toHaveValue(old);
+      if (width === 390)
+        await nav.screenshot({
+          path: testInfo.outputPath(`native-date-${mode}-v019.png`),
+          scale: "css",
+        });
+    }
+  }
 });

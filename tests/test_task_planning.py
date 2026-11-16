@@ -51,6 +51,35 @@ class TaskPlanningTests(unittest.TestCase):
         values.update(kwargs)
         return reconcile(**values)
 
+    def test_perennial_activities_generate_localized_tasks_and_preserve_completion(
+        self,
+    ) -> None:
+        for activity, german, english in (
+            ("fertilize", "Düngen", "Fertilize"),
+            ("prune", "Rückschnitt", "Prune"),
+        ):
+            with self.subTest(activity=activity):
+                self.windows[0]["data"]["activity"] = activity
+                cells = {"p": {activity: True}}
+                records = self.plan(cells=cells)
+                self.assertTrue(
+                    all(r["data"]["title"].endswith(german) for r in records.values())
+                )
+                translated = self.plan(cells=cells, language="en")
+                self.assertTrue(
+                    all(
+                        r["data"]["title"].endswith(english)
+                        for r in translated.values()
+                    )
+                )
+                task = visible(records)[0]
+                done = complete(records, task["id"], task["revision"], True, "done")
+                disabled = self.plan(done, cells={"p": {activity: False}})
+                self.assertEqual(len(visible(disabled)), 1)
+                restored = self.plan(disabled, cells=cells)
+                self.assertEqual(set(restored), set(done))
+                self.assertTrue(restored[task["id"]]["data"]["completed"])
+
     def test_stable_ids_dates_and_separate_owners(self) -> None:
         first = self.plan()
         self.assertEqual(len(first), 2)

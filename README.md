@@ -4,7 +4,7 @@
 
 **Deutsch** · [English](docs/en/README.md)
 
-Lokaler Aussaat-, Pflanz-, Pflege- und Erntekalender für Home Assistant.
+Lokaler Gartenkalender für Aussaat, Pflanzung, Pflege, Düngen, Rückschnitt und Ernte in Home Assistant.
 
 **Öffentliche Entwicklungsversion: [neueste Veröffentlichung](https://github.com/ClamsyHub/ha-garden-planner/releases/latest).**
 Automatisches Seitenleisten-Panel, Live-Temperaturen, Sensor-/Kalender-Entitäten,
@@ -12,15 +12,14 @@ Bearbeitungsfreigaben und optionale Erinnerungen sind vorhanden. Dies ist eine
 frühe Version 0.x, noch keine stabile Version 1.0.
 
 Quellcode: [ClamsyHub/ha-garden-planner](https://github.com/ClamsyHub/ha-garden-planner).
-Garden Planner ist seit dem 9. November 2026 im offiziellen HACS-Community-Katalog
-aufgenommen. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
+Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.8:** Sofort reagierende Erinnerungs-Checkboxen, gebündeltes Speichern,
-mehr Platz in der mobilen Matrix und übersichtlich ausgerichtete Kalenderfilter und Datumsfelder.
-[Updatehinweise und Datensicherung](docs/releases/v0.1.8.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
-wurde am 9. November 2026 von Frenck akzeptiert und zusammengeführt. [Status](docs/catalog/README.md).
+**Änderungen v0.1.9:** Gartenkalender und Tätigkeitszeiträume für Gemüse, Obst, Bäume und Sträucher.
+Düngen und Rückschnitt mit eigenen Farben, persönlichen Aufgaben und Erinnerungen.
+Verbesserte Begrenzung der Datumsfelder in der iOS-Ansicht.
+[Updatehinweise und Datensicherung](docs/releases/v0.1.9.md).
 
 ## Oberfläche
 
@@ -28,8 +27,8 @@ wurde am 9. November 2026 von Frenck akzeptiert und zusammengeführt. [Status](d
 
 Eine zusammenhängende Anwendung mit acht Bereichen:
 
-1. **Übersicht:** hinterlegte Anbauzeiträume des aktuellen Monats, Aufgaben und Kennzahlen.
-2. **Aussaatkalender:** Jahr, Monat und Woche mit Tagesgrenzen, Filtern, Notiz-Tooltips und Zeitraum-/Pflanzendetails.
+1. **Übersicht:** hinterlegte Tätigkeitszeiträume des aktuellen Monats, Aufgaben und Kennzahlen.
+2. **Gartenkalender:** Jahr, Monat und Woche mit Tagesgrenzen, Filtern, Notiz-Tooltips und Zeitraum-/Pflanzendetails.
 3. **Meine Pflanzen:** Stammdaten, Sorten, mehrere Zeitfenster, Suche, Sortierung, Duplizieren und Archivieren.
 4. **Aktuelle Kulturen:** Aussaat erfassen, bearbeiten und datierte Ereignisse dokumentieren; Aufgaben erledigen.
 5. **Aussaat-Historie:** tatsächliche Aussaattermine und Ergebnisse über mehrere Jahre vergleichen.

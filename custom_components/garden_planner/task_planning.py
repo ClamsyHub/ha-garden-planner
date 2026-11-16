@@ -21,6 +21,8 @@ LABELS = {
     "prick_out": ("Pikieren", "Prick out"),
     "transplant": ("Auspflanzen", "Plant out"),
     "care": ("Pflege", "Care"),
+    "fertilize": ("Düngen", "Fertilize"),
+    "prune": ("Rückschnitt", "Prune"),
     "harvest": ("Ernte", "Harvest"),
     "other": ("Sonstige Gartenarbeit", "Other garden work"),
 }
