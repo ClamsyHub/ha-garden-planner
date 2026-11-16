@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.7 — development candidate
+## 0.1.7 — 2026-11-16
 
 - Add a personal Reminders page between Locations and Settings, available to every authorized user including read-only users.
 - Generate private, completable annual tasks from growing-window selections; retain completed history and route due-task notifications through existing settings.

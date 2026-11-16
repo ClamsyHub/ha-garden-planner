@@ -115,3 +115,5 @@ From v0.1.4, cultivation traits belong to plants and windows apply to all variet
 From v0.1.5, calendar entries include note tooltips and open compact growing-window details followed by the plant profile. Tap the entry on touchscreens. [Update notes](../releases/v0.1.5.md).
 
 Version 0.1.6 adds calendar multi-filters, sticky year headings/corner and native per-user sidebar visibility. [Update notes](../releases/v0.1.6.md).
+
+Version 0.1.7 adds a personal task plan from the plant/activity matrix. Read-only users can complete their own work; existing push/email settings notify due tasks. Back up the full HA configuration to retain private choices and completion history. [Update notes](../releases/v0.1.7.md).

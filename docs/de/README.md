@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.6
+## Stand dieser Dokumentation: v0.1.7
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
@@ -142,3 +142,5 @@ Ab v0.1.4 liegen Anbau-Messwerte nur an der Pflanze, Zeiträume gelten für alle
 Ab v0.1.5 stehen die Kalenderansichten in der Reihenfolge Jahr / Monat / Woche. Tooltips zeigen Zeitraum-Notizen; Antippen oder Anklicken öffnet kompakte Zeitraumdetails mit Pflanzensteckbrief darunter. [Updatehinweise](../releases/v0.1.5.md).
 
 Ab v0.1.6 ermöglichen die Kalenderfilter eine Mehrfachauswahl. Die Monatszeile und Eckzelle der Jahresliste sind fixiert. [Updatehinweise](../releases/v0.1.6.md).
+
+Ab v0.1.7 erzeugt **Erinnerungen** einen persönlichen Aufgabenplan. Eigene Aufgaben lassen sich auch mit Leserecht erledigen; vorhandene Push-/E-Mail-Einstellungen erinnern an fällige Aufgaben. Auswahl und Erledigtstände mit der vollständigen HA-Konfiguration sichern. [Updatehinweise](../releases/v0.1.7.md).
