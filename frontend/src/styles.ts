@@ -477,6 +477,7 @@ export const styles = css`
     border: 1px solid currentColor;
   }
   .toast {
+    pointer-events: none;
     position: fixed;
     bottom: 22px;
     left: 50%;

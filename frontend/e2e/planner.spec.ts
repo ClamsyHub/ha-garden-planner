@@ -1305,6 +1305,7 @@ test("calendar views share period-first details and show the matching note in to
     .fill("28");
   await editor.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(editor).not.toBeVisible();
+  await expect(page.locator(".toast")).toHaveCSS("pointer-events", "none");
   await page
     .getByRole("button", { name: "Kalenderpflanze", exact: true })
     .click();
