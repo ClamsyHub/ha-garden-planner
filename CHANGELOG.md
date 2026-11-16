@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.10 — 2026-11-16
+
+- Show inclusive start and end dates for generated activity-period tasks in the overview and task list, including winter periods.
+- Save end dates with private tasks, update open entries and retain completed history. Legacy tasks remain readable; notification scheduling and completion semantics are unchanged.
+
 ## 0.1.9 — 2026-11-16
 
 - Rename the calendar and periods to Garden calendar / activity periods (Gartenkalender / Tätigkeitszeiträume), retaining stored identifiers and existing data.

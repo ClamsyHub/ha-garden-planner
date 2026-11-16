@@ -28,6 +28,7 @@ import {
   cultureEvents,
   cultureStatus,
   formatDate,
+  taskDateLabel,
   monthLabel,
   monthSegments,
   nextDay,
@@ -1345,7 +1346,7 @@ export class GardenPlannerPanel extends LitElement {
                   <h3>${text(task, "title")}</h3>
                   <small
                     >${this.lab(text(task, "activity"))} ·
-                    ${formatDate(text(task, "date"), this.language)}</small
+                    ${taskDateLabel(task, this.language)}</small
                   >${text(task, "notes") ? html`<p>${text(task, "notes")}</p>` : nothing}${task.data.completed ? html`<span class="badge">${this.tr("completed")}</span>` : nothing}
                 </div>
                 ${task.data.personal_generated ? html`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("set_personal_task_completed", { id: task.id, revision: task.revision, completed: !task.data.completed })}>${icon("check")}</button>` : this.editable ? html`<button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", { table: "tasks", id: task.id, revision: task.revision, data: { completed: !task.data.completed } })}>${icon("check")}</button><button @click=${() => this.startEditor("tasks", task)}>${this.tr("edit")}</button>` : nothing}

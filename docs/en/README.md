@@ -120,3 +120,5 @@ Version 0.1.7 adds a personal task plan from the plant/activity matrix. Read-onl
 Version **0.1.8** makes reminder selections respond immediately and saves rapid changes in batches. The mobile matrix leaves more room for activities, and calendar filters/date navigation are aligned. Filters close on outside clicks or Escape. Wait for the saving indicator before closing the page. [Update notes](../releases/v0.1.8.md).
 
 The **Garden calendar** uses **activity periods** for vegetables, fruit trees and shrubs. **Fertilize** and **Prune** have distinct colors and personal reminder selections. Existing periods remain intact. [v0.1.9 update notes](../releases/v0.1.9.md).
+
+From **v0.1.10**, personal activity tasks display both start and end dates. Notifications remain scheduled from the start date. [Update notes](../releases/v0.1.10.md).

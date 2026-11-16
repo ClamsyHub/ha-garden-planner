@@ -28,6 +28,8 @@ class TaskPlanningTests(unittest.TestCase):
                     "activity": "care",
                     "start_month": 11,
                     "start_day": 16,
+                    "end_month": 11,
+                    "end_day": 30,
                     "notes": "Check the bed",
                 },
             }
@@ -79,6 +81,25 @@ class TaskPlanningTests(unittest.TestCase):
                 restored = self.plan(disabled, cells=cells)
                 self.assertEqual(set(restored), set(done))
                 self.assertTrue(restored[task["id"]]["data"]["completed"])
+
+    def test_end_dates_update_open_tasks_and_freeze_completed_history(self) -> None:
+        first = self.plan()
+        task = next(r for r in visible(first) if r["data"]["date"] == "2026-11-16")
+        self.assertEqual(task["data"]["end_date"], "2026-11-30")
+        done = complete(first, task["id"], task["revision"], True, "done")
+        self.windows[0]["data"].update(end_month=2, end_day=29)
+        updated = self.plan(first)
+        self.assertEqual(updated[task["id"]]["data"]["end_date"], "2027-02-28")
+        self.assertEqual(set(first), set(updated))
+        self.assertEqual(self.plan(done)[task["id"]]["data"]["end_date"], "2026-11-30")
+        overdue = self.plan(updated, today=date(2027, 1, 1))
+        self.assertEqual(overdue[task["id"]]["data"]["end_date"], "2027-02-28")
+        legacy = deepcopy(first)
+        for record in legacy.values():
+            record["data"].pop("end_date")
+        self.assertEqual(
+            self.plan(legacy)[task["id"]]["data"]["end_date"], "2027-02-28"
+        )
 
     def test_stable_ids_dates_and_separate_owners(self) -> None:
         first = self.plan()

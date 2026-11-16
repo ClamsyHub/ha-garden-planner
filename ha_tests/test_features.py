@@ -519,6 +519,7 @@ class FeatureTests(IntegrationHarness):
         own = (await self.request("list", {"table": "tasks"}))["result"]
         task = next(r for r in own if r["data"]["date"] == "2026-11-06")
         self.assertTrue(task["data"]["personal_generated"])
+        self.assertEqual(task["data"]["end_date"], "2026-11-30")
         self.assertEqual(
             (await self.request("get", {"table": "tasks", "id": task["id"]}))["result"][
                 "id"
@@ -563,6 +564,10 @@ class FeatureTests(IntegrationHarness):
         )
         reloaded = PersonalTasks(self.hass, self.hass.data[DOMAIN].worker)
         again = await reloaded.async_tasks(self.editor.id, date(2026, 11, 6), "de")
+        self.assertEqual(
+            next(r for r in again if r["id"] == editor_task["id"])["data"]["end_date"],
+            "2026-11-30",
+        )
         self.assertTrue(
             next(r for r in again if r["id"] == editor_task["id"])["data"]["completed"]
         )
@@ -1348,6 +1353,8 @@ class ReminderDateTests(unittest.TestCase):
                         "activity": "indoors",
                         "start_month": 2,
                         "start_day": 29,
+                        "end_month": 2,
+                        "end_day": 29,
                     },
                 }
             ]

@@ -73,6 +73,10 @@ class PersonalTasks:
                     timestamp(record.get("updated_at"))
                     item = record["data"]
                     iso_date(item.get("date"))
+                    if "end_date" in item:
+                        iso_date(item["end_date"])
+                        if item["end_date"] < item["date"]:
+                            raise StorageError("Personal task end precedes its start.")
                     identifier(item.get("source_window_id"))
                     identifier(item.get("plant_id"))
                     if (

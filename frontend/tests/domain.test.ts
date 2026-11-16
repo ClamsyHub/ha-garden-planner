@@ -7,6 +7,7 @@ import type { Hass } from "../src/types";
 import { describe, expect, it } from "vitest";
 import {
   activeInMonth,
+  taskDateLabel,
   contains,
   cultureStatus,
   monthSegments,
@@ -344,4 +345,23 @@ it("varieties and activity periods no longer offer retired master fields", () =>
   expect(
     fieldsFor("cultivations", {}, tables, "de", false).map((f) => f.key),
   ).toContain("variety_id");
+});
+
+it("shows inclusive task periods, including winter, and keeps single-date tasks", () => {
+  const task = record({
+    date: "2027-01-15",
+    end_date: "2027-02-28",
+    personal_generated: true,
+  });
+  expect(taskDateLabel(task, "de")).toBe("15.01.2027 bis 28.02.2027");
+  expect(taskDateLabel(task, "en")).toBe("15 Jan 2027 to 28 Feb 2027");
+  expect(
+    taskDateLabel(record({ ...task.data, date: "2026-12-15" }), "de"),
+  ).toBe("15.12.2026 bis 28.02.2027");
+  expect(taskDateLabel(record({ date: "2027-01-15" }), "de")).toBe(
+    "15.01.2027",
+  );
+  expect(
+    taskDateLabel(record({ ...task.data, end_date: "2027-01-15" }), "de"),
+  ).toBe("15.01.2027");
 });

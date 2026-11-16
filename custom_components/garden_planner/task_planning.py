@@ -1,5 +1,6 @@
 """Pure, idempotent annual task planning from personal plant/activity choices."""
 
+from calendar import monthrange
 from copy import deepcopy
 from datetime import date, timedelta
 from typing import Any
@@ -26,6 +27,15 @@ LABELS = {
     "harvest": ("Ernte", "Harvest"),
     "other": ("Sonstige Gartenarbeit", "Other garden work"),
 }
+
+
+def period_end(data: dict[str, Any], start: date) -> str:
+    """Inclusive seasonal end; winter periods finish in the following year."""
+    month, day = data["end_month"], data["end_day"]
+    year = start.year + ((month, day) < (start.month, start.day))
+    if year > date.max.year:
+        return date.max.isoformat()
+    return date(year, month, min(day, monthrange(year, month)[1])).isoformat()
 
 
 def reconcile(
@@ -68,6 +78,7 @@ def reconcile(
             wanted[task_id] = {
                 "title": f"{names[data['plant_id']]}: {caption}",
                 "date": start.isoformat(),
+                "end_date": period_end(data, start),
                 "activity": data["activity"],
                 "plant_id": data["plant_id"],
                 "notes": data.get("notes", ""),
@@ -90,6 +101,7 @@ def reconcile(
                     {
                         **item,
                         "title": f"{names[source['plant_id']]}: {caption}",
+                        "end_date": period_end(source, due),
                         "activity": source["activity"],
                         "notes": source.get("notes", ""),
                     },

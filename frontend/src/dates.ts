@@ -97,6 +97,14 @@ export function formatDate(iso: string, language: Language): string {
     dateStyle: "medium",
   }).format(dateObject(iso));
 }
+export function taskDateLabel(task: Entity, language: Language): string {
+  const start = text(task, "date"),
+    end = text(task, "end_date");
+  const first = formatDate(start, language);
+  return task.data.personal_generated && end && end > start
+    ? `${first}${language === "de" ? " bis " : " to "}${formatDate(end, language)}`
+    : first;
+}
 export function monthLabel(
   year: number,
   month: number,

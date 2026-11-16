@@ -16,10 +16,9 @@ Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzei
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.9:** Gartenkalender und Tätigkeitszeiträume für Gemüse, Obst, Bäume und Sträucher.
-Düngen und Rückschnitt mit eigenen Farben, persönlichen Aufgaben und Erinnerungen.
-Verbesserte Begrenzung der Datumsfelder in der iOS-Ansicht.
-[Updatehinweise und Datensicherung](docs/releases/v0.1.9.md).
+**Änderungen v0.1.10:** Aufgaben aus Tätigkeitszeiträumen zeigen Beginn und Ende,
+auch über den Jahreswechsel. Erledigte Aufgaben behalten ihren gespeicherten Zeitraum.
+[Updatehinweise und Datensicherung](docs/releases/v0.1.10.md).
 
 ## Oberfläche
 

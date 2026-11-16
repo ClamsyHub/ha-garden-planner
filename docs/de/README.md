@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.9
+## Stand dieser Dokumentation: v0.1.10
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
@@ -147,3 +147,5 @@ Ab v0.1.7 erzeugt **Erinnerungen** einen persönlichen Aufgabenplan. Eigene Aufg
 Version **0.1.8** verbessert die Reaktionszeit der Erinnerungs-Checkboxen durch sofortige Anzeige und gebündeltes Speichern. Die mobile Matrix lässt mehr Platz für Tätigkeiten; Kalenderfilter und Datumsnavigation sind ausgerichtet. Filter schließen beim Klicken außerhalb oder mit Escape. Beim Verlassen der Seite den Speicherstatus abwarten. [Updatehinweise](../releases/v0.1.8.md).
 
 Im **Gartenkalender** bilden **Tätigkeitszeiträume** auch Arbeiten an Obstbäumen und Sträuchern ab. **Düngen** und **Rückschnitt** besitzen eigene Farben und sind in der persönlichen Erinnerungsmatrix auswählbar. Alle gespeicherten Zeiträume bleiben erhalten. [Updatehinweise v0.1.9](../releases/v0.1.9.md).
+
+Ab **v0.1.10** zeigen persönliche Aufgaben den vollständigen Tätigkeitszeitraum mit Beginn und Ende. Der Start bleibt der Termin für Erinnerungen. [Updatehinweise](../releases/v0.1.10.md).

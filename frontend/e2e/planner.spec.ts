@@ -2176,3 +2176,50 @@ test("calendar native date fields remain inside their column at narrow widths", 
     }
   }
 });
+
+test("generated work displays its full period in overview and task list", async ({
+  page,
+}) => {
+  await open(page, { host: "1", role: "reader" });
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(operation: string, parameters: Record<string, unknown>) {
+    const response = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role: "admin", host: true },
+    });
+    expect(response.ok()).toBe(true);
+    return response.json();
+  }
+  const plant = await api("create", {
+    table: "plants",
+    data: { name: "Kiwi" },
+  });
+  await api("create", {
+    table: "growing_windows",
+    data: {
+      plant_id: plant.id,
+      activity: "prune",
+      environment: "outdoors",
+      start_month: 1,
+      start_day: 15,
+      end_month: 2,
+      end_day: 28,
+      notes: "Notiz zum Rückschnitt",
+    },
+  });
+  await page.reload();
+  const card = page
+    .locator(".task-card")
+    .filter({ hasText: "Kiwi: Rückschnitt" })
+    .first();
+  await expect(card).toContainText("Rückschnitt · 15.01.2027 bis 28.02.2027");
+  await expect(card).toContainText("Notiz zum Rückschnitt");
+  await navigate(page, "Aktuelle Kulturen");
+  await expect(card).toContainText("15.01.2027 bis 28.02.2027");
+  await card
+    .getByRole("button", { name: "Als erledigt markieren", exact: true })
+    .click();
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Aktuelle Kulturen");
+  await expect(card).toContainText("15.01.2027 bis 28.02.2027");
+});
