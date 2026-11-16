@@ -1,22 +1,23 @@
 import type { Language } from "./types";
 const de = {
   reminders: "Erinnerungen",
+  personalTask: "Meine geplante Gartenarbeit",
   personalSubtitle: "Wähle, woran du erinnert werden möchtest.",
   personalUnavailable:
     "Persönliche Erinnerungen sind nur in der Home-Assistant-Integration verfügbar.",
   personalIntro:
-    "Meine Erinnerungen für Anbauzeiträume. Deine Auswahl wird automatisch gespeichert und gilt nur für dich – für deine eingerichteten Push- und E-Mail-Ziele.",
+    "Dein persönlicher Aufgabenplan. Markierte Anbauzeiträume erzeugen Gartenarbeiten unter „Nächste Gartenarbeiten“. Deine Auswahl wird automatisch gespeichert.",
   personalGlobalOn: "Der Erinnerungsversand ist global aktiviert.",
   personalGlobalOff:
-    "Der Erinnerungsversand ist global ausgeschaltet. Deine Auswahl bleibt gespeichert; ein Administrator muss den Versand aktivieren.",
+    "Der Erinnerungsversand ist global ausgeschaltet. Deine Gartenarbeiten werden trotzdem angelegt; ein Administrator muss den Versand aktivieren.",
   personalChannelOn: "Persönliche Versandziele sind eingerichtet.",
   personalChannelOff:
     "Für dich ist noch kein persönliches Versandziel aktiviert. Bitte einen Administrator um die Einrichtung von Push oder E-Mail.",
   personalNoWindow: "Kein Anbauzeitraum für diese Tätigkeit vorhanden.",
   personalHint:
-    "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl gilt für alle Zeiträume dieser Pflanze und Tätigkeit. Manuelle Aufgaben werden weiterhin erinnert. Beim Speichern wird keine Testnachricht gesendet.",
+    "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl entfernt zugehörige offene Aufgaben. Erledigte Einträge bleiben erhalten. Aufgaben entstehen für die nächsten zwölf Monate und lassen sich als erledigt markieren. Push und E-Mail folgen den vorhandenen Einstellungen. Beim Speichern wird keine Testnachricht gesendet.",
   personalSharedHint:
-    "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er besitzt keine Benutzerzuordnung und folgt weiterhin allen Terminen, unabhängig von deiner persönlichen Auswahl.",
+    "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er erinnert weiterhin an manuelle gemeinsame Aufgaben. Persönlich erzeugte Gartenarbeiten gehen ausschließlich an deine persönlichen Versandziele.",
   multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
   windowDetail: "Anbauzeitraum",
   recurringWindow: "Jährlich wiederkehrender Zeitraum",
@@ -88,22 +89,23 @@ const de = {
 };
 const en: Record<keyof typeof de, string> = {
   reminders: "Reminders",
+  personalTask: "My planned garden task",
   personalSubtitle: "Choose what you want to be reminded about.",
   personalUnavailable:
     "Personal reminders are available in the Home Assistant integration.",
   personalIntro:
-    "My growing-window reminders. Your choices save automatically and apply only to your configured personal push and email destinations.",
+    "Your personal task plan. Selected growing windows create tasks under Upcoming garden work. Your choices save automatically.",
   personalGlobalOn: "Reminder delivery is globally enabled.",
   personalGlobalOff:
-    "Reminder delivery is globally disabled. Your choices are saved; an administrator must enable delivery.",
+    "Reminder delivery is globally disabled. Tasks are still generated; an administrator must enable notification delivery.",
   personalChannelOn: "Personal delivery destinations are configured.",
   personalChannelOff:
     "No personal delivery destination is enabled for you. Ask an administrator to configure push or email.",
   personalNoWindow: "No growing window exists for this activity.",
   personalHint:
-    "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out covers all windows for this plant and activity. Manual tasks still generate reminders. Saving sends no test message.",
+    "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out removes related open tasks; completed history is preserved. Tasks cover the next twelve months and can be completed. Push/email use the existing settings. Saving sends no test message.",
   personalSharedHint:
-    "A shared channel is also enabled. It has no user association and continues to receive all events independently of your personal choices.",
+    "A shared channel is also enabled. It continues to notify shared manual tasks. Personal generated tasks go only to your personal delivery destinations.",
   multiFilterHint: "Select multiple values. An empty selection shows all.",
   windowDetail: "Growing window",
   recurringWindow: "Annually recurring window",

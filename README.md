@@ -33,7 +33,7 @@ Eine zusammenhängende Anwendung mit acht Bereichen:
 4. **Aktuelle Kulturen:** Aussaat erfassen, bearbeiten und datierte Ereignisse dokumentieren; Aufgaben erledigen.
 5. **Aussaat-Historie:** tatsächliche Aussaattermine und Ergebnisse über mehrere Jahre vergleichen.
 6. **Beete & Standorte:** Standorte verwalten, optional Temperatursensor und Messart zuordnen.
-7. **Erinnerungen (ab v0.1.7):** persönliche Pflanzen-/Tätigkeiten-Auswahl für alle berechtigten Nutzer, auch mit reinem Leserecht.
+7. **Erinnerungen (ab v0.1.7):** persönlicher Pflanzen-/Tätigkeiten-Aufgabenplan mit dauerhaftem Erledigtstand und Push/E-Mail über die bestehenden Einstellungen; auch mit reinem Leserecht.
 8. **Einstellungen:** Sprache, Bearbeitungsrechte, optionale Erinnerungen, JSON-/CSV-Export, Importvorschau und Sicherungen.
 
 Deutsch und Englisch, Hell-/Dunkelmodus, Smartphone-/Tablet-/Desktop-Layout,

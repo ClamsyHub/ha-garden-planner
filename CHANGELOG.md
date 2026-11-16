@@ -3,9 +3,10 @@
 ## 0.1.7 — development candidate
 
 - Add a personal Reminders page between Locations and Settings, available to every authorized user including read-only users.
-- Select growing-window reminders per plant/activity with available cells enabled by default and missing activities disabled. New activity generations default back on.
+- Generate private, completable annual tasks from growing-window selections; retain completed history and route due-task notifications through existing settings.
+- Select growing-window tasks per plant/activity with available cells enabled by default and missing activities disabled. New activity generations default back on.
 - Persist personal opt-outs in authenticated HA user profiles without changing garden database schema or global notification opt-in.
-- Filter personal delivery routes before destination deduplication; retain manual task reminders and explicitly configured shared-channel behavior.
+- Notify saved tasks only, preserving historical window delivery reservations to prevent upgrade duplicates; retain shared manual task notifications.
 
 ## 0.1.6 — 2026-11-09
 

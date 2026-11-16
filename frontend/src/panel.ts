@@ -1220,7 +1220,11 @@ export class GardenPlannerPanel extends LitElement {
       tasks.length
         ? (all ? tasks : tasks.slice(0, 6)).map(
             (task) =>
-              html`<article class="item">
+              html`<article
+                class="item task-card"
+                id=${`task-${task.id}`}
+                tabindex="-1"
+              >
                 <div class="date-tile">
                   <strong>${text(task, "date").slice(8)}</strong
                   ><small
@@ -1234,7 +1238,7 @@ export class GardenPlannerPanel extends LitElement {
                     ${formatDate(text(task, "date"), this.language)}</small
                   >${text(task, "notes") ? html`<p>${text(task, "notes")}</p>` : nothing}${task.data.completed ? html`<span class="badge">${this.tr("completed")}</span>` : nothing}
                 </div>
-                ${this.editable ? html`<button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", { table: "tasks", id: task.id, revision: task.revision, data: { completed: !task.data.completed } })}>${icon("check")}</button><button @click=${() => this.startEditor("tasks", task)}>${this.tr("edit")}</button>` : nothing}
+                ${task.data.personal_generated ? html`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("set_personal_task_completed", { id: task.id, revision: task.revision, completed: !task.data.completed })}>${icon("check")}</button>` : this.editable ? html`<button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", { table: "tasks", id: task.id, revision: task.revision, data: { completed: !task.data.completed } })}>${icon("check")}</button><button @click=${() => this.startEditor("tasks", task)}>${this.tr("edit")}</button>` : nothing}
               </article>`,
           )
         : html`<p class="empty">${this.tr("noTasks")}</p>`
@@ -1536,8 +1540,18 @@ export class GardenPlannerPanel extends LitElement {
                 if (item.kind === "task")
                   return html`<button
                     class=${`week-event ${item.activity}`}
-                    ?disabled=${!this.editable}
-                    @click=${() => this.startEditor("tasks", item.record)}
+                    ?disabled=${!this.editable && !item.record.data.personal_generated}
+                    @click=${async () => {
+                      if (item.record.data.personal_generated) {
+                        this.navigate("cultures");
+                        await this.updateComplete;
+                        const task = this.renderRoot.querySelector<HTMLElement>(
+                          `#task-${item.record.id}`,
+                        );
+                        task?.scrollIntoView({ block: "center" });
+                        task?.focus({ preventScroll: true });
+                      } else this.startEditor("tasks", item.record);
+                    }}
                   >
                     ${text(item.record, "title")}${item.record.data.completed ? " ✓" : ""}
                   </button>`;
@@ -1765,7 +1779,8 @@ export class GardenPlannerPanel extends LitElement {
         generation === this.preferencesGeneration
       ) {
         this.personalReminders = value;
-        this.announce("saved");
+        await this.refresh();
+        if (connection === this.connectionGeneration) this.announce("saved");
       }
     } catch (error) {
       if (

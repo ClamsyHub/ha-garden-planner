@@ -8,12 +8,17 @@ import asyncio
 import json
 import re
 import signal
+from datetime import UTC, date, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from custom_components.garden_planner.models import PlannerError, ValidationError
+from custom_components.garden_planner.models import (
+    NotFoundError,
+    PlannerError,
+    ValidationError,
+)
 from custom_components.garden_planner.options import validate_options
 from custom_components.garden_planner.reminder_preferences import (
     availability,
@@ -22,6 +27,7 @@ from custom_components.garden_planner.reminder_preferences import (
 )
 from custom_components.garden_planner.service import Actor, PlannerService
 from custom_components.garden_planner.storage import PlannerWorker
+from custom_components.garden_planner.task_planning import complete, reconcile, visible
 
 
 async def seed(service: PlannerService) -> None:
@@ -129,6 +135,7 @@ async def main() -> None:
                 if body.get("host"):
                     settings_state = validate_options({})
                     personal: dict[str, Any] = {}
+                    task_ledgers: dict[str, dict[str, Any]] = {}
 
                     async def test_host(
                         operation: str, parameters: dict[str, Any], actor: Actor
@@ -136,6 +143,47 @@ async def main() -> None:
                         nonlocal settings_state
                         if operation == "capabilities":
                             return {"reminders": True, "http_transfer": False}
+                        if operation in {
+                            "list_personal_tasks",
+                            "get_personal_task",
+                            "set_personal_task_completed",
+                        }:
+                            plants = await worker.async_call("list_records", "plants")
+                            windows = await worker.async_call(
+                                "list_records", "growing_windows"
+                            )
+                            cells = selections(
+                                availability(plants, windows),
+                                personal.get(actor.user_id, {}),
+                            )
+                            records = reconcile(
+                                task_ledgers.get(actor.user_id, {}),
+                                plants,
+                                windows,
+                                cells,
+                                actor.user_id,
+                                date(2026, 11, 6),
+                                "de",
+                                datetime.now(UTC).isoformat(),
+                            )
+                            if operation == "set_personal_task_completed":
+                                records = complete(
+                                    records,
+                                    parameters["id"],
+                                    parameters["revision"],
+                                    parameters["completed"],
+                                    datetime.now(UTC).isoformat(),
+                                )
+                            task_ledgers[actor.user_id] = records
+                            tasks = visible(records)
+                            if operation == "list_personal_tasks":
+                                return tasks
+                            record = next(
+                                (r for r in tasks if r["id"] == parameters["id"]), None
+                            )
+                            if record is None:
+                                raise NotFoundError("Personal task not found.")
+                            return record
                         if operation in {"get_user_reminders", "set_user_reminder"}:
                             plants = await worker.async_call("list_records", "plants")
                             windows = await worker.async_call(

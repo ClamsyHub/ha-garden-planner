@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .exchange import export_csv, import_csv
-from .models import PlannerError, ValidationError
+from .models import NotFoundError, PlannerError, ValidationError
 from .storage.worker import PlannerWorker
 
 READ_OPERATIONS = frozenset({"get", "list", "history", "summary"})
@@ -55,6 +55,7 @@ class Actor:
 PARAMETERS: dict[str, tuple[set[str], set[str]]] = {
     "capabilities": (set(), set()),
     "get_user_reminders": (set(), set()),
+    "set_personal_task_completed": ({"id", "revision", "completed"}, set()),
     "set_user_reminder": ({"plant_id", "activity", "enabled"}, set()),
     "get_settings": (set(), set()),
     "set_settings": ({"settings", "confirm"}, set()),
@@ -147,6 +148,7 @@ class PlannerService:
             "set_settings",
             "get_user_reminders",
             "set_user_reminder",
+            "set_personal_task_completed",
         }:
             if self.host_handler is None:
                 raise ValidationError(
@@ -156,13 +158,33 @@ class PlannerService:
         call = self.worker.async_call
         match operation:
             case "get":
+                if (
+                    params["table"] == "tasks"
+                    and params["id"].startswith("personal-")
+                    and self.host_handler
+                ):
+                    try:
+                        return await call("get", "tasks", params["id"])
+                    except NotFoundError:
+                        return await self.host_handler(
+                            "get_personal_task", params, actor
+                        )
                 return await call("get", params["table"], params["id"])
             case "list":
                 if "filters" in params and not isinstance(params["filters"], dict):
                     raise ValidationError("Filters must be an object.")
-                return await call(
+                records = await call(
                     "list_records", params["table"], params.get("filters")
                 )
+                if params["table"] == "tasks" and self.host_handler:
+                    personal = await self.host_handler("list_personal_tasks", {}, actor)
+                    filters = params.get("filters") or {}
+                    records.extend(
+                        r
+                        for r in personal
+                        if all(r["data"].get(k) == v for k, v in filters.items())
+                    )
+                return records
             case "create":
                 return await call("create", params["table"], params["data"])
             case "update":

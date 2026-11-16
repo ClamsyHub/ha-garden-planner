@@ -194,10 +194,12 @@ Die Matrix zeigt nicht archivierte Pflanzen mit Vorziehen, Direktsaat, Pikieren,
 Auspflanzen, Pflege, Ernte und Sonstige. Fehlende Anbauzeiträume ergeben eine
 ausgegraute Checkbox, vorhandene starten aktiviert. Neue Tätigkeiten starten
 aktiviert; bestehende Abwahlen bleiben erhalten, solange ein bisheriger Zeitraum
-für diese Pflanze/Tätigkeit weiterbesteht. Änderungen speichern automatisch,
-auch für Personen mit reinem Leserecht. Eine Suche und fixierte Tabellenköpfe/
+für diese Pflanze/Tätigkeit weiterbesteht. Änderungen speichern automatisch und erzeugen persönliche Aufgaben unter
+Nächste Gartenarbeiten, in der Wochenansicht und unter Aktuelle Kulturen. Eigene
+Aufgaben lassen sich auch mit reinem Leserecht erledigen und wieder öffnen. Eine Suche und fixierte Tabellenköpfe/
 Pflanzenspalte unterstützen große Listen und kleine Bildschirme.
 
-Die persönlichen Einstellungen gelten für eigene Push-/E-Mail-Ziele und ersetzen
-keine globale Versandfreigabe. Fehlende Voraussetzungen und ein separat aktiver
-ungefilterter gemeinsamer Kanal werden angezeigt. [Details](notifications.md).
+Die persönlichen Aufgaben werden über eigene Push-/E-Mail-Ziele benachrichtigt;
+eine globale Versandfreigabe bleibt erforderlich. Fehlende Voraussetzungen und
+der nur für manuelle gemeinsame Aufgaben verwendete gemeinsame Kanal werden
+angezeigt. [Details](notifications.md).

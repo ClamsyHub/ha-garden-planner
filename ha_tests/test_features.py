@@ -1,5 +1,7 @@
 """Real HA HTTP app, calendar entities, options, sensors and durable reminders."""
 
+import asyncio
+import hashlib
 import io
 import json
 import unittest
@@ -7,6 +9,7 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock, patch
 
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
@@ -16,16 +19,25 @@ from homeassistant.components.frontend.storage import UserStore, async_user_stor
 from homeassistant.components.http.const import KEY_HASS_USER
 from homeassistant.core import ServiceCall
 from homeassistant.helpers.http import KEY_AUTHENTICATED, KEY_HASS
+from homeassistant.util.file import WriteError
 
 from custom_components.garden_planner.calendar import GardenCalendar
 from custom_components.garden_planner.config_flow import GardenOptionsFlow
 from custom_components.garden_planner.const import DOMAIN
+from custom_components.garden_planner.models import StorageError
 from custom_components.garden_planner.options import DEFAULT_OPTIONS
-from custom_components.garden_planner.reminder_preferences import STORE_KEY
-from custom_components.garden_planner.reminders import candidates
+from custom_components.garden_planner.personal_tasks import PersonalTasks
+from custom_components.garden_planner.reminder_preferences import (
+    STORE_KEY,
+    availability,
+    selections,
+)
+from custom_components.garden_planner.reminders import Reminders, candidates
+from custom_components.garden_planner.runtime import Runtime
 from custom_components.garden_planner.sensor import GardenCount
 from custom_components.garden_planner.service import Actor, AuthorizationError
 from custom_components.garden_planner.storage import PlannerWorker
+from custom_components.garden_planner.task_planning import reconcile, visible
 from ha_tests.test_integration import IntegrationHarness
 
 
@@ -248,7 +260,7 @@ class FeatureTests(IntegrationHarness):
             },
         )
         self.assertTrue(result["success"], result)
-        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        reminder: Reminders = self.hass.data[f"{DOMAIN}_runtime"].reminders
         # First route opted out; the second identical destination still delivers.
         await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
         self.assertEqual(len(self.delivered), 1)
@@ -311,6 +323,391 @@ class FeatureTests(IntegrationHarness):
             )["success"]
         )
         self.connection.user = original_admin
+
+    async def test_generated_tasks_are_private_completable_and_notify_through_tasks(
+        self,
+    ) -> None:
+        plant = (
+            await self.request(
+                "create",
+                {"table": "plants", "data": {"name": "Synthetic planned crop"}},
+            )
+        )["result"]
+        window = (
+            await self.request(
+                "create",
+                {
+                    "table": "growing_windows",
+                    "data": {
+                        "plant_id": plant["id"],
+                        "activity": "care",
+                        "environment": "outdoors",
+                        "start_month": 11,
+                        "start_day": 6,
+                        "end_month": 11,
+                        "end_day": 30,
+                    },
+                },
+            )
+        )["result"]
+        runtime: Runtime = self.hass.data[f"{DOMAIN}_runtime"]
+        await runtime.reminders.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
+        self.assertEqual(self.delivered, [])
+        # Timer planning runs even while notifications are globally off.
+        self.assertIn(self.owner.id, runtime.reminders.planner.records)
+        original = self.connection.user
+        self.connection.user = self.owner
+        own = (await self.request("list", {"table": "tasks"}))["result"]
+        task = next(r for r in own if r["data"]["date"] == "2026-11-06")
+        self.assertTrue(task["data"]["personal_generated"])
+        self.assertEqual(
+            (await self.request("get", {"table": "tasks", "id": task["id"]}))["result"][
+                "id"
+            ],
+            task["id"],
+        )
+        self.connection.user = self.editor
+        self.assertFalse(
+            (await self.request("get", {"table": "tasks", "id": task["id"]}))["success"]
+        )
+        self.assertFalse(
+            (
+                await self.request(
+                    "set_personal_task_completed",
+                    {"id": task["id"], "revision": task["revision"], "completed": True},
+                )
+            )["success"]
+        )
+        editor_tasks = (await self.request("list", {"table": "tasks"}))["result"]
+        editor_task = next(r for r in editor_tasks if r["data"]["date"] == "2026-11-06")
+        completed = await self.request(
+            "set_personal_task_completed",
+            {
+                "id": editor_task["id"],
+                "revision": editor_task["revision"],
+                "completed": True,
+            },
+        )
+        self.assertTrue(completed["success"], completed)
+        self.assertFalse(
+            (
+                await self.request(
+                    "update",
+                    {
+                        "table": "tasks",
+                        "id": editor_task["id"],
+                        "revision": editor_task["revision"],
+                        "data": {"completed": False},
+                    },
+                )
+            )["success"]
+        )
+        reloaded = PersonalTasks(self.hass, self.hass.data[DOMAIN].worker)
+        again = await reloaded.async_tasks(self.editor.id, date(2026, 11, 6), "de")
+        self.assertTrue(
+            next(r for r in again if r["id"] == editor_task["id"])["data"]["completed"]
+        )
+        await runtime.coordinator.async_refresh()
+        self.assertEqual(runtime.coordinator.data["tasks"], [])
+        # Existing notifications deliver the pending task, not the completed one.
+        self.connection.user = self.owner
+        routes = [
+            {
+                "user_id": user.id,
+                "kind": "push",
+                "enabled": True,
+                "service": "notify.test_local",
+                "entity": "",
+                "target": "",
+            }
+            for user in (self.editor, self.owner)
+        ]
+        routes.append(
+            {
+                "user_id": self.owner.id,
+                "kind": "email",
+                "enabled": True,
+                "service": "notify.test_local",
+                "entity": "",
+                "target": "synthetic@example.invalid",
+            }
+        )
+        result = await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "notification_routes": routes,
+                },
+                "confirm": True,
+            },
+        )
+        self.assertTrue(result["success"], result)
+        await runtime.reminders.async_check(datetime(2026, 11, 6, 13, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 2)
+        await runtime.reminders.async_check(datetime(2026, 11, 6, 14, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 2)
+        # Keep existing window reservations to prevent upgrade duplicates.
+        key = f"window:{window['id']}:2026-11-06"
+        self.assertFalse(
+            await self.hass.data[DOMAIN].worker.async_call(
+                "claim_reminder",
+                key
+                + ":route:"
+                + hashlib.sha256(
+                    json.dumps(["notify.test_local", "", ""]).encode()
+                ).hexdigest()[:24],
+                "compatibility",
+            )
+        )
+        latest = (await self.request("get", {"table": "tasks", "id": task["id"]}))[
+            "result"
+        ]
+        with patch.object(
+            runtime.reminders.planner.stores[self.owner.id],
+            "async_save",
+            new=AsyncMock(side_effect=OSError("Synthetic storage failure")),
+        ):
+            failed = await self.request(
+                "set_personal_task_completed",
+                {"id": task["id"], "revision": latest["revision"], "completed": True},
+            )
+            self.assertFalse(failed["success"])
+        self.assertFalse(
+            (await self.request("get", {"table": "tasks", "id": task["id"]}))["result"][
+                "data"
+            ]["completed"]
+        )
+        with patch(
+            "homeassistant.helpers.storage.write_utf8_file_atomic",
+            side_effect=WriteError("Synthetic disk failure"),
+        ):
+            with self.assertLogs("homeassistant.helpers.storage", level="ERROR"):
+                failed = await self.request(
+                    "set_personal_task_completed",
+                    {
+                        "id": task["id"],
+                        "revision": latest["revision"],
+                        "completed": True,
+                    },
+                )
+                self.assertFalse(failed["success"])
+        self.assertFalse(
+            (await self.request("get", {"table": "tasks", "id": task["id"]}))["result"][
+                "data"
+            ]["completed"]
+        )
+        self.connection.user = original
+
+    async def test_one_private_archive_failure_does_not_stop_other_notifications(
+        self,
+    ) -> None:
+        plant = (
+            await self.request(
+                "create",
+                {"table": "plants", "data": {"name": "Synthetic healthy plan"}},
+            )
+        )["result"]
+        await self.request(
+            "create",
+            {
+                "table": "growing_windows",
+                "data": {
+                    "plant_id": plant["id"],
+                    "activity": "care",
+                    "environment": "outdoors",
+                    "start_month": 11,
+                    "start_day": 6,
+                    "end_month": 11,
+                    "end_day": 30,
+                },
+            },
+        )
+        await self.request(
+            "create",
+            {
+                "table": "tasks",
+                "data": {
+                    "title": "Shared work survives",
+                    "date": "2026-11-06",
+                    "activity": "care",
+                },
+            },
+        )
+        routes = [
+            {
+                "user_id": user.id,
+                "kind": "push",
+                "enabled": True,
+                "service": "notify.test_local",
+                "entity": "",
+                "target": "",
+            }
+            for user in (self.owner, self.editor)
+        ]
+        await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "notification_routes": routes,
+                },
+                "confirm": True,
+            },
+        )
+        reminder: Reminders = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        original = reminder.planner.async_tasks
+
+        async def unavailable(
+            user_id: str, *args: Any, **kwargs: Any
+        ) -> list[dict[str, Any]]:
+            if user_id == self.editor.id:
+                raise StorageError("Synthetic private archive failure")
+            return await original(user_id, *args, **kwargs)
+
+        with patch.object(reminder.planner, "async_tasks", new=unavailable):
+            with self.assertLogs(
+                "custom_components.garden_planner.reminders", level="ERROR"
+            ):
+                await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 2)
+
+    async def test_reload_drains_personal_completion_before_closing_storage(
+        self,
+    ) -> None:
+        plant = (
+            await self.request(
+                "create", {"table": "plants", "data": {"name": "Synthetic reload work"}}
+            )
+        )["result"]
+        await self.request(
+            "create",
+            {
+                "table": "growing_windows",
+                "data": {
+                    "plant_id": plant["id"],
+                    "activity": "care",
+                    "environment": "outdoors",
+                    "start_month": 11,
+                    "start_day": 6,
+                    "end_month": 11,
+                    "end_day": 30,
+                },
+            },
+        )
+        runtime: Runtime = self.hass.data[f"{DOMAIN}_runtime"]
+        service = self.hass.data[DOMAIN]
+        actor = Actor(self.owner.id, is_admin=True)
+        task = (await service.async_execute("list", {"table": "tasks"}, actor))[0]
+        original = runtime.reminders.planner.async_tasks
+        entered, release, closed = asyncio.Event(), asyncio.Event(), asyncio.Event()
+
+        async def delayed(
+            user_id: str, *args: Any, **kwargs: Any
+        ) -> list[dict[str, Any]]:
+            rows = await original(user_id, *args, **kwargs)
+            entered.set()
+            await release.wait()
+            return rows
+
+        original_close = service.worker.async_close
+
+        async def observed_close() -> None:
+            self.assertTrue(completion.done())
+            closed.set()
+            await original_close()
+
+        await runtime.coordinator.async_shutdown()
+        with (
+            patch.object(runtime.coordinator, "async_shutdown", new=AsyncMock()),
+            patch.object(runtime.reminders.planner, "async_tasks", new=delayed),
+            patch.object(service.worker, "async_close", new=observed_close),
+        ):
+            completion = asyncio.create_task(
+                service.async_execute(
+                    "set_personal_task_completed",
+                    {"id": task["id"], "revision": task["revision"], "completed": True},
+                    actor,
+                )
+            )
+            await asyncio.wait_for(entered.wait(), 5)
+            shutdown = asyncio.create_task(runtime.close())
+            await asyncio.sleep(0)
+            self.assertTrue(runtime.closing)
+            self.assertFalse(closed.is_set())
+            release.set()
+            result = await completion
+            self.assertTrue(result["data"]["completed"])
+            await shutdown
+            self.assertTrue(closed.is_set())
+        self.assertTrue(
+            runtime.reminders.planner.records[self.owner.id][task["id"]]["data"][
+                "completed"
+            ]
+        )
+
+    async def test_invalid_private_task_store_is_not_silently_recreated(self) -> None:
+        planner = PersonalTasks(self.hass, self.hass.data[DOMAIN].worker)
+        with patch(
+            "custom_components.garden_planner.personal_tasks.Store.async_load",
+            new=AsyncMock(return_value={"unexpected": "data"}),
+        ):
+            with self.assertRaises(StorageError):
+                await planner.async_tasks(self.owner.id, date(2026, 11, 6), "de")
+        self.assertNotIn(self.owner.id, planner.records)
+
+    async def test_personal_tasks_do_not_leak_to_shared_channel(self) -> None:
+        plant = (
+            await self.request(
+                "create",
+                {"table": "plants", "data": {"name": "Synthetic private work"}},
+            )
+        )["result"]
+        await self.request(
+            "create",
+            {
+                "table": "growing_windows",
+                "data": {
+                    "plant_id": plant["id"],
+                    "activity": "direct",
+                    "environment": "outdoors",
+                    "start_month": 11,
+                    "start_day": 6,
+                    "end_month": 11,
+                    "end_day": 30,
+                },
+            },
+        )
+        await self.request(
+            "set_settings",
+            {
+                "settings": {
+                    **DEFAULT_OPTIONS,
+                    "reminders_enabled": True,
+                    "shared_channel_enabled": True,
+                    "notify_service": "notify.test_local",
+                },
+                "confirm": True,
+            },
+        )
+        reminder: Reminders = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
+        self.assertEqual(self.delivered, [])
+        await self.request(
+            "create",
+            {
+                "table": "tasks",
+                "data": {
+                    "title": "Shared manual work",
+                    "date": "2026-11-06",
+                    "activity": "care",
+                },
+            },
+        )
+        await reminder.async_check(datetime(2026, 11, 6, 13, tzinfo=UTC))
+        self.assertEqual(len(self.delivered), 1)
 
     async def test_panel_and_static_code_are_registered_automatically(self) -> None:
         panels = self.hass.data[DATA_PANELS]
@@ -473,7 +870,7 @@ class FeatureTests(IntegrationHarness):
             },
         )
         self.assertTrue(response["success"], response)
-        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        reminder: Reminders = self.hass.data[f"{DOMAIN}_runtime"].reminders
         await reminder.async_check(datetime(2026, 11, 6, 12, tzinfo=UTC))
         await reminder.async_check(datetime(2026, 11, 6, 13, tzinfo=UTC))
         self.assertEqual(len(calls), 5)
@@ -567,7 +964,7 @@ class FeatureTests(IntegrationHarness):
             },
         )
         self.assertTrue(response["success"], response)
-        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        reminder: Reminders = self.hass.data[f"{DOMAIN}_runtime"].reminders
         with self.assertLogs(
             "custom_components.garden_planner.reminders", level="ERROR"
         ):
@@ -625,7 +1022,7 @@ class FeatureTests(IntegrationHarness):
                 },
             },
         )
-        runtime = self.hass.data[f"{DOMAIN}_runtime"]
+        runtime: Runtime = self.hass.data[f"{DOMAIN}_runtime"]
         await runtime.coordinator.async_refresh()
         sensor = GardenCount(runtime.coordinator, self.entry, "plants")
         self.assertEqual(sensor.native_value, 1)
@@ -644,7 +1041,7 @@ class FeatureTests(IntegrationHarness):
     async def test_reminders_default_off_and_persist_attempts_across_workers(
         self,
     ) -> None:
-        runtime = self.hass.data[f"{DOMAIN}_runtime"]
+        runtime: Runtime = self.hass.data[f"{DOMAIN}_runtime"]
         await self.request(
             "create",
             {
@@ -726,7 +1123,7 @@ class FeatureTests(IntegrationHarness):
                 "confirm": True,
             },
         )
-        reminder = self.hass.data[f"{DOMAIN}_runtime"].reminders
+        reminder: Reminders = self.hass.data[f"{DOMAIN}_runtime"].reminders
         with self.assertLogs(
             "custom_components.garden_planner.reminders", level="ERROR"
         ):
@@ -745,6 +1142,17 @@ if __name__ == "__main__":
 class ReminderDateTests(unittest.TestCase):
     """Seasonal openings are dates, including winter and leap-year boundaries."""
 
+    def planned(
+        self, data: dict[str, Any], today: date, lead: int, language: str
+    ) -> list[tuple[str, str]]:
+        plants = data.get("plants", [{"id": "p", "data": {"name": "Crop"}}])
+        windows = data.get("growing_windows", [])
+        cells = selections(availability(plants, windows), {})
+        tasks = visible(
+            reconcile({}, plants, windows, cells, "user", today, language, "now")
+        )
+        return candidates({"tasks": tasks}, today, lead, language)
+
     def test_window_opening_catchup_and_archive(self) -> None:
         data: dict[str, Any] = {
             "plants": [{"id": "p", "data": {"name": "Crop"}}],
@@ -762,13 +1170,14 @@ class ReminderDateTests(unittest.TestCase):
                 }
             ],
         }
+        self.assertEqual(candidates(data, date(2027, 1, 1), 0, "en"), [])
         self.assertEqual(
-            candidates(data, date(2027, 1, 1), 0, "en"),
+            self.planned(data, date(2027, 1, 1), 0, "en"),
             [("window:w:2026-12-31", "Crop: Direct sowing · 2026-12-31")],
         )
-        self.assertEqual(candidates(data, date(2027, 1, 8), 0, "de"), [])
+        self.assertEqual(self.planned(data, date(2027, 1, 8), 0, "de"), [])
         data["plants"][0]["data"]["archived"] = True
-        self.assertEqual(candidates(data, date(2027, 1, 1), 0, "de"), [])
+        self.assertEqual(self.planned(data, date(2027, 1, 1), 0, "de"), [])
 
     def test_leap_day_and_lead_time(self) -> None:
         data = {
@@ -784,6 +1193,6 @@ class ReminderDateTests(unittest.TestCase):
                 }
             ]
         }
-        self.assertEqual(candidates(data, date(2027, 2, 28), 3, "de"), [])
-        self.assertEqual(len(candidates(data, date(2028, 2, 27), 2, "de")), 1)
-        self.assertEqual(candidates(data, date(2028, 2, 27), 1, "de"), [])
+        self.assertEqual(self.planned(data, date(2027, 2, 28), 3, "de"), [])
+        self.assertEqual(len(self.planned(data, date(2028, 2, 27), 2, "de")), 1)
+        self.assertEqual(self.planned(data, date(2028, 2, 27), 1, "de"), [])

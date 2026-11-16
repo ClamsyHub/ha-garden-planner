@@ -625,6 +625,9 @@ export const styles = css`
     margin-top: 0;
     font-size: 12px;
   }
+  .task-card {
+    scroll-margin-top: 130px;
+  }
   .reminders-scroll {
     overflow: auto;
     max-height: 65dvh;

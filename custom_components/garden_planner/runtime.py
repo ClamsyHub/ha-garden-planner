@@ -10,9 +10,10 @@ from homeassistant.components.frontend.storage import async_user_store
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.util import dt as dt_util
 
 from .coordinator import GardenCoordinator
-from .models import ValidationError
+from .models import NotFoundError, StorageError, ValidationError
 from .options import notification_destinations, validate_options
 from .reminder_preferences import STORE_KEY, availability, selections, updated
 from .reminders import Reminders
@@ -23,7 +24,7 @@ from .websocket_api import SIGNAL_CHANGED
 
 @dataclass
 class Runtime:
-    """Ephemeral HA resources; all garden data remains owned by SQLite."""
+    """Own HA resources; shared garden data uses SQLite, private tasks use HA Store."""
 
     hass: HomeAssistant
     entry: ConfigEntry
@@ -37,10 +38,39 @@ class Runtime:
     async def host_command(
         self, operation: str, params: dict[str, Any], actor: Actor
     ) -> Any:
+        if self.closing:
+            raise StorageError("Garden Planner is unloading; retry after reload.")
         if operation == "capabilities":
             return {"http_transfer": True, "reminders": True}
+        if operation in {
+            "list_personal_tasks",
+            "get_personal_task",
+            "set_personal_task_completed",
+        }:
+            async with self.preference_lock:
+                if self.closing:
+                    raise StorageError("Garden Planner is unloading.")
+                language = validate_options(dict(self.entry.options))["language"]
+                records = await self.reminders.planner.async_tasks(
+                    actor.user_id, dt_util.now().date(), language
+                )
+                if operation == "list_personal_tasks":
+                    return records
+                if operation == "set_personal_task_completed":
+                    return await self.reminders.planner.async_complete(
+                        actor.user_id,
+                        params["id"],
+                        params["revision"],
+                        params["completed"],
+                    )
+                record = next((r for r in records if r["id"] == params["id"]), None)
+                if record is None:
+                    raise NotFoundError("Personal task not found.")
+                return record
         if operation in {"get_user_reminders", "set_user_reminder"}:
             async with self.preference_lock:
+                if self.closing:
+                    raise StorageError("Garden Planner is unloading.")
                 plants = await self.service.worker.async_call("list_records", "plants")
                 windows = await self.service.worker.async_call(
                     "list_records", "growing_windows"
@@ -60,6 +90,13 @@ class Runtime:
                     )
                     await store.async_set_item(STORE_KEY, stored)
                 settings = validate_options(dict(self.entry.options))
+                await self.reminders.planner.async_tasks(
+                    actor.user_id,
+                    dt_util.now().date(),
+                    settings["language"],
+                    plants,
+                    windows,
+                )
                 return {
                     "cells": selections(available, stored),
                     "global_enabled": settings["reminders_enabled"],
@@ -123,7 +160,9 @@ class Runtime:
         await self.coordinator.async_shutdown()
         # Drain reminder activity before closing its database worker.
         async with self.reminders.lock:
-            await self.service.worker.async_close()
+            async with self.preference_lock:
+                async with self.reminders.planner.lock:
+                    await self.service.worker.async_close()
 
 
 async def validate_host_options(hass: HomeAssistant, settings: dict[str, Any]) -> None:

@@ -175,7 +175,7 @@ const de = {
   deleted: "Eintrag gelöscht.",
   copied: "Pflanze dupliziert.",
   readOnly:
-    "Du kannst diesen gemeinsamen Garten ansehen. Zum Bearbeiten brauchst du eine Freigabe.",
+    "Du kannst diesen gemeinsamen Garten ansehen. Für Änderungen an gemeinsamen Gartendaten brauchst du eine Freigabe. Deine persönlichen Aufgaben kannst du als erledigt markieren.",
   disconnected:
     "Garden Planner ist gerade nicht erreichbar. Deine Eingaben bleiben geöffnet.",
   invalid_data:
@@ -426,7 +426,8 @@ const en: Record<keyof typeof de, string> = {
   saved: "Saved.",
   deleted: "Record deleted.",
   copied: "Plant duplicated.",
-  readOnly: "You can view this shared garden. Editing requires permission.",
+  readOnly:
+    "You can view the shared garden. Editing shared data requires permission. You can complete your own personal tasks.",
   disconnected:
     "Garden Planner cannot be reached right now. Your open form is preserved.",
   invalid_data:

@@ -7,58 +7,34 @@ import logging
 from datetime import date, datetime
 from typing import Any
 
-from homeassistant.components.frontend.storage import async_user_store
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
+from .models import PlannerError
 from .options import notification_destinations, validate_options
-from .reminder_preferences import STORE_KEY, availability, selections
+from .personal_tasks import PersonalTasks
 from .service import PlannerService
 
 _LOGGER = logging.getLogger(__name__)
-ACTIVITIES = {
-    "direct": ("Direktsaat", "Direct sowing"),
-    "indoors": ("Vorziehen", "Start indoors"),
-    "transplant": ("Auspflanzen", "Plant out"),
-    "harvest": ("Ernten", "Harvest"),
-    "prick_out": ("Pikieren prüfen", "Check pricking out"),
-    "care": ("Pflege prüfen", "Check care"),
-    "other": ("Gartenarbeit", "Garden task"),
-}
 
 
 def candidates(
     data: dict[str, Any], today: date, lead: int, language: str
 ) -> list[tuple[str, str]]:
-    """Only stored windows/tasks; never fabricate a crop-specific growth schedule."""
+    """Only saved tasks can notify; raw growing windows never dispatch directly."""
     result = []
-    plants = {p["id"]: p["data"] for p in data.get("plants", [])}
-    for window in data.get("growing_windows", []):
-        item = window["data"]
-        plant = plants.get(item["plant_id"], {})
-        if plant.get("archived"):
-            continue
-        # Find a new window's actual opening, not any day within an existing window.
-        for year in (today.year - 1, today.year, today.year + 1):
-            try:
-                start = date(year, item["start_month"], item["start_day"])
-            except ValueError:
-                continue
-            if -7 <= (start - today).days <= lead:
-                activity = ACTIVITIES[item["activity"]][language == "en"]
-                text = (
-                    f"{plant.get('name', 'Garden Planner')}: "
-                    f"{activity} · {start.isoformat()}"
-                )
-                result.append((f"window:{window['id']}:{start.isoformat()}", text))
     for task in data.get("tasks", []):
         item = task["data"]
         due = date.fromisoformat(item["date"])
         if not item.get("completed") and -7 <= (due - today).days <= lead:
             result.append(
                 (
-                    f"task:{task['id']}:{due.isoformat()}",
+                    (
+                        f"window:{item['source_window_id']}:{due.isoformat()}"
+                        if item.get("personal_generated")
+                        else f"task:{task['id']}:{due.isoformat()}"
+                    ),
                     f"{item['title']} · {due.isoformat()}",
                 )
             )
@@ -73,27 +49,57 @@ class Reminders:
     ) -> None:
         self.hass, self.entry, self.service = hass, entry, service
         self.lock = asyncio.Lock()
+        self.planner = PersonalTasks(hass, service.worker)
 
     async def async_check(self, instant: datetime | None = None) -> None:
         async with self.lock:
             settings = validate_options(dict(self.entry.options))
-            if not settings["reminders_enabled"]:
-                return
             current = dt_util.as_local(instant or dt_util.utcnow())
-            if current.hour < settings["reminder_hour"]:
-                return
             users = {u.id: u for u in await self.hass.auth.async_get_users()}
+            plants = await self.service.worker.async_call("list_records", "plants")
+            windows = await self.service.worker.async_call(
+                "list_records", "growing_windows"
+            )
+            personal: dict[str, list[dict[str, Any]]] = {}
+            for user in users.values():
+                if (
+                    user.is_active
+                    and not user.system_generated
+                    and (
+                        user.is_admin
+                        or self.service.readers is None
+                        or user.id in self.service.readers
+                    )
+                ):
+                    try:
+                        personal[user.id] = await self.planner.async_tasks(
+                            user.id,
+                            current.date(),
+                            settings["language"],
+                            plants,
+                            windows,
+                        )
+                    except PlannerError:
+                        _LOGGER.exception(
+                            "Personal tasks unavailable; continuing other deliveries"
+                        )
+            # Planning is independent of notification activation and dispatch hour.
+            if (
+                not settings["reminders_enabled"]
+                or current.hour < settings["reminder_hour"]
+            ):
+                return
             destinations = []
             for destination in notification_destinations(settings):
                 if not destination["legacy"]:
-                    user = users.get(destination["user_id"])
+                    recipient = users.get(destination["user_id"])
                     if (
-                        user is None
-                        or not user.is_active
+                        recipient is None
+                        or not recipient.is_active
                         or (
                             settings["readers"] is not None
-                            and not user.is_admin
-                            and user.id not in settings["readers"]
+                            and not recipient.is_admin
+                            and recipient.id not in settings["readers"]
                         )
                     ):
                         continue
@@ -124,41 +130,38 @@ class Reminders:
                 )
             if not destinations:
                 return
-            data = {}
-            for table in ("plants", "growing_windows", "tasks"):
-                data[table] = await self.service.worker.async_call(
-                    "list_records", table
+            shared_tasks = await self.service.worker.async_call("list_records", "tasks")
+            jobs: list[tuple[str, str, str | None]] = [
+                (key, message, None)
+                for key, message in candidates(
+                    {"tasks": shared_tasks},
+                    current.date(),
+                    settings["lead_days"],
+                    settings["language"],
                 )
-            available = availability(data["plants"], data["growing_windows"])
-            personal: dict[str, dict[str, dict[str, bool]]] = {}
-            for destination, _, _, _ in destinations:
-                if not destination["legacy"] and destination["user_id"] not in personal:
-                    store = await async_user_store(self.hass, destination["user_id"])
-                    personal[destination["user_id"]] = selections(
-                        available, store.data.get(STORE_KEY, {})
+            ]
+            for user_id, records in personal.items():
+                jobs.extend(
+                    (key, message, user_id)
+                    for key, message in candidates(
+                        {"tasks": records},
+                        current.date(),
+                        settings["lead_days"],
+                        settings["language"],
                     )
-            window_lookup = {
-                f"window:{w['id']}": w["data"] for w in data["growing_windows"]
-            }
-            for key, message in candidates(
-                data, current.date(), settings["lead_days"], settings["language"]
-            ):
+                )
+            seen: set[tuple[str, str]] = set()
+            for key, message, owner in jobs:
                 if len(message) > 1000:
                     message = message[:999] + "…"
-                seen: set[str] = set()
-                window = window_lookup.get(key.rsplit(":", 1)[0])
                 for destination, domain, action, signature in destinations:
-                    if (
-                        window
-                        and not destination["legacy"]
-                        and not personal[destination["user_id"]]
-                        .get(window["plant_id"], {})
-                        .get(window["activity"], True)
+                    if owner is not None and (
+                        destination["legacy"] or destination["user_id"] != owner
                     ):
                         continue
-                    if signature in seen:
+                    if (key, signature) in seen:
                         continue
-                    seen.add(signature)
+                    seen.add((key, signature))
                     delivery_key = (
                         key if destination["legacy"] else f"{key}:route:{signature}"
                     )

@@ -1672,3 +1672,106 @@ test("failed personal reminder save preserves the previous checkbox state", asyn
   await expect(input).toBeChecked();
   await expect(input).toBeEnabled();
 });
+
+test("selected growing windows become private tasks that readers can complete without regeneration", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(
+    operation: string,
+    parameters: Record<string, unknown>,
+    role = "reader",
+  ) {
+    const response = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role, host: true },
+    });
+    expect(response.ok()).toBe(true);
+    return response.json();
+  }
+  const tasks = await api("list", { table: "tasks" });
+  const task = tasks.find(
+    (r: { data: { personal_generated?: boolean; date: string } }) =>
+      r.data.personal_generated && r.data.date === "2026-11-01",
+  );
+  expect(task).toBeTruthy();
+  const card = page.locator(`#task-${task.id}`);
+  await expect(card).toBeVisible();
+  const manual = page
+    .locator(".task-card")
+    .filter({ hasText: "Beet kontrollieren · Beispiel" });
+  await expect(
+    manual.getByRole("button", { name: "Als erledigt markieren" }),
+  ).toHaveCount(0);
+  await navigate(page, "Aussaatkalender");
+  await page.getByRole("button", { name: "Woche", exact: true }).click();
+  await page.getByLabel("Woche auswählen", { exact: true }).fill("2026-11-01");
+  await page.getByLabel("Woche auswählen", { exact: true }).press("Tab");
+  await page.locator(".week-event.direct").click();
+  await expect(
+    page.getByRole("heading", { name: "Aktuelle Kulturen", exact: true }),
+  ).toBeVisible();
+  await expect(card).toBeFocused();
+  await card
+    .getByRole("button", { name: "Als erledigt markieren", exact: true })
+    .click();
+  await expect(
+    card.getByRole("button", { name: "Wieder öffnen", exact: true }),
+  ).toBeVisible();
+  await navigate(page, "Übersicht");
+  await expect(card).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await expect(card).toHaveCount(0);
+  const current = await api("get", { table: "tasks", id: task.id });
+  expect(current.data.completed).toBe(true);
+  await navigate(page, "Erinnerungen");
+  const selected = page.getByRole("checkbox", {
+    name: "Blattkultur · Beispiel: Direktsaat",
+    exact: true,
+  });
+  await selected.uncheck();
+  await expect(selected).toBeEnabled();
+  let own = await api("list", { table: "tasks" });
+  expect(
+    own.filter(
+      (r: { data: { source_window_id?: string } }) =>
+        r.data.source_window_id === task.data.source_window_id,
+    ),
+  ).toHaveLength(1);
+  await selected.check();
+  await expect(selected).toBeEnabled();
+  own = await api("list", { table: "tasks" });
+  expect(own.filter((r: { id: string }) => r.id === task.id)).toHaveLength(1);
+  expect(own.find((r: { id: string }) => r.id === task.id).data.completed).toBe(
+    true,
+  );
+  const other = await api("list", { table: "tasks" }, "admin");
+  const ownIds = new Set(
+    own
+      .filter(
+        (r: { data: { personal_generated?: boolean } }) =>
+          r.data.personal_generated,
+      )
+      .map((r: { id: string }) => r.id),
+  );
+  expect(
+    other.filter(
+      (r: { id: string; data: { personal_generated?: boolean } }) =>
+        r.data.personal_generated && ownIds.has(r.id),
+    ),
+  ).toHaveLength(0);
+  const foreignTask = other.find(
+    (r: { data: { personal_generated?: boolean } }) =>
+      r.data.personal_generated,
+  );
+  const forbidden = await page.request.post(`/__test_api/${session}`, {
+    data: {
+      operation: "get",
+      parameters: { table: "tasks", id: foreignTask.id },
+      role: "reader",
+      host: true,
+    },
+  });
+  expect(forbidden.ok()).toBe(false);
+});

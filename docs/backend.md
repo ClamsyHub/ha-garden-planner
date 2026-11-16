@@ -172,3 +172,25 @@ Native HA `frontend` user storage key `garden_planner_reminders` persists opt-ou
 with their current window IDs. A changed generation with no surviving old window
 IDs defaults back on. Garden schema/export versions remain unchanged. HA profile
 preferences are included in HA configuration backups, not in garden data exports.
+
+
+## Personal generated tasks (v0.1.7)
+
+`list`/`get` for `tasks` merge shared SQLite records with only the authenticated
+actor's private generated work. `set_personal_task_completed` accepts exactly
+`id`, `revision`, `completed`. Authorized viewers can complete/reopen their own
+work; generic shared-data writes retain the existing editor checks. Foreign task
+IDs return not-found, including when the requesting actor is an administrator.
+
+Private integration-owned HA `Store` files use hashed user keys, version 1,
+private permissions, atomic writes and off-loop serialization. Planner changes,
+completion and saves are serialized; completion uses optimistic revisions.
+Stable IDs derive from user/window/start-date. Cancelled tombstones preserve
+revisions; completed history is never regenerated open. Failed saves do not
+commit the in-memory ledger. Shared SQLite schema/export versions stay unchanged.
+
+The notification engine generates tasks independently of global delivery enablement,
+then selects due incomplete tasks only. Generated tasks retain the historical
+window reservation keys for backward-compatible at-most-once delivery. They route
+only to their owner's configured destinations. Shared HA calendar/count entities
+continue to use shared SQLite snapshots and never publish private ledgers.

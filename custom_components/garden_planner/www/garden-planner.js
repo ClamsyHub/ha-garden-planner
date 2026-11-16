@@ -860,16 +860,17 @@ var Ze = {
 	}
 }, mt = {
 	reminders: "Erinnerungen",
+	personalTask: "Meine geplante Gartenarbeit",
 	personalSubtitle: "Wähle, woran du erinnert werden möchtest.",
 	personalUnavailable: "Persönliche Erinnerungen sind nur in der Home-Assistant-Integration verfügbar.",
-	personalIntro: "Meine Erinnerungen für Anbauzeiträume. Deine Auswahl wird automatisch gespeichert und gilt nur für dich – für deine eingerichteten Push- und E-Mail-Ziele.",
+	personalIntro: "Dein persönlicher Aufgabenplan. Markierte Anbauzeiträume erzeugen Gartenarbeiten unter „Nächste Gartenarbeiten“. Deine Auswahl wird automatisch gespeichert.",
 	personalGlobalOn: "Der Erinnerungsversand ist global aktiviert.",
-	personalGlobalOff: "Der Erinnerungsversand ist global ausgeschaltet. Deine Auswahl bleibt gespeichert; ein Administrator muss den Versand aktivieren.",
+	personalGlobalOff: "Der Erinnerungsversand ist global ausgeschaltet. Deine Gartenarbeiten werden trotzdem angelegt; ein Administrator muss den Versand aktivieren.",
 	personalChannelOn: "Persönliche Versandziele sind eingerichtet.",
 	personalChannelOff: "Für dich ist noch kein persönliches Versandziel aktiviert. Bitte einen Administrator um die Einrichtung von Push oder E-Mail.",
 	personalNoWindow: "Kein Anbauzeitraum für diese Tätigkeit vorhanden.",
-	personalHint: "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl gilt für alle Zeiträume dieser Pflanze und Tätigkeit. Manuelle Aufgaben werden weiterhin erinnert. Beim Speichern wird keine Testnachricht gesendet.",
-	personalSharedHint: "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er besitzt keine Benutzerzuordnung und folgt weiterhin allen Terminen, unabhängig von deiner persönlichen Auswahl.",
+	personalHint: "Vorhandene Tätigkeiten sind zunächst aktiviert. Ohne Anbauzeitraum bleibt die Checkbox ausgegraut. Kommt eine Tätigkeit neu hinzu, ist sie zunächst aktiviert. Deine Abwahl entfernt zugehörige offene Aufgaben. Erledigte Einträge bleiben erhalten. Aufgaben entstehen für die nächsten zwölf Monate und lassen sich als erledigt markieren. Push und E-Mail folgen den vorhandenen Einstellungen. Beim Speichern wird keine Testnachricht gesendet.",
+	personalSharedHint: "Zusätzlich ist ein gemeinsamer Kanal aktiviert. Er erinnert weiterhin an manuelle gemeinsame Aufgaben. Persönlich erzeugte Gartenarbeiten gehen ausschließlich an deine persönlichen Versandziele.",
 	multiFilterHint: "Mehrere Werte möglich. Ohne Auswahl werden alle angezeigt.",
 	windowDetail: "Anbauzeitraum",
 	recurringWindow: "Jährlich wiederkehrender Zeitraum",
@@ -928,16 +929,17 @@ var Ze = {
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, ht = {
 	reminders: "Reminders",
+	personalTask: "My planned garden task",
 	personalSubtitle: "Choose what you want to be reminded about.",
 	personalUnavailable: "Personal reminders are available in the Home Assistant integration.",
-	personalIntro: "My growing-window reminders. Your choices save automatically and apply only to your configured personal push and email destinations.",
+	personalIntro: "Your personal task plan. Selected growing windows create tasks under Upcoming garden work. Your choices save automatically.",
 	personalGlobalOn: "Reminder delivery is globally enabled.",
-	personalGlobalOff: "Reminder delivery is globally disabled. Your choices are saved; an administrator must enable delivery.",
+	personalGlobalOff: "Reminder delivery is globally disabled. Tasks are still generated; an administrator must enable notification delivery.",
 	personalChannelOn: "Personal delivery destinations are configured.",
 	personalChannelOff: "No personal delivery destination is enabled for you. Ask an administrator to configure push or email.",
 	personalNoWindow: "No growing window exists for this activity.",
-	personalHint: "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out covers all windows for this plant and activity. Manual tasks still generate reminders. Saving sends no test message.",
-	personalSharedHint: "A shared channel is also enabled. It has no user association and continues to receive all events independently of your personal choices.",
+	personalHint: "Available activities start enabled. Missing windows disable the checkbox. Newly available activities start enabled. Opting out removes related open tasks; completed history is preserved. Tasks cover the next twelve months and can be completed. Push/email use the existing settings. Saving sends no test message.",
+	personalSharedHint: "A shared channel is also enabled. It continues to notify shared manual tasks. Personal generated tasks go only to your personal delivery destinations.",
 	multiFilterHint: "Select multiple values. An empty selection shows all.",
 	windowDetail: "Growing window",
 	recurringWindow: "Annually recurring window",
@@ -1166,7 +1168,7 @@ var _t = {
 	saved: "Gespeichert.",
 	deleted: "Eintrag gelöscht.",
 	copied: "Pflanze dupliziert.",
-	readOnly: "Du kannst diesen gemeinsamen Garten ansehen. Zum Bearbeiten brauchst du eine Freigabe.",
+	readOnly: "Du kannst diesen gemeinsamen Garten ansehen. Für Änderungen an gemeinsamen Gartendaten brauchst du eine Freigabe. Deine persönlichen Aufgaben kannst du als erledigt markieren.",
 	disconnected: "Garden Planner ist gerade nicht erreichbar. Deine Eingaben bleiben geöffnet.",
 	invalid_data: "Die Angaben konnten nicht gespeichert werden. Bitte prüfe Pflichtfelder, Datumsangaben, Temperaturbereiche und Beziehungen.",
 	not_found: "Dieser Eintrag ist nicht mehr vorhanden. Bitte aktualisiere die Ansicht.",
@@ -1395,7 +1397,7 @@ var _t = {
 	saved: "Saved.",
 	deleted: "Record deleted.",
 	copied: "Plant duplicated.",
-	readOnly: "You can view this shared garden. Editing requires permission.",
+	readOnly: "You can view the shared garden. Editing shared data requires permission. You can complete your own personal tasks.",
 	disconnected: "Garden Planner cannot be reached right now. Your open form is preserved.",
 	invalid_data: "The details could not be saved. Check required fields, dates, temperature ranges and relationships.",
 	not_found: "This record no longer exists. Refresh the view.",
@@ -3096,6 +3098,9 @@ var Rn = j`
     margin-top: 0;
     font-size: 12px;
   }
+  .task-card {
+    scroll-margin-top: 130px;
+  }
   .reminders-scroll {
     overflow: auto;
     max-height: 65dvh;
@@ -4538,7 +4543,11 @@ var Hn = class extends Ye {
 	}
 	renderTasks(e = !0) {
 		let n = this.tables.tasks.filter((t) => e || !t.data.completed).sort((e, n) => t(e, "date").localeCompare(t(n, "date")));
-		return V`${n.length ? (e ? n : n.slice(0, 6)).map((e) => V`<article class="item">
+		return V`${n.length ? (e ? n : n.slice(0, 6)).map((e) => V`<article
+                class="item task-card"
+                id=${`task-${e.id}`}
+                tabindex="-1"
+              >
                 <div class="date-tile">
                   <strong>${t(e, "date").slice(8)}</strong
                   ><small
@@ -4552,7 +4561,11 @@ var Hn = class extends Ye {
                     ${h(t(e, "date"), this.language)}</small
                   >${t(e, "notes") ? V`<p>${t(e, "notes")}</p>` : U}${e.data.completed ? V`<span class="badge">${this.tr("completed")}</span>` : U}
                 </div>
-                ${this.editable ? V`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", {
+                ${e.data.personal_generated ? V`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("set_personal_task_completed", {
+			id: e.id,
+			revision: e.revision,
+			completed: !e.data.completed
+		})}>${$("check")}</button>` : this.editable ? V`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", {
 			table: "tasks",
 			id: e.id,
 			revision: e.revision,
@@ -4777,8 +4790,14 @@ var Hn = class extends Ye {
               ${a.map((e) => {
 				if (e.kind === "task") return V`<button
                     class=${`week-event ${e.activity}`}
-                    ?disabled=${!this.editable}
-                    @click=${() => this.startEditor("tasks", e.record)}
+                    ?disabled=${!this.editable && !e.record.data.personal_generated}
+                    @click=${async () => {
+					if (e.record.data.personal_generated) {
+						this.navigate("cultures"), await this.updateComplete;
+						let t = this.renderRoot.querySelector(`#task-${e.record.id}`);
+						t?.scrollIntoView({ block: "center" }), t?.focus({ preventScroll: !0 });
+					} else this.startEditor("tasks", e.record);
+				}}
                   >
                     ${t(e.record, "title")}${e.record.data.completed ? " ✓" : ""}
                   </button>`;
@@ -4941,7 +4960,7 @@ var Hn = class extends Ye {
 				activity: t,
 				enabled: n
 			});
-			i === this.connectionGeneration && a === this.preferencesGeneration && (this.personalReminders = r, this.announce("saved"));
+			i === this.connectionGeneration && a === this.preferencesGeneration && (this.personalReminders = r, await this.refresh(), i === this.connectionGeneration && this.announce("saved"));
 		} catch (e) {
 			i === this.connectionGeneration && a === this.preferencesGeneration && (this.personalReminders = r, this.error = xt(this.language, e));
 		} finally {

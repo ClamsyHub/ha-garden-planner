@@ -77,6 +77,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if not runtime or runtime.closing:
                 return
             await reminders.async_check(instant)
+            async_dispatcher_send(hass, SIGNAL_CHANGED)
 
         async def stop(event: Event[Any]) -> None:
             if runtime:
