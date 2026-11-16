@@ -20,6 +20,7 @@ import {
 } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { live } from "lit/directives/live.js";
+import { guard } from "lit/directives/guard.js";
 import { PlannerApi } from "./api";
 import {
   activeInMonth,
@@ -56,6 +57,7 @@ import {
 } from "./types";
 
 type Editor = { table: Table; record?: Entity; draft: Data };
+type ReminderChange = { plant_id: string; activity: string; enabled: boolean };
 type Selection = { kind: "plant" | "culture" | "window"; id: string };
 type Reviewed = {
   plan: ImportPlan;
@@ -117,6 +119,7 @@ export class GardenPlannerPanel extends LitElement {
   static properties = {
     hass: { attribute: false },
     narrow: { type: Boolean },
+    reminderSaving: { state: true },
     personalReminders: { state: true },
     reminderQuery: { state: true },
     capabilities: { state: true },
@@ -156,6 +159,14 @@ export class GardenPlannerPanel extends LitElement {
   declare hass?: Hass;
   declare narrow: boolean;
   private personalReminders: PersonalReminders | null = null;
+  private reminderConfirmed: PersonalReminders | null = null;
+  private reminderPending = new Map<string, ReminderChange>();
+  private reminderFlush?: Promise<boolean>;
+  private reminderTimer?: ReturnType<typeof setTimeout>;
+  private reminderSaving = false;
+  private reminderTasksDirty = false;
+  private reminderTaskVersion = 0;
+  private navigationGeneration = 0;
   private reminderQuery = "";
   private preferencesGeneration = 0;
   private capabilities: Capabilities | null = null;
@@ -280,8 +291,58 @@ export class GardenPlannerPanel extends LitElement {
     });
   };
 
+  private readonly dismissCalendarFilters = (event: Event): void => {
+    const group = event
+      .composedPath()
+      .find(
+        (node) =>
+          node instanceof HTMLElement &&
+          node.classList.contains("multi-filter"),
+      );
+    for (const details of this.renderRoot.querySelectorAll<HTMLDetailsElement>(
+      ".multi-filter details[open]",
+    )) {
+      if (!(group instanceof HTMLElement) || !group.contains(details))
+        details.open = false;
+    }
+  };
+  private readonly closeCalendarFilters = (event: KeyboardEvent): void => {
+    if (event.key !== "Escape" || this.renderRoot.querySelector("dialog[open]"))
+      return;
+    const details = [
+      ...this.renderRoot.querySelectorAll<HTMLDetailsElement>(
+        ".multi-filter details[open]",
+      ),
+    ];
+    if (!details.length) return;
+    const focused = details.find((item) =>
+      event
+        .composedPath()
+        .some((node) => node instanceof Node && item.contains(node)),
+    );
+    details.forEach((item) => {
+      item.open = false;
+    });
+    focused?.querySelector<HTMLElement>("summary")?.focus();
+    event.preventDefault();
+  };
+  private readonly flushHiddenReminders = (): void => {
+    if (document.visibilityState === "hidden") void this.flushReminderChanges();
+  };
+  private readonly confirmPendingReminders = (
+    event: BeforeUnloadEvent,
+  ): void => {
+    if (this.reminderSaving) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+  };
   connectedCallback(): void {
     super.connectedCallback();
+    document.addEventListener("pointerdown", this.dismissCalendarFilters, true);
+    document.addEventListener("keydown", this.closeCalendarFilters, true);
+    document.addEventListener("visibilitychange", this.flushHiddenReminders);
+    window.addEventListener("beforeunload", this.confirmPendingReminders);
     this.addEventListener("click", this.rememberTrigger, true);
     this.renderRoot.addEventListener("close", this.restoreDialogFocus, true);
     this.renderRoot.addEventListener(
@@ -301,7 +362,16 @@ export class GardenPlannerPanel extends LitElement {
     if (this.hass) void this.bind();
   }
   disconnectedCallback(): void {
+    void this.flushReminderChanges();
     super.disconnectedCallback();
+    document.removeEventListener(
+      "pointerdown",
+      this.dismissCalendarFilters,
+      true,
+    );
+    document.removeEventListener("keydown", this.closeCalendarFilters, true);
+    document.removeEventListener("visibilitychange", this.flushHiddenReminders);
+    window.removeEventListener("beforeunload", this.confirmPendingReminders);
     this.removeEventListener("click", this.rememberTrigger, true);
     this.renderRoot.removeEventListener(
       "scroll",
@@ -359,6 +429,7 @@ export class GardenPlannerPanel extends LitElement {
     if (!open && dialog?.open) dialog.close();
   }
   private async bind(): Promise<void> {
+    void this.flushReminderChanges();
     const generation = ++this.connectionGeneration;
     this.loadGeneration++;
     this.boundConnection?.removeEventListener?.("ready", this.reconnect);
@@ -369,6 +440,13 @@ export class GardenPlannerPanel extends LitElement {
     this.api = this.hass?.user ? new PlannerApi(this.hass) : undefined;
     this.tables = emptyTables();
     this.personalReminders = null;
+    this.reminderConfirmed = null;
+    this.reminderPending = new Map();
+    this.reminderFlush = undefined;
+    this.reminderSaving = false;
+    this.reminderTasksDirty = false;
+    this.reminderTaskVersion = 0;
+    this.navigationGeneration++;
     this.preferencesGeneration++;
     this.capabilities = null;
     this.hostSettings = null;
@@ -469,7 +547,31 @@ export class GardenPlannerPanel extends LitElement {
       if (generation === this.connectionGeneration) this.busy = false;
     }
   }
-  private navigate(page: Page): void {
+  private async navigate(page: Page): Promise<void> {
+    const navigation = ++this.navigationGeneration;
+    const connection = this.connectionGeneration;
+    if (this.page === "reminders" && page !== "reminders") {
+      do {
+        if (!(await this.flushReminderChanges())) return;
+        if (
+          connection !== this.connectionGeneration ||
+          navigation !== this.navigationGeneration ||
+          !this.isConnected
+        )
+          return;
+        if (this.reminderTasksDirty && !(await this.refreshReminderTasks()))
+          return;
+      } while (
+        this.reminderPending.size ||
+        this.reminderSaving ||
+        this.reminderTasksDirty
+      );
+    } else if (this.page === "reminders" && page === "reminders") return;
+    if (
+      connection !== this.connectionGeneration ||
+      navigation !== this.navigationGeneration
+    )
+      return;
     this.page = page;
     this.error = "";
     if (page === "reminders") {
@@ -913,10 +1015,16 @@ export class GardenPlannerPanel extends LitElement {
     const allLabel = this.tr(
       kind === "category" ? "allCategories" : "allActivities",
     );
-    return html`<fieldset class="multi-filter">
-      <legend>${this.tr(kind)}</legend>
+    return html`<div
+      class="multi-filter"
+      role="group"
+      aria-label=${this.tr(kind)}
+    >
+      <span class="filter-label">${this.tr(kind)}</span>
       <details>
-        <summary>
+        <summary
+          title=${selected.length ? selected.map((value) => this.lab(value)).join(" · ") : allLabel}
+        >
           ${selected.length ? selected.map((value) => this.lab(value)).join(" · ") : allLabel}
         </summary>
         <div class="multi-filter-options">
@@ -948,7 +1056,7 @@ export class GardenPlannerPanel extends LitElement {
           </button>
         </div>
       </details>
-    </fieldset>`;
+    </div>`;
   }
   private calendarActivityMatches(value: string): boolean {
     return (
@@ -956,7 +1064,7 @@ export class GardenPlannerPanel extends LitElement {
     );
   }
   private renderFilters(calendar = false): TemplateResult {
-    return html`<div class="filters">
+    return html`<div class=${calendar ? "filters calendar-filters" : "filters"}>
       <label
         >${this.tr("search")}<input
           type="search"
@@ -1271,7 +1379,7 @@ export class GardenPlannerPanel extends LitElement {
     const windows = this.calendarWindows();
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
     return html`${this.renderFilters(true)}
-      <div class="toolbar">
+      <div class="toolbar calendar-toolbar">
         <div class="segmented" aria-label=${this.tr("calendar")}>
           ${(["year", "month", "week"] as const).map(
             (mode) =>
@@ -1285,7 +1393,7 @@ export class GardenPlannerPanel extends LitElement {
               </button>`,
           )}
         </div>
-        <div class="actions">
+        <div class="calendar-navigation">
           <button
             class="icon"
             aria-label=${this.tr("previous")}
@@ -1326,6 +1434,7 @@ export class GardenPlannerPanel extends LitElement {
           >
             ›</button
           ><button
+            class="calendar-today"
             @click=${() => {
               this.anchor = this.today;
             }}
@@ -1730,7 +1839,13 @@ export class GardenPlannerPanel extends LitElement {
     }`;
   }
   private async loadPersonalReminders(): Promise<void> {
-    if (!this.api || !this.capabilities?.reminders || this.busy) return;
+    if (
+      !this.api ||
+      !this.capabilities?.reminders ||
+      this.busy ||
+      this.reminderSaving
+    )
+      return;
     const generation = ++this.preferencesGeneration;
     const connection = this.connectionGeneration;
     try {
@@ -1740,8 +1855,10 @@ export class GardenPlannerPanel extends LitElement {
         generation === this.preferencesGeneration &&
         connection === this.connectionGeneration &&
         this.isConnected
-      )
+      ) {
         this.personalReminders = value;
+        this.reminderConfirmed = value;
+      }
     } catch (error) {
       if (
         generation === this.preferencesGeneration &&
@@ -1750,48 +1867,115 @@ export class GardenPlannerPanel extends LitElement {
         this.error = errorText(this.language, error);
     }
   }
-  private async setPersonalReminder(
+  private reminderView(
+    value: PersonalReminders,
+    pending: Map<string, ReminderChange>,
+  ): PersonalReminders {
+    const cells = { ...value.cells };
+    for (const change of pending.values()) {
+      if (cells[change.plant_id]?.[change.activity] !== undefined)
+        cells[change.plant_id] = {
+          ...cells[change.plant_id],
+          [change.activity]: change.enabled,
+        };
+    }
+    return { ...value, cells };
+  }
+  private setPersonalReminder(
     plant_id: string,
     activity: string,
     enabled: boolean,
-  ): Promise<void> {
-    if (!this.api || this.busy) return;
-    const previous = this.personalReminders;
-    if (previous)
-      this.personalReminders = {
-        ...previous,
-        cells: {
-          ...previous.cells,
-          [plant_id]: { ...previous.cells[plant_id], [activity]: enabled },
-        },
-      };
-    this.busy = true;
+  ): void {
+    if (!this.api || !this.personalReminders || this.busy) return;
+    this.preferencesGeneration++;
+    this.reminderPending.set(JSON.stringify([plant_id, activity]), {
+      plant_id,
+      activity,
+      enabled,
+    });
+    this.personalReminders = this.reminderView(
+      this.personalReminders,
+      this.reminderPending,
+    );
+    this.reminderSaving = true;
     this.error = "";
-    const connection = this.connectionGeneration;
-    const generation = ++this.preferencesGeneration;
+    if (this.reminderTimer) clearTimeout(this.reminderTimer);
+    if (!this.reminderFlush)
+      this.reminderTimer = setTimeout(() => {
+        void this.flushReminderChanges();
+      }, 80);
+  }
+  private flushReminderChanges(): Promise<boolean> {
+    if (this.reminderTimer) clearTimeout(this.reminderTimer);
+    this.reminderTimer = undefined;
+    if (this.reminderFlush) return this.reminderFlush;
+    if (!this.api || !this.reminderPending.size) return Promise.resolve(true);
+    const api = this.api,
+      connection = this.connectionGeneration,
+      queue = this.reminderPending;
+    let confirmed = this.reminderConfirmed ?? this.personalReminders!;
+    const run = (async (): Promise<boolean> => {
+      let success = true;
+      while (queue.size) {
+        const batch = [...queue.values()].slice(0, 500);
+        for (const change of batch)
+          queue.delete(JSON.stringify([change.plant_id, change.activity]));
+        try {
+          confirmed = await api.command<PersonalReminders>(
+            "set_user_reminders",
+            { changes: batch },
+          );
+          if (connection === this.connectionGeneration && this.isConnected) {
+            this.reminderConfirmed = confirmed;
+            this.personalReminders = this.reminderView(confirmed, queue);
+            this.reminderTasksDirty = true;
+            this.reminderTaskVersion++;
+          }
+        } catch (error) {
+          success = false;
+          if (connection === this.connectionGeneration && this.isConnected) {
+            this.personalReminders = this.reminderView(confirmed, queue);
+            this.error = errorText(this.language, error);
+          } else
+            console.error(
+              "Garden Planner: queued reminder changes could not be saved.",
+            );
+        }
+      }
+      if (connection === this.connectionGeneration && this.isConnected) {
+        this.reminderSaving = false;
+        if (success) this.announce("saved");
+      }
+      return success;
+    })();
+    this.reminderFlush = run;
+    void run.then(() => {
+      if (this.reminderFlush === run) this.reminderFlush = undefined;
+    });
+    return run;
+  }
+  private async refreshReminderTasks(): Promise<boolean> {
+    if (!this.api) return false;
+    const connection = this.connectionGeneration,
+      generation = ++this.loadGeneration,
+      version = this.reminderTaskVersion;
     try {
-      const value = await this.api.command<PersonalReminders>(
-        "set_user_reminder",
-        { plant_id, activity, enabled },
-      );
+      const tasks = await this.api.command<Entity[]>("list", {
+        table: "tasks",
+      });
       if (
-        connection === this.connectionGeneration &&
-        generation === this.preferencesGeneration
-      ) {
-        this.personalReminders = value;
-        await this.refresh();
-        if (connection === this.connectionGeneration) this.announce("saved");
-      }
+        connection !== this.connectionGeneration ||
+        generation !== this.loadGeneration ||
+        !this.isConnected
+      )
+        return false;
+      this.tables = { ...this.tables, tasks };
+      if (version === this.reminderTaskVersion) this.reminderTasksDirty = false;
+      return true;
     } catch (error) {
-      if (
-        connection === this.connectionGeneration &&
-        generation === this.preferencesGeneration
-      ) {
-        this.personalReminders = previous;
+      if (connection === this.connectionGeneration)
         this.error = errorText(this.language, error);
-      }
-    } finally {
-      if (connection === this.connectionGeneration) this.busy = false;
+      return false;
     }
   }
   private renderPersonalReminders(): TemplateResult {
@@ -1823,6 +2007,10 @@ export class GardenPlannerPanel extends LitElement {
             this.reminderQuery = (event.target as HTMLInputElement).value;
           }}
       /></label>
+      <p role="status" class="reminder-save-status">
+        ${this.reminderSaving ? this.tr("savingReminders") : ""}
+      </p>
+      <p class="matrix-scroll-hint muted">${this.tr("matrixScrollHint")}</p>
       <div
         class="reminders-scroll"
         tabindex="0"
@@ -1837,29 +2025,42 @@ export class GardenPlannerPanel extends LitElement {
             </tr>
           </thead>
           <tbody>
-            ${plants.map(
+            ${repeat(
+              plants,
+              (plant) => plant.id,
               (plant) =>
-                html`<tr>
-                  <th scope="row">${text(plant, "name")}</th>
-                  ${activities.map((activity) => {
-                    const available =
-                      preferences.cells[plant.id]?.[activity] !== undefined;
-                    const checked =
-                      preferences.cells[plant.id]?.[activity] ?? false;
-                    return html`<td
-                      class=${available ? "" : "reminder-unavailable"}
-                      title=${!available ? this.tr("personalNoWindow") : ""}
-                    >
-                      <input
-                        type="checkbox"
-                        aria-label=${`${text(plant, "name")}: ${this.lab(activity)}`}
-                        .checked=${live(checked)}
-                        ?disabled=${!available || this.busy}
-                        @change=${(event: Event) => void this.setPersonalReminder(plant.id, activity, (event.target as HTMLInputElement).checked)}
-                      />
-                    </td>`;
-                  })}
-                </tr>`,
+                guard(
+                  [
+                    plant,
+                    preferences.cells[plant.id],
+                    this.busy,
+                    this.language,
+                  ],
+                  () =>
+                    html`<tr>
+                      <th scope="row" title=${text(plant, "name")}>
+                        ${text(plant, "name")}
+                      </th>
+                      ${activities.map((activity) => {
+                        const available =
+                          preferences.cells[plant.id]?.[activity] !== undefined;
+                        const checked =
+                          preferences.cells[plant.id]?.[activity] ?? false;
+                        return html`<td
+                          class=${available ? "" : "reminder-unavailable"}
+                          title=${!available ? this.tr("personalNoWindow") : ""}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label=${`${text(plant, "name")}: ${this.lab(activity)}`}
+                            .checked=${live(checked)}
+                            ?disabled=${!available || this.busy}
+                            @change=${(event: Event) => void this.setPersonalReminder(plant.id, activity, (event.target as HTMLInputElement).checked)}
+                          />
+                        </td>`;
+                      })}
+                    </tr>`,
+                ),
             )}
           </tbody>
         </table>

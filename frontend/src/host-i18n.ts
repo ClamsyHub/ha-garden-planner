@@ -1,5 +1,7 @@
 import type { Language } from "./types";
 const de = {
+  savingReminders: "Änderungen werden gespeichert …",
+  matrixScrollHint: "Für weitere Tätigkeiten seitlich wischen.",
   reminders: "Erinnerungen",
   personalTask: "Meine geplante Gartenarbeit",
   personalSubtitle: "Wähle, woran du erinnert werden möchtest.",
@@ -88,6 +90,8 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  savingReminders: "Saving changes …",
+  matrixScrollHint: "Swipe sideways for more activities.",
   reminders: "Reminders",
   personalTask: "My planned garden task",
   personalSubtitle: "Choose what you want to be reminded about.",

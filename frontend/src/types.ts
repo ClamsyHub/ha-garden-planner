@@ -33,6 +33,7 @@ export interface Hass {
   fetchWithAuth?(path: string, init?: RequestInit): Promise<Response>;
   callWS<T>(message: Record<string, unknown>): Promise<T>;
   connection: {
+    sendMessagePromise?<T>(message: Record<string, unknown>): Promise<T>;
     subscribeMessage<T>(
       callback: (message: T) => void,
       message: Record<string, unknown>,

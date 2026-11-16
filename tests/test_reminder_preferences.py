@@ -8,6 +8,7 @@ from custom_components.garden_planner.reminder_preferences import (
     availability,
     selections,
     updated,
+    updated_many,
 )
 
 
@@ -51,3 +52,29 @@ class PreferenceTests(unittest.TestCase):
             ),
             {},
         )
+
+    def test_batch_is_atomic_and_preserves_other_selections(self) -> None:
+        available = {"plant": {"direct": ["d"], "care": ["c"], "harvest": ["h"]}}
+        stored = updated(available, {}, "plant", "harvest", False)
+        changes = [
+            {"plant_id": "plant", "activity": a, "enabled": False}
+            for a in ("direct", "care")
+        ]
+        result = updated_many(available, stored, changes)
+        self.assertEqual(
+            selections(available, result)["plant"],
+            {"direct": False, "care": False, "harvest": False},
+        )
+        self.assertEqual(stored, {"disabled": {"plant": {"harvest": ["h"]}}})
+        for invalid in (
+            [],
+            changes * 251,
+            changes + [changes[0]],
+            changes + [{"plant_id": "plant", "activity": "missing", "enabled": True}],
+            [dict(changes[0], user_id="other")],
+            [dict(changes[0], enabled=1)],
+        ):
+            with self.subTest(invalid=str(invalid)[:100]):
+                with self.assertRaises(ValidationError):
+                    updated_many(available, stored, invalid)
+                self.assertEqual(stored, {"disabled": {"plant": {"harvest": ["h"]}}})

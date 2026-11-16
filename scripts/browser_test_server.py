@@ -23,7 +23,7 @@ from custom_components.garden_planner.options import validate_options
 from custom_components.garden_planner.reminder_preferences import (
     availability,
     selections,
-    updated,
+    updated_many,
 )
 from custom_components.garden_planner.service import Actor, PlannerService
 from custom_components.garden_planner.storage import PlannerWorker
@@ -184,21 +184,30 @@ async def main() -> None:
                             if record is None:
                                 raise NotFoundError("Personal task not found.")
                             return record
-                        if operation in {"get_user_reminders", "set_user_reminder"}:
+                        if operation in {
+                            "get_user_reminders",
+                            "set_user_reminder",
+                            "set_user_reminders",
+                        }:
                             plants = await worker.async_call("list_records", "plants")
                             windows = await worker.async_call(
                                 "list_records", "growing_windows"
                             )
                             available = availability(plants, windows)
                             stored = personal.get(actor.user_id, {})
-                            if operation == "set_user_reminder":
-                                stored = updated(
-                                    available,
-                                    stored,
-                                    parameters["plant_id"],
-                                    parameters["activity"],
-                                    parameters["enabled"],
+                            if operation != "get_user_reminders":
+                                changes = (
+                                    parameters["changes"]
+                                    if operation == "set_user_reminders"
+                                    else [
+                                        {
+                                            "plant_id": parameters["plant_id"],
+                                            "activity": parameters["activity"],
+                                            "enabled": parameters["enabled"],
+                                        }
+                                    ]
                                 )
+                                stored = updated_many(available, stored, changes)
                                 personal[actor.user_id] = stored
                             return {
                                 "cells": selections(available, stored),

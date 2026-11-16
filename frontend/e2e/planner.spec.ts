@@ -1615,6 +1615,7 @@ test("personal reminder matrix works for readers and defaults newly available ac
   await expect(care).toBeEnabled();
   await expect(care).toBeChecked();
   await care.uncheck();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
   await expect(care).toBeEnabled();
   await expect(care).not.toBeChecked();
   await command("delete", {
@@ -1659,7 +1660,7 @@ test("failed personal reminder save preserves the previous checkbox state", asyn
   await expect(input).toBeChecked();
   await page.route("**/__test_api/**", async (route) => {
     const data = route.request().postDataJSON();
-    if (data.operation === "set_user_reminder")
+    if (data.operation === "set_user_reminders")
       await route.fulfill({
         status: 400,
         contentType: "application/json",
@@ -1731,6 +1732,7 @@ test("selected growing windows become private tasks that readers can complete wi
     exact: true,
   });
   await selected.uncheck();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
   await expect(selected).toBeEnabled();
   let own = await api("list", { table: "tasks" });
   expect(
@@ -1740,6 +1742,7 @@ test("selected growing windows become private tasks that readers can complete wi
     ),
   ).toHaveLength(1);
   await selected.check();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
   await expect(selected).toBeEnabled();
   own = await api("list", { table: "tasks" });
   expect(own.filter((r: { id: string }) => r.id === task.id)).toHaveLength(1);
@@ -1774,4 +1777,274 @@ test("selected growing windows become private tasks that readers can complete wi
     },
   });
   expect(forbidden.ok()).toBe(false);
+});
+
+test("reminder checkboxes stay responsive during saving and persist the latest choice", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  await navigate(page, "Erinnerungen");
+  const direct = page.getByRole("checkbox", {
+    name: "Blattkultur · Beispiel: Direktsaat",
+    exact: true,
+  });
+  await expect(direct).toBeChecked();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let started!: () => void;
+  const received = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  const batches: unknown[] = [];
+  const operations: string[] = [];
+  await page.route("**/__test_api/**", async (route) => {
+    const data = route.request().postDataJSON();
+    operations.push(data.operation);
+    if (data.operation === "set_user_reminders") {
+      batches.push(data.parameters.changes);
+      if (batches.length === 1) {
+        started();
+        await gate;
+      }
+    }
+    await route.continue();
+  });
+  await direct.uncheck();
+  await received;
+  await expect(direct).toBeEnabled();
+  await direct.check();
+  await expect(direct).toBeChecked();
+  await expect(page.locator(".reminder-save-status")).not.toHaveText("");
+  release();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
+  await expect(direct).toBeChecked();
+  expect(batches).toHaveLength(2);
+  expect(operations).toEqual(["set_user_reminders", "set_user_reminders"]);
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  await expect(direct).toBeChecked();
+});
+
+test("calendar filters keep their width and close on outside click and Escape", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Aussaatkalender");
+  const group = page.getByRole("group", { name: "Tätigkeit", exact: true });
+  const summary = group.locator("summary");
+  const before = await summary.boundingBox();
+  await calendarFilter(page, "Tätigkeit", ["Pflege"]);
+  const after = await summary.boundingBox();
+  expect(Math.abs(before!.width - after!.width)).toBeLessThan(1);
+  await summary.click();
+  await expect(
+    group.getByRole("checkbox", { name: "Vorziehen", exact: true }),
+  ).toBeVisible();
+  await group.getByRole("checkbox", { name: "Vorziehen", exact: true }).check();
+  await page
+    .getByRole("heading", { name: "Aussaatkalender", exact: true })
+    .click();
+  await expect(group.locator("details")).not.toHaveAttribute("open");
+  await summary.click();
+  await expect(
+    group.getByRole("checkbox", { name: "Pflege", exact: true }),
+  ).toBeChecked();
+  await expect(
+    group.getByRole("checkbox", { name: "Vorziehen", exact: true }),
+  ).toBeChecked();
+  await page.keyboard.press("Escape");
+  await expect(group.locator("details")).not.toHaveAttribute("open");
+  for (const mode of ["Jahr", "Monat", "Woche"]) {
+    await page
+      .locator(".segmented")
+      .getByRole("button", { name: mode, exact: true })
+      .click();
+    const input = await page
+      .locator(".calendar-navigation input")
+      .boundingBox();
+    const previous = await page
+      .getByRole("button", { name: "Zurück", exact: true })
+      .boundingBox();
+    const next = await page
+      .getByRole("button", { name: "Weiter", exact: true })
+      .boundingBox();
+    expect(input!.x).toBeGreaterThanOrEqual(previous!.x + previous!.width);
+    expect(input!.x + input!.width).toBeLessThanOrEqual(next!.x);
+    expect(Math.abs(input!.y - next!.y)).toBeLessThan(1);
+  }
+  if (testInfo.project.name === "desktop-chromium") {
+    const boxes = await page
+      .locator(".calendar-filters > label input, .calendar-filters summary")
+      .evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().y));
+    expect(Math.max(...boxes) - Math.min(...boxes)).toBeLessThan(1);
+  }
+  await page.locator(".calendar-navigation").screenshot({
+    path: testInfo.outputPath("calendar-date-controls-v018.png"),
+    scale: "css",
+  });
+  await page.screenshot({
+    path: testInfo.outputPath("calendar-controls-v018.png"),
+    scale: "css",
+  });
+});
+
+test("mobile reminder matrix leaves room to scroll activities", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  await navigate(page, "Erinnerungen");
+  await expect(page.getByRole("table")).toBeVisible();
+  const region = page.locator(".reminders-scroll");
+  const corner = page.locator(".reminders-table thead th").first();
+  const before = await corner.boundingBox();
+  if ((page.viewportSize()?.width ?? 0) < 600) {
+    const bounds = await region.boundingBox();
+    expect(before!.width).toBeLessThanOrEqual(120);
+    expect(bounds!.width - before!.width).toBeGreaterThan(170);
+    await region.evaluate((n) => {
+      n.scrollLeft = 350;
+    });
+    const after = await corner.boundingBox();
+    expect(Math.abs(before!.x - after!.x)).toBeLessThan(1);
+  }
+  await page.screenshot({
+    path: testInfo.outputPath("reminders-mobile-v018.png"),
+    scale: "css",
+  });
+});
+
+test("a failed reminder batch rolls back only that batch while later choices save", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  await navigate(page, "Erinnerungen");
+  const inputs = page.locator(".reminders-table input:enabled");
+  await expect(inputs).toHaveCount(4);
+  let release!: () => void, started!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const received = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  let calls = 0;
+  await page.route("**/__test_api/**", async (route) => {
+    if (
+      route.request().postDataJSON().operation === "set_user_reminders" &&
+      ++calls === 1
+    ) {
+      started();
+      await gate;
+      await route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "invalid_data" }),
+      });
+    } else await route.continue();
+  });
+  await inputs.nth(0).uncheck();
+  await received;
+  await inputs.nth(1).uncheck();
+  release();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
+  await expect(inputs.nth(0)).toBeChecked();
+  await expect(inputs.nth(1)).not.toBeChecked();
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  await expect(inputs.nth(0)).toBeChecked();
+  await expect(inputs.nth(1)).not.toBeChecked();
+});
+
+test("large reminder matrix batches rapid changes without disabling other plants", async ({
+  page,
+}, testInfo) => {
+  await open(page, { host: "1", role: "reader" });
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(
+    operation: string,
+    parameters: Record<string, unknown> = {},
+  ) {
+    const response = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role: "admin", host: true },
+    });
+    expect(response.ok()).toBe(true);
+    return response.json();
+  }
+  const payload = await api("export");
+  const stamp = "2026-11-06T10:00:00+00:00";
+  for (let i = 0; i < 200; i++) {
+    const id = `matrix-plant-${i}`;
+    payload.tables.plants.push({
+      id,
+      revision: 1,
+      created_at: stamp,
+      updated_at: stamp,
+      data: {
+        name: `Pflanze ${String(i).padStart(3, "0")} mit einem sehr langen Pflanzennamen`,
+      },
+    });
+    payload.tables.growing_windows.push({
+      id: `matrix-window-${i}`,
+      revision: 1,
+      created_at: stamp,
+      updated_at: stamp,
+      data: {
+        plant_id: id,
+        activity: "direct",
+        environment: "outdoors",
+        start_month: 11,
+        start_day: 6,
+        end_month: 11,
+        end_day: 30,
+      },
+    });
+  }
+  const preview = await api("preview_import", { payload });
+  await api("import", { payload, token: preview.token });
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  const inputs = page.locator(".reminders-table input:enabled");
+  await expect(inputs).toHaveCount(200);
+  const batches: { enabled: boolean }[][] = [];
+  await page.route("**/__test_api/**", async (route) => {
+    const data = route.request().postDataJSON();
+    if (data.operation === "set_user_reminders")
+      batches.push(data.parameters.changes);
+    await route.continue();
+  });
+  // A single input burst fits inside the debounce window, independent of machine speed.
+  await inputs.evaluateAll((nodes) =>
+    nodes.slice(0, 20).forEach((node) => {
+      (node as HTMLInputElement).checked = false;
+      node.dispatchEvent(new Event("change", { bubbles: true }));
+    }),
+  );
+  await expect(inputs.nth(0)).not.toBeChecked();
+  await expect(inputs.nth(19)).not.toBeChecked();
+  await expect(inputs.nth(199)).toBeEnabled();
+  await expect(page.locator(".reminder-save-status")).toHaveText("");
+  expect(batches).toHaveLength(1);
+  expect(batches[0]).toHaveLength(20);
+  const corner = await page
+    .locator(".reminders-table thead th")
+    .first()
+    .boundingBox();
+  if ((page.viewportSize()?.width ?? 0) < 600)
+    expect(corner!.width).toBeLessThanOrEqual(120);
+  await page.locator(".reminders-scroll").screenshot({
+    path: testInfo.outputPath("large-matrix-v018.png"),
+    scale: "css",
+  });
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Erinnerungen");
+  await expect(inputs.nth(0)).not.toBeChecked();
+  await expect(inputs.nth(19)).not.toBeChecked();
+  await expect(inputs.nth(20)).toBeChecked();
 });

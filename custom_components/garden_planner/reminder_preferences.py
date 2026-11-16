@@ -48,11 +48,41 @@ def updated(
     activity: str,
     enabled: bool,
 ) -> dict[str, Any]:
-    if type(enabled) is not bool or activity not in available.get(plant_id, {}):
-        raise ValidationError("Choose an existing growing-window activity.")
+    return updated_many(
+        available,
+        stored,
+        [{"plant_id": plant_id, "activity": activity, "enabled": enabled}],
+    )
+
+
+def updated_many(
+    available: dict[str, dict[str, list[str]]], stored: Any, changes: Any
+) -> dict[str, Any]:
+    """Validate the entire bounded batch before applying it in a single pass."""
+    if not isinstance(changes, list) or not 1 <= len(changes) <= 500:
+        raise ValidationError("Choose between one and 500 reminder changes.")
+    seen: set[tuple[str, str]] = set()
+    for change in changes:
+        if not isinstance(change, dict) or set(change) != {
+            "plant_id",
+            "activity",
+            "enabled",
+        }:
+            raise ValidationError("Invalid reminder change fields.")
+        pid, activity = change["plant_id"], change["activity"]
+        if (
+            not isinstance(pid, str)
+            or not isinstance(activity, str)
+            or type(change["enabled"]) is not bool
+            or activity not in available.get(pid, {})
+        ):
+            raise ValidationError("Choose an existing growing-window activity.")
+        if (pid, activity) in seen:
+            raise ValidationError("Duplicate reminder changes.")
+        seen.add((pid, activity))
     current = selections(available, stored)
-    current[plant_id][activity] = enabled
-    # Persist only current opt-outs and their window generation; stale pairs disappear.
+    for change in changes:
+        current[change["plant_id"]][change["activity"]] = change["enabled"]
     return {
         "disabled": {
             pid: {act: available[pid][act] for act, value in acts.items() if not value}

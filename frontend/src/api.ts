@@ -1,7 +1,10 @@
 import { TABLES, type Hass, type Tables, type Entity } from "./types";
 
 export class PlannerApi {
-  constructor(readonly hass: Hass) {}
+  private readonly connection: Hass["connection"];
+  constructor(readonly hass: Hass) {
+    this.connection = hass.connection;
+  }
   command<T>(
     operation: string,
     parameters: Record<string, unknown> = {},
@@ -24,11 +27,14 @@ export class PlannerApi {
           return value as T;
         });
     }
-    return this.hass.callWS<T>({
+    const message = {
       type: "garden_planner/command",
       operation,
       parameters,
-    });
+    };
+    return this.connection.sendMessagePromise
+      ? this.connection.sendMessagePromise<T>(message)
+      : this.hass.callWS<T>(message);
   }
   async load(): Promise<Tables> {
     const records = await Promise.all(

@@ -581,7 +581,50 @@ export const styles = css`
   .harvest {
     --bar-color: #b97856;
   }
+  .filters.calendar-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+  }
+  .filters.calendar-filters > label {
+    min-width: 0;
+    max-width: none;
+  }
+  .calendar-toolbar {
+    align-items: end;
+  }
+  .calendar-navigation {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 220px) 44px auto;
+    align-items: end;
+    gap: 10px;
+    max-width: 100%;
+  }
+  .calendar-navigation label {
+    min-width: 0;
+  }
+  .calendar-navigation input {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    box-sizing: border-box;
+  }
+  .calendar-navigation input::-webkit-date-and-time-value {
+    min-width: 0;
+    text-align: left;
+  }
+  .calendar-navigation button {
+    min-height: 44px;
+  }
+  .filter-label {
+    font-size: 12px;
+    font-weight: 600;
+  }
   .multi-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
     min-width: 0;
     padding: 0;
     margin: 0;
@@ -594,9 +637,15 @@ export const styles = css`
   }
   .multi-filter details {
     position: relative;
+    margin: 0;
   }
   .multi-filter summary {
-    min-height: 44px;
+    width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     border: 1px solid var(--gp-border);
     border-radius: 10px;
     background: var(--gp-card);
@@ -620,6 +669,10 @@ export const styles = css`
   }
   .multi-filter-options .check {
     min-height: 44px;
+    max-width: none;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .multi-filter-options p {
     margin-top: 0;
@@ -628,8 +681,20 @@ export const styles = css`
   .task-card {
     scroll-margin-top: 130px;
   }
+  .reminder-save-status {
+    min-height: 20px;
+    margin: 8px 0;
+    font-size: 12px;
+    color: var(--gp-muted);
+  }
+  .matrix-scroll-hint {
+    display: none;
+  }
   .reminders-scroll {
     overflow: auto;
+    touch-action: pan-x pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     max-height: 65dvh;
     margin-top: 20px;
     border: 1px solid var(--gp-border);
@@ -638,6 +703,7 @@ export const styles = css`
   .reminders-table {
     border-collapse: separate;
     border-spacing: 0;
+    table-layout: fixed;
     min-width: 850px;
     width: 100%;
   }
@@ -659,7 +725,9 @@ export const styles = css`
   .reminders-table th:first-child {
     position: sticky;
     left: 0;
-    min-width: 180px;
+    width: 180px;
+    white-space: normal;
+    overflow-wrap: anywhere;
     text-align: left;
     z-index: 1;
   }
@@ -1342,6 +1410,41 @@ export const styles = css`
     }
     dd {
       margin-bottom: 10px;
+    }
+  }
+  @media (max-width: 900px) {
+    .filters.calendar-filters {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .filters.calendar-filters > label:first-child {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 600px) {
+    .filters.calendar-filters {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .calendar-navigation {
+      width: 100%;
+      grid-template-columns: 44px minmax(0, 1fr) 44px;
+    }
+    .calendar-today {
+      grid-column: 1 / -1;
+      justify-self: end;
+    }
+    .reminders-table {
+      min-width: 750px;
+    }
+    .reminders-table th:first-child {
+      width: 100px;
+      padding: 8px;
+    }
+    .reminders-table thead th {
+      overflow-wrap: anywhere;
+    }
+    .matrix-scroll-hint {
+      display: block;
+      font-size: 12px;
     }
   }
 `;

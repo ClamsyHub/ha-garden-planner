@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8 — 2026-11-16
+
+- Apply reminder selections immediately without locking the matrix; coalesce rapid changes into bounded, authenticated batches and update only affected rows.
+- Preserve newer choices while a save is pending; restore confirmed values on failure and drain pending changes before internal navigation.
+- Reduce the sticky plant column on phones and keep long names within its width, leaving room to scroll activities.
+- Keep multi-select calendar filters at a stable width, align their labels/controls, and close menus on outside clicks or Escape.
+- Align calendar date navigation and wrap the Today button on narrow displays to avoid overlaps.
+
 ## 0.1.7 — 2026-11-16
 
 - Add a personal Reminders page between Locations and Settings, available to every authorized user including read-only users.

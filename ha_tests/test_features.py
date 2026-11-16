@@ -160,6 +160,78 @@ class FeatureTests(IntegrationHarness):
         self.assertTrue(late.is_admin)
         self.assertNotIn("garden-planner", store.data["sidebar"]["hiddenPanels"])
 
+    async def test_batch_preferences_save_once_and_regenerate_once_for_reader(
+        self,
+    ) -> None:
+        plant = (
+            await self.request(
+                "create", {"table": "plants", "data": {"name": "Batch plant"}}
+            )
+        )["result"]
+        for activity in ("direct", "care"):
+            response = await self.request(
+                "create",
+                {
+                    "table": "growing_windows",
+                    "data": {
+                        "plant_id": plant["id"],
+                        "activity": activity,
+                        "environment": "outdoors",
+                        "start_month": 11,
+                        "start_day": 6,
+                        "end_month": 11,
+                        "end_day": 30,
+                    },
+                },
+            )
+            self.assertTrue(response["success"], response)
+        self.connection.user = self.editor
+        runtime: Runtime = self.hass.data[f"{DOMAIN}_runtime"]
+        store = await async_user_store(self.hass, self.editor.id)
+        changes = [
+            {"plant_id": plant["id"], "activity": a, "enabled": False}
+            for a in ("direct", "care")
+        ]
+        with (
+            patch.object(store, "async_set_item", wraps=store.async_set_item) as save,
+            patch.object(
+                runtime.reminders.planner,
+                "async_tasks",
+                wraps=runtime.reminders.planner.async_tasks,
+            ) as generate,
+        ):
+            response = await self.request("set_user_reminders", {"changes": changes})
+            self.assertTrue(response["success"], response)
+            self.assertEqual(
+                response["result"]["cells"][plant["id"]],
+                {"direct": False, "care": False},
+            )
+            self.assertEqual(save.await_count, 1)
+            self.assertEqual(generate.await_count, 1)
+            await self.request("get_user_reminders")
+            self.assertEqual(generate.await_count, 1)
+            invalid = changes + [
+                {"plant_id": plant["id"], "activity": "missing", "enabled": True}
+            ]
+            self.assertFalse(
+                (await self.request("set_user_reminders", {"changes": invalid}))[
+                    "success"
+                ]
+            )
+            self.assertFalse(
+                (
+                    await self.request(
+                        "set_user_reminders",
+                        {"changes": changes, "user_id": self.owner.id},
+                    )
+                )["success"]
+            )
+            self.assertEqual(save.await_count, 1)
+            self.assertEqual(generate.await_count, 1)
+        self.connection.user = self.owner
+        result = (await self.request("get_user_reminders"))["result"]
+        self.assertTrue(all(result["cells"][plant["id"]].values()))
+
     async def test_personal_reminders_owner_persistence_and_deduplication(
         self,
     ) -> None:

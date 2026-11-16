@@ -15,7 +15,7 @@ from homeassistant.util import dt as dt_util
 from .coordinator import GardenCoordinator
 from .models import NotFoundError, StorageError, ValidationError
 from .options import notification_destinations, validate_options
-from .reminder_preferences import STORE_KEY, availability, selections, updated
+from .reminder_preferences import STORE_KEY, availability, selections, updated_many
 from .reminders import Reminders
 from .service import Actor, PlannerService
 from .sidebar import async_sync_sidebar
@@ -67,7 +67,11 @@ class Runtime:
                 if record is None:
                     raise NotFoundError("Personal task not found.")
                 return record
-        if operation in {"get_user_reminders", "set_user_reminder"}:
+        if operation in {
+            "get_user_reminders",
+            "set_user_reminder",
+            "set_user_reminders",
+        }:
             async with self.preference_lock:
                 if self.closing:
                     raise StorageError("Garden Planner is unloading.")
@@ -78,25 +82,31 @@ class Runtime:
                 available = availability(plants, windows)
                 store = await async_user_store(self.hass, actor.user_id)
                 stored = store.data.get(STORE_KEY, {})
-                if operation == "set_user_reminder":
-                    if not isinstance(params["activity"], str):
-                        raise ValidationError("Activity must be text.")
-                    stored = updated(
-                        available,
-                        stored,
-                        params["plant_id"],
-                        params["activity"],
-                        params["enabled"],
+                if operation != "get_user_reminders":
+                    changes = (
+                        params["changes"]
+                        if operation == "set_user_reminders"
+                        else [
+                            {
+                                "plant_id": params["plant_id"],
+                                "activity": params["activity"],
+                                "enabled": params["enabled"],
+                            }
+                        ]
                     )
-                    await store.async_set_item(STORE_KEY, stored)
+                    next_stored = updated_many(available, stored, changes)
+                    if next_stored != stored:
+                        await store.async_set_item(STORE_KEY, next_stored)
+                    stored = next_stored
                 settings = validate_options(dict(self.entry.options))
-                await self.reminders.planner.async_tasks(
-                    actor.user_id,
-                    dt_util.now().date(),
-                    settings["language"],
-                    plants,
-                    windows,
-                )
+                if operation != "get_user_reminders":
+                    await self.reminders.planner.async_tasks(
+                        actor.user_id,
+                        dt_util.now().date(),
+                        settings["language"],
+                        plants,
+                        windows,
+                    )
                 return {
                     "cells": selections(available, stored),
                     "global_enabled": settings["reminders_enabled"],

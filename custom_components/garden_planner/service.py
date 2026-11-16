@@ -56,6 +56,7 @@ PARAMETERS: dict[str, tuple[set[str], set[str]]] = {
     "capabilities": (set(), set()),
     "get_user_reminders": (set(), set()),
     "set_personal_task_completed": ({"id", "revision", "completed"}, set()),
+    "set_user_reminders": ({"changes"}, set()),
     "set_user_reminder": ({"plant_id", "activity", "enabled"}, set()),
     "get_settings": (set(), set()),
     "set_settings": ({"settings", "confirm"}, set()),
@@ -148,6 +149,7 @@ class PlannerService:
             "set_settings",
             "get_user_reminders",
             "set_user_reminder",
+            "set_user_reminders",
             "set_personal_task_completed",
         }:
             if self.host_handler is None:
