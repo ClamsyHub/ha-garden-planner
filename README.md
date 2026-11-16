@@ -17,9 +17,9 @@ aufgenommen. Live-Verzeichnisse werden nicht zur Entwicklung verwendet.
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.7:** Persönlicher Aufgabenplan aus der Pflanzen-/Tätigkeiten-Matrix,
-dauerhafte Erledigtstände und Benachrichtigungen über die vorhandenen Push-/E-Mail-Ziele.
-[Updatehinweise und Datensicherung](docs/releases/v0.1.7.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
+**Änderungen v0.1.8:** Sofort reagierende Erinnerungs-Checkboxen, gebündeltes Speichern,
+mehr Platz in der mobilen Matrix und übersichtlich ausgerichtete Kalenderfilter und Datumsfelder.
+[Updatehinweise und Datensicherung](docs/releases/v0.1.8.md). [Katalog-PR #13526](https://github.com/hacs/default/pull/13526)
 wurde am 9. November 2026 von Frenck akzeptiert und zusammengeführt. [Status](docs/catalog/README.md).
 
 ## Oberfläche

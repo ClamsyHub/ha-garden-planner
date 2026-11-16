@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.7
+## Stand dieser Dokumentation: v0.1.8
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
@@ -144,3 +144,5 @@ Ab v0.1.5 stehen die Kalenderansichten in der Reihenfolge Jahr / Monat / Woche. 
 Ab v0.1.6 ermöglichen die Kalenderfilter eine Mehrfachauswahl. Die Monatszeile und Eckzelle der Jahresliste sind fixiert. [Updatehinweise](../releases/v0.1.6.md).
 
 Ab v0.1.7 erzeugt **Erinnerungen** einen persönlichen Aufgabenplan. Eigene Aufgaben lassen sich auch mit Leserecht erledigen; vorhandene Push-/E-Mail-Einstellungen erinnern an fällige Aufgaben. Auswahl und Erledigtstände mit der vollständigen HA-Konfiguration sichern. [Updatehinweise](../releases/v0.1.7.md).
+
+Version **0.1.8** verbessert die Reaktionszeit der Erinnerungs-Checkboxen durch sofortige Anzeige und gebündeltes Speichern. Die mobile Matrix lässt mehr Platz für Tätigkeiten; Kalenderfilter und Datumsnavigation sind ausgerichtet. Filter schließen beim Klicken außerhalb oder mit Escape. Beim Verlassen der Seite den Speicherstatus abwarten. [Updatehinweise](../releases/v0.1.8.md).
