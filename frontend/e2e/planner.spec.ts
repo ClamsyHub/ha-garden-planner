@@ -3028,13 +3028,11 @@ test("plant and variety photos persist independently and profile has real year b
     ctx.fillRect(0, 0, 32, 24);
     return c.toDataURL("image/png").split(",")[1]!;
   });
-  await editor
-    .getByLabel("Bild hochladen", { exact: true })
-    .setInputFiles({
-      name: "bad.svg",
-      mimeType: "image/svg+xml",
-      buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
-    });
+  await editor.getByLabel("Bild hochladen", { exact: true }).setInputFiles({
+    name: "bad.svg",
+    mimeType: "image/svg+xml",
+    buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
+  });
   await expect(editor.getByRole("alert")).toContainText(
     "Bild konnte nicht verarbeitet",
   );
