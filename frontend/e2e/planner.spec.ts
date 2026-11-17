@@ -2914,6 +2914,23 @@ test("all sections provide a direct return to overview", async ({ page }) => {
     "Einstellungen",
   ]) {
     await navigate(page, name);
+    if (name === "Einstellungen") {
+      await page.evaluate(() => window.scrollTo(0, 900));
+      const bar = page.locator(".back-overview-bar");
+      const top = await page
+        .locator("garden-planner-panel")
+        .evaluate((e) =>
+          Number.parseFloat(
+            (e as HTMLElement).style.getPropertyValue("--gp-sticky-top"),
+          ),
+        );
+      await expect
+        .poll(async () => Math.abs((await bar.boundingBox())!.y - top))
+        .toBeLessThan(2);
+      await expect(
+        bar.getByRole("button", { name: "Zurück zur Übersicht", exact: true }),
+      ).toBeInViewport();
+    }
     await page
       .getByRole("button", { name: "Zurück zur Übersicht", exact: true })
       .click();

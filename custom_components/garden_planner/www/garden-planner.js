@@ -4418,7 +4418,12 @@ var Hn = M`
     white-space: nowrap;
     border: 0;
   }
-  .back-overview {
+  .back-overview-bar {
+    position: sticky;
+    top: var(--gp-sticky-top, 56px);
+    z-index: 1;
+    background: var(--gp-bg);
+    padding: 8px 0;
     margin-bottom: 16px;
   }
   .plant-photo,
@@ -7757,7 +7762,7 @@ var Kn = class extends Ze {
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
         <main class=${this.page === "overview" ? "overview-page" : ""}>
-          ${this.page === "overview" ? H : B`<button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button>`}
+          ${this.page === "overview" ? H : B`<div class="back-overview-bar"><button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button></div>`}
           <header class="topbar">
             <div>
               <div class="eyebrow">Garden Planner</div>

@@ -4434,7 +4434,7 @@ export class GardenPlannerPanel extends LitElement {
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
         <main class=${this.page === "overview" ? "overview-page" : ""}>
-          ${this.page !== "overview" ? html`<button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button>` : nothing}
+          ${this.page !== "overview" ? html`<div class="back-overview-bar"><button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button></div>` : nothing}
           <header class="topbar">
             <div>
               <div class="eyebrow">Garden Planner</div>

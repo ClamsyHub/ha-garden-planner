@@ -1759,7 +1759,12 @@ export const styles = css`
     white-space: nowrap;
     border: 0;
   }
-  .back-overview {
+  .back-overview-bar {
+    position: sticky;
+    top: var(--gp-sticky-top, 56px);
+    z-index: 1;
+    background: var(--gp-bg);
+    padding: 8px 0;
     margin-bottom: 16px;
   }
   .plant-photo,
