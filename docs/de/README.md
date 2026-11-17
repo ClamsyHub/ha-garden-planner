@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.10
+## Stand dieser Dokumentation: v0.1.11
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
@@ -149,3 +149,13 @@ Version **0.1.8** verbessert die Reaktionszeit der Erinnerungs-Checkboxen durch 
 Im **Gartenkalender** bilden **Tätigkeitszeiträume** auch Arbeiten an Obstbäumen und Sträuchern ab. **Düngen** und **Rückschnitt** besitzen eigene Farben und sind in der persönlichen Erinnerungsmatrix auswählbar. Alle gespeicherten Zeiträume bleiben erhalten. [Updatehinweise v0.1.9](../releases/v0.1.9.md).
 
 Ab **v0.1.10** zeigen persönliche Aufgaben den vollständigen Tätigkeitszeitraum mit Beginn und Ende. Der Start bleibt der Termin für Erinnerungen. [Updatehinweise](../releases/v0.1.10.md).
+
+## Nachbarn und Saatgut & Einkauf (v0.1.11)
+
+Unter **Nachbarn** eine Pflanze auswählen und gute/schlechte Nachbarn aus dem bestehenden Katalog mehrfach zuordnen. Katalog-Verknüpfungen gelten automatisch in beide Richtungen und werden gemeinsam gespeichert. Ein Wechsel von gut zu schlecht ersetzt die bisherige Einordnung auf beiden Seiten. Freie Namen außerhalb des Katalogs sind optional (ein Name pro Zeile). Wird ein eindeutiger Katalogname dort eingegeben, verwendet die Oberfläche dessen vorhandene Pflanze. Bei mehrdeutigen Namen die Katalogauswahl verwenden. Freie Angaben ohne Katalogpflanze bleiben an der ausgewählten Pflanze gespeichert. Die Angaben sind eigene Erfahrungen; es werden keine Empfehlungen vorbesetzt. Vor dem Löschen einer verknüpften Pflanze die Zuordnungen entfernen oder die Pflanze archivieren.
+
+**Saatgut & Einkauf** gehört zum gemeinsamen Garten, nicht zum persönlichen Benutzerprofil. Pro aktiver Pflanze genau einen Zustand wählen: **Vorhanden**, **Kaufen**, **Nicht benötigt** oder **Offen**. Ohne vorherige Angabe ist der Zustand offen. „Nicht benötigt“ passt z. B. zu Bäumen oder einer Saisonpause. Änderungen reagieren sofort und werden über **Änderungen speichern** gesammelt gespeichert; beim Wechsel in einen anderen Panel-Bereich wird ebenfalls gespeichert. Vor dem Schließen der App speichern. Der Statusfilter **Kaufen** zeigt die Einkaufsauswahl. Bei einem konkurrierenden Schreibzugriff bleiben nicht gespeicherte Auswahlen erhalten; mit **Auswahl verwerfen** neu laden und erneut auswählen.
+
+Nachbarn und Saatgut bearbeiten nur Nutzer mit Garten-Bearbeitungsrecht sowie Administratoren. Leser können beide Bereiche ansehen. Die Daten liegen an den Pflanzen in der Garten-SQLite-Datenbank und sind in Garten-JSON/CSV-Exporten und Datenbanksicherungen enthalten. Bestehende CSV-Dateien ohne die zusätzlichen Spalten bleiben importierbar. Datenbankschema 3 und Austauschformat 1 bleiben unverändert.
+
+Das Erledigen einer gemeinsamen oder persönlichen Aufgabe erfordert nun eine Bestätigung mit Titel und Datum/Zeitraum. **Abbrechen** oder **Escape** ändern nichts. Wiederöffnen erfolgt weiterhin über die Aufgabenliste.

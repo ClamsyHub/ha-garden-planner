@@ -878,6 +878,33 @@ var $e = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, vt = {
+	neighbors: "Nachbarn",
+	seeds: "Saatgut & Einkauf",
+	goodNeighbors: "Gute Nachbarn",
+	badNeighbors: "Schlechte Nachbarn",
+	editNeighbors: "Nachbarn bearbeiten",
+	neighborIntro: "Pflege deine eigenen Mischkultur-Erfahrungen. Katalog-Zuordnungen gelten automatisch für beide Pflanzen.",
+	chooseNeighborPlant: "Pflanze auswählen",
+	neighborSearch: "Nachbarn suchen",
+	extraGoodNeighbors: "Weitere gute Nachbarn (ein Name pro Zeile)",
+	extraBadNeighbors: "Weitere schlechte Nachbarn (ein Name pro Zeile)",
+	freeNeighbor: "Freie Angabe",
+	noNeighbors: "Noch keine Nachbarn zugeordnet.",
+	neighborConflict: "Bitte ordne jeden Nachbarn nur einer Gruppe zu und wähle nicht die Pflanze selbst. Bei gleichen Pflanzennamen nutze die Katalogauswahl.",
+	seedIntro: "Gemeinsame Saatgutplanung für deinen Pflanzenkatalog. Wähle je Pflanze einen Status; mehrere Änderungen lassen sich gesammelt speichern. Beim Wechsel in einen anderen Bereich werden sie ebenfalls gespeichert.",
+	seed_available: "Vorhanden",
+	seed_buy: "Kaufen",
+	seed_unneeded: "Nicht benötigt",
+	seed_unplanned: "Offen",
+	seedPending: "Ungespeicherte Änderungen",
+	saveSeed: "Änderungen speichern",
+	discardSeed: "Auswahl verwerfen",
+	seedFilter: "Status filtern",
+	seedAll: "Alle Zustände",
+	seedHint: "„Nicht benötigt“ passt zu Bäumen, Sträuchern oder einer Pause. „Offen“ bedeutet: noch nicht entschieden. Bei einem Änderungskonflikt Auswahl verwerfen und neu auswählen.",
+	completeTaskTitle: "Gartenarbeit erledigen?",
+	completeTaskBody: "Möchtest du diese Aufgabe wirklich als erledigt markieren? Sie wird anschließend aus „Nächste Gartenarbeiten“ ausgeblendet.",
+	confirmTask: "Ja, als erledigt markieren",
 	savingReminders: "Änderungen werden gespeichert …",
 	matrixScrollHint: "Für weitere Tätigkeiten seitlich wischen.",
 	reminders: "Erinnerungen",
@@ -949,6 +976,33 @@ var $e = {
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, yt = {
+	neighbors: "Neighbors",
+	seeds: "Seeds & shopping",
+	goodNeighbors: "Good neighbors",
+	badNeighbors: "Bad neighbors",
+	editNeighbors: "Edit neighbors",
+	neighborIntro: "Record your own companion-planting observations. Catalog links automatically apply to both plants.",
+	chooseNeighborPlant: "Select plant",
+	neighborSearch: "Search neighbors",
+	extraGoodNeighbors: "Other good neighbors (one name per line)",
+	extraBadNeighbors: "Other bad neighbors (one name per line)",
+	freeNeighbor: "Free entry",
+	noNeighbors: "No neighbors assigned yet.",
+	neighborConflict: "Assign each neighbor to only one group and do not select the plant itself. For duplicate plant names, use catalog selection.",
+	seedIntro: "Shared seed planning for your plant catalog. Select one state per plant and save changes together. Leaving this section also saves your choices.",
+	seed_available: "Available",
+	seed_buy: "Buy",
+	seed_unneeded: "Not needed",
+	seed_unplanned: "Undecided",
+	seedPending: "Unsaved changes",
+	saveSeed: "Save changes",
+	discardSeed: "Discard choices",
+	seedFilter: "Filter by state",
+	seedAll: "All states",
+	seedHint: "Use “Not needed” for trees, shrubs or a seasonal break. “Undecided” means no choice yet. If another edit conflicts, discard choices and select again.",
+	completeTaskTitle: "Complete garden task?",
+	completeTaskBody: "Mark this task as complete? It will be removed from Upcoming garden work.",
+	confirmTask: "Yes, mark as complete",
 	savingReminders: "Saving changes …",
 	matrixScrollHint: "Swipe sideways for more activities.",
 	reminders: "Reminders",
@@ -3992,6 +4046,121 @@ var Vn = M`
       font-size: 12px;
     }
   }
+  .neighbor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+  }
+  .neighbor-grid > section {
+    min-width: 0;
+  }
+  .neighbor-group li {
+    margin: 10px 0;
+    overflow-wrap: anywhere;
+  }
+  .neighbor-options {
+    max-height: 280px;
+    overflow: auto;
+    margin-bottom: 14px;
+    border: 1px solid var(--gp-border);
+    padding: 8px;
+    border-radius: 9px;
+  }
+  .neighbor-options .check {
+    min-height: 44px;
+    overflow-wrap: anywhere;
+  }
+  .seed-save {
+    margin: 14px 0;
+  }
+  .seed-scroll {
+    overflow: auto;
+    max-height: 65dvh;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    touch-action: pan-x pan-y;
+  }
+  .seed-table {
+    width: 100%;
+    min-width: 580px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+  .seed-table th,
+  .seed-table td {
+    padding: 8px;
+    border-right: 1px solid var(--gp-border);
+    border-bottom: 1px solid var(--gp-border);
+    text-align: center;
+  }
+  .seed-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-soft);
+  }
+  .seed-table th:first-child {
+    position: sticky;
+    left: 0;
+    width: 180px;
+    background: var(--gp-card);
+    text-align: left;
+    overflow-wrap: anywhere;
+    z-index: 1;
+  }
+  .seed-table thead th:first-child {
+    background: var(--gp-soft);
+    z-index: 3;
+  }
+  .seed-choice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .seed-choice input {
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    accent-color: var(--gp-green);
+  }
+  @media (max-width: 600px) {
+    .neighbor-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .seed-table {
+      min-width: 500px;
+    }
+    .seed-table th:first-child {
+      width: 100px;
+    }
+    .seed-save > .actions {
+      width: 100%;
+    }
+    .seed-save button {
+      flex: 1;
+    }
+  }
+  .neighbor-toolbar {
+    align-items: end;
+  }
+  .neighbor-toolbar > label {
+    width: min(100%, 320px);
+    min-width: 0;
+  }
+  .seed-table thead th {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 600px) {
+    .neighbor-toolbar > label,
+    .neighbor-toolbar > button {
+      width: 100%;
+    }
+  }
 `, Hn = [
 	"overview",
 	"calendar",
@@ -4000,6 +4169,8 @@ var Vn = M`
 	"history",
 	"locations",
 	"reminders",
+	"neighbors",
+	"seeds",
 	"settings"
 ], Q = [
 	"indoors",
@@ -4018,6 +4189,8 @@ var Vn = M`
 	plants: "M12 21V10M12 15C3 15 3 6 3 6s9-1 9 9zm0-5c0-8 9-8 9-8s1 9-9 8z",
 	cultures: "M5 20h14l2-10H3zM12 10V4m0 4C6 8 6 3 6 3s6 0 6 5zm0-2c0-5 6-5 6-5s0 5-6 5z",
 	history: "M3 11a9 9 0 1 1 2 7M3 4v7h7m2-4v6l4 2",
+	neighbors: "M4 20V8m16 12V8M4 10c0-6 8-6 8 0M12 10c0-6 8-6 8 0M8 20v-6m8 6v-6M2 20h20",
+	seeds: "M4 5h16v16H4zM8 2v6m8-6v6M8 12h8M8 16h5",
 	reminders: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
 	locations: "M3 3l6 3 6-3 6 3v15l-6-3-6 3-6-3zm6 3v15m6-18v15",
 	settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0-6v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2",
@@ -4040,7 +4213,7 @@ function Wn() {
 }
 var Gn = class extends Ze {
 	constructor(...e) {
-		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Wn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Wn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -4066,7 +4239,7 @@ var Gn = class extends Ze {
 		}, this.flushHiddenReminders = () => {
 			document.visibilityState === "hidden" && this.flushReminderChanges();
 		}, this.confirmPendingReminders = (e) => {
-			this.reminderSaving && (e.preventDefault(), e.returnValue = "");
+			(this.reminderSaving || this.seedDraft.size) && (e.preventDefault(), e.returnValue = "");
 		}, this.positionSensorOptions = () => {
 			if (!this.sensorOpen) return;
 			let e = this.renderRoot.querySelector("#field-sensor_entity_id");
@@ -4117,6 +4290,13 @@ var Gn = class extends Ze {
 			sensorAbove: { state: !0 },
 			sensorMaxHeight: { state: !0 },
 			deleting: { state: !0 },
+			completing: { state: !0 },
+			neighborPlant: { state: !0 },
+			neighborEditor: { state: !0 },
+			neighborQuery: { state: !0 },
+			seedDraft: { state: !0 },
+			seedQuery: { state: !0 },
+			seedFilter: { state: !0 },
 			reviewed: { state: !0 },
 			importMode: { state: !0 },
 			replaceConfirmed: { state: !0 },
@@ -4168,7 +4348,7 @@ var Gn = class extends Ze {
 		e.has("hass") && this.isConnected && (this.hass?.connection !== this.boundConnection || this.hass?.user?.id !== this.boundUser) && this.bind();
 	}
 	updated() {
-		this.setAttribute("lang", this.language), this.hass?.themes && this.toggleAttribute("dark", this.hass.themes.darkMode), this.syncDialog("detail-dialog", this.selected !== null), this.syncDialog("editor-dialog", this.editor !== null), this.syncDialog("delete-dialog", this.deleting !== null), this.syncDialog("review-dialog", this.reviewed !== null);
+		this.setAttribute("lang", this.language), this.hass?.themes && this.toggleAttribute("dark", this.hass.themes.darkMode), this.syncDialog("detail-dialog", this.selected !== null), this.syncDialog("editor-dialog", this.editor !== null), this.syncDialog("delete-dialog", this.deleting !== null), this.syncDialog("complete-task-dialog", this.completing !== null), this.syncDialog("neighbors-dialog", this.neighborEditor !== null), this.syncDialog("review-dialog", this.reviewed !== null);
 	}
 	syncDialog(e, t) {
 		let n = this.renderRoot.querySelector(`#${e}`);
@@ -4181,7 +4361,7 @@ var Gn = class extends Ze {
 	async bind() {
 		this.flushReminderChanges();
 		let e = ++this.connectionGeneration;
-		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new _t(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
+		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new _t(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
 			this.anchor ||= this.today, this.boundConnection.addEventListener?.("ready", this.reconnect);
 			try {
 				let t = await this.api.subscribe(() => {
@@ -4204,9 +4384,9 @@ var Gn = class extends Ze {
 		try {
 			let [t, n] = await Promise.all([this.api.load(), this.api.command("capabilities")]);
 			if (e !== this.loadGeneration || !this.isConnected) return;
-			this.tables = t, this.capabilities = n, this.loaded = !0, this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
+			this.tables = t, this.capabilities = n, n.can_edit || (this.neighborEditor = null, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions.clear(), this.completing && !this.completing.data.personal_generated && (this.completing = null)), this.loaded = !0, this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
 		} catch (t) {
-			e === this.loadGeneration && (this.error = U(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
+			e === this.loadGeneration && (this.error = U(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.completing = null, this.neighborEditor = null, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions.clear(), this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
 		}
 	}
 	announce(e) {
@@ -4230,11 +4410,13 @@ var Gn = class extends Ze {
 	}
 	async navigate(e) {
 		let t = ++this.navigationGeneration, n = this.connectionGeneration;
-		if (this.page === "reminders" && e !== "reminders") do
-			if (!await this.flushReminderChanges() || n !== this.connectionGeneration || t !== this.navigationGeneration || !this.isConnected || this.reminderTasksDirty && !await this.refreshReminderTasks()) return;
-		while (this.reminderPending.size || this.reminderSaving || this.reminderTasksDirty);
-		else if (this.page === "reminders" && e === "reminders") return;
-		n === this.connectionGeneration && t === this.navigationGeneration && (this.page = e, this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings()));
+		if (this.page !== "seeds" || e === "seeds" || !this.seedDraft.size || await this.saveSeedInventory() && n === this.connectionGeneration && t === this.navigationGeneration && this.isConnected) {
+			if (this.page === "reminders" && e !== "reminders") do
+				if (!await this.flushReminderChanges() || n !== this.connectionGeneration || t !== this.navigationGeneration || !this.isConnected || this.reminderTasksDirty && !await this.refreshReminderTasks()) return;
+			while (this.reminderPending.size || this.reminderSaving || this.reminderTasksDirty);
+			else if (this.page === "reminders" && e === "reminders") return;
+			n === this.connectionGeneration && t === this.navigationGeneration && (this.page = e, this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings()));
+		}
 	}
 	plantName(e) {
 		let n = e.data.snapshot;
@@ -4746,6 +4928,330 @@ var Gn = class extends Ze {
         </section>
       </div>`;
 	}
+	toggleTask(e) {
+		this.busy || (e.data.completed ? this.setTaskCompleted(e, !1) : this.completing = e);
+	}
+	async setTaskCompleted(e, t) {
+		return (e.data.personal_generated ? await this.action("set_personal_task_completed", {
+			id: e.id,
+			revision: e.revision,
+			completed: t
+		}) : await this.action("update", {
+			table: "tasks",
+			id: e.id,
+			revision: e.revision,
+			data: { completed: t }
+		})) !== void 0;
+	}
+	renderTaskConfirmation() {
+		let e = this.completing;
+		return B`<dialog
+      id="complete-task-dialog"
+      aria-labelledby="complete-task-title"
+      @cancel=${(e) => {
+			this.busy && e.preventDefault();
+		}}
+      @close=${() => {
+			this.completing = null;
+		}}
+    >
+      <div class="dialog-head">
+        <h2 id="complete-task-title">${this.tr("completeTaskTitle")}</h2>
+      </div>
+      <div class="dialog-body">
+        <p>${this.tr("completeTaskBody")}</p>
+        ${e ? B`<h3>${t(e, "title")}</h3>
+                <p>${g(e, this.language)}</p>` : H}
+        ${this.error ? B`<p role="alert" class="notice error">${this.error}</p>` : H}
+      </div>
+      <div class="dialog-foot">
+        <button
+          ?disabled=${this.busy}
+          @click=${() => {
+			this.completing = null;
+		}}
+        >
+          ${this.tr("cancel")}
+        </button>
+        <button
+          class="primary"
+          ?disabled=${this.busy || !e}
+          @click=${async () => {
+			e && await this.setTaskCompleted(e, !0) && (this.completing = null);
+		}}
+        >
+          ${this.tr("confirmTask")}
+        </button>
+      </div>
+    </dialog>`;
+	}
+	neighborIds(e, t) {
+		let n = e.data[`neighbor_${t}_ids`];
+		return Array.isArray(n) ? n.filter((e) => typeof e == "string") : [];
+	}
+	neighborNames(e, t) {
+		let n = e.data[`neighbor_${t}_names`];
+		return Array.isArray(n) ? n.filter((e) => typeof e == "string") : [];
+	}
+	beginNeighbors(e) {
+		this.error = "", this.neighborQuery = "", this.neighborEditor = {
+			plant: e,
+			good: new Set(this.neighborIds(e, "good")),
+			bad: new Set(this.neighborIds(e, "bad")),
+			goodNames: this.neighborNames(e, "good").join("\n"),
+			badNames: this.neighborNames(e, "bad").join("\n")
+		};
+	}
+	changeNeighbor(e, t, n) {
+		let r = this.neighborEditor;
+		if (!r) return;
+		let i = {
+			...r,
+			good: new Set(r.good),
+			bad: new Set(r.bad)
+		};
+		n ? (i[e].add(t), i[e === "good" ? "bad" : "good"].delete(t)) : i[e].delete(t), this.neighborEditor = i;
+	}
+	async saveNeighbors() {
+		let e = this.neighborEditor;
+		if (!e || this.busy) return;
+		let n = new Set(e.good), r = new Set(e.bad), i = (n, r) => {
+			let i = [];
+			for (let a of n.split(/\r?\n/).map((e) => e.trim()).filter(Boolean)) {
+				let n = this.tables.plants.filter((e) => t(e, "name").toLocaleLowerCase(this.language) === a.toLocaleLowerCase(this.language));
+				if (n.length > 1 || n[0]?.id === e.plant.id) throw Error("neighbors");
+				n[0] ? r.add(n[0].id) : i.push(a);
+			}
+			return i;
+		}, a, o;
+		try {
+			if (a = i(e.goodNames, n), o = i(e.badNames, r), [...n].some((e) => r.has(e))) throw Error("neighbors");
+		} catch {
+			this.error = this.tr("neighborConflict");
+			return;
+		}
+		await this.action("set_neighbors", {
+			plant_id: e.plant.id,
+			revision: e.plant.revision,
+			neighbors: {
+				neighbor_good_ids: [...n].sort(),
+				neighbor_bad_ids: [...r].sort(),
+				neighbor_good_names: a,
+				neighbor_bad_names: o
+			}
+		}) !== void 0 && (this.neighborEditor = null);
+	}
+	renderNeighbors() {
+		let e = [...this.plantList].sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language)), n = e.find((e) => e.id === this.neighborPlant) ?? e[0], r = (e) => B`<section class="panel neighbor-group">
+        <h2>${this.tr(e === "good" ? "goodNeighbors" : "badNeighbors")}</h2>
+        ${n && (this.neighborIds(n, e).length || this.neighborNames(n, e).length) ? B`<ul>
+                ${this.neighborIds(n, e).map((e) => B`<li>${this.nameFor(e, "plants")}</li>`)}${this.neighborNames(n, e).map((e) => B`<li>${e} <small class="muted">${this.tr("freeNeighbor")}</small></li>`)}
+              </ul>` : B`<p class="muted">${this.tr("noNeighbors")}</p>`}
+      </section>`;
+		return B`<p>${this.tr("neighborIntro")}</p>
+      ${n ? B`<div class="toolbar neighbor-toolbar">
+                <label
+                  >${this.tr("chooseNeighborPlant")}<select
+                    aria-label=${this.tr("chooseNeighborPlant")}
+                    .value=${n.id}
+                    @change=${(e) => {
+			this.neighborPlant = e.target.value;
+		}}
+                  >
+                    ${e.map((e) => B`<option value=${e.id} .selected=${e.id === n.id}>${t(e, "name")}</option>`)}
+                  </select></label
+                >${this.editable ? B`<button class="primary" @click=${() => this.beginNeighbors(n)}>${this.tr("editNeighbors")}</button>` : H}
+              </div>
+              <div class="neighbor-grid">${r("good")}${r("bad")}</div>` : this.empty("emptyPlants")}`;
+	}
+	renderNeighborEditor() {
+		let e = this.neighborEditor, n = e ? this.tables.plants.filter((n) => n.id !== e.plant.id && (!n.data.archived || e.good.has(n.id) || e.bad.has(n.id)) && t(n, "name").toLocaleLowerCase(this.language).includes(this.neighborQuery.toLocaleLowerCase(this.language))).sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language)) : [], r = (r) => B`<section>
+        <h3>${this.tr(r === "good" ? "goodNeighbors" : "badNeighbors")}</h3>
+        <div class="neighbor-options">
+          ${n.map((n) => B`<label class="check"><input type="checkbox" .checked=${e?.[r].has(n.id) ?? !1} ?disabled=${this.busy} aria-label=${`${t(n, "name")}: ${this.tr(r === "good" ? "goodNeighbors" : "badNeighbors")}`} @change=${(e) => this.changeNeighbor(r, n.id, e.target.checked)} />${t(n, "name")}${n.data.archived ? B` <small>${this.tr("archived")}</small>` : H}</label>`)}
+        </div>
+        <label
+          >${this.tr(r === "good" ? "extraGoodNeighbors" : "extraBadNeighbors")}<textarea
+            .value=${e?.[r === "good" ? "goodNames" : "badNames"] ?? ""}
+            ?disabled=${this.busy}
+            @input=${(e) => {
+			this.neighborEditor &&= {
+				...this.neighborEditor,
+				[r === "good" ? "goodNames" : "badNames"]: e.target.value
+			};
+		}}
+          ></textarea>
+        </label>
+      </section>`;
+		return B`<dialog
+      id="neighbors-dialog"
+      aria-labelledby="neighbors-title"
+      @cancel=${(e) => {
+			this.busy && e.preventDefault();
+		}}
+      @close=${() => {
+			this.neighborEditor = null;
+		}}
+    >
+      <form
+        @submit=${(e) => {
+			e.preventDefault(), this.saveNeighbors();
+		}}
+      >
+        <div class="dialog-head">
+          <h2 id="neighbors-title">
+            ${this.tr("editNeighbors")}${e ? ` · ${t(e.plant, "name")}` : ""}
+          </h2>
+        </div>
+        <div class="dialog-body">
+          <p>${this.tr("neighborIntro")}</p>
+          <label
+            >${this.tr("neighborSearch")}<input
+              type="search"
+              .value=${this.neighborQuery}
+              @input=${(e) => {
+			this.neighborQuery = e.target.value;
+		}}
+          /></label>
+          <div class="neighbor-grid">${r("good")}${r("bad")}</div>
+          ${this.error ? B`<p role="alert" class="notice error">${this.error}</p>` : H}
+        </div>
+        <div class="dialog-foot">
+          <button
+            type="button"
+            ?disabled=${this.busy}
+            @click=${() => {
+			this.neighborEditor = null;
+		}}
+          >
+            ${this.tr("cancel")}</button
+          ><button type="submit" class="primary" ?disabled=${this.busy}>
+            ${this.tr("save")}
+          </button>
+        </div>
+      </form>
+    </dialog>`;
+	}
+	changeSeed(e, n) {
+		if (!this.editable || this.busy) return;
+		let r = new Map(this.seedDraft);
+		n === (t(e, "seed_state") || "unplanned") ? (r.delete(e.id), this.seedRevisions.delete(e.id)) : (r.set(e.id, n), this.seedRevisions.has(e.id) || this.seedRevisions.set(e.id, e.revision)), this.seedDraft = r;
+	}
+	async saveSeedInventory() {
+		if (!this.api || this.busy || !this.editable) return !1;
+		let e = this.api, t = this.connectionGeneration, n = [...this.seedDraft].map(([e, t]) => ({
+			id: e,
+			state: t,
+			revision: this.seedRevisions.get(e)
+		}));
+		this.busy = !0, this.error = "";
+		try {
+			for (let r = 0; r < n.length; r += 500) {
+				if (t !== this.connectionGeneration) return !1;
+				let i = n.slice(r, r + 500), a = await e.command("set_seed_inventory", { changes: i });
+				if (t !== this.connectionGeneration) return !1;
+				this.loadGeneration++;
+				let o = new Map(a.map((e) => [e.id, e]));
+				this.tables = {
+					...this.tables,
+					plants: this.tables.plants.map((e) => o.get(e.id) ?? e)
+				};
+				let s = new Map(this.seedDraft);
+				i.forEach((e) => {
+					s.delete(e.id), this.seedRevisions.delete(e.id);
+				}), this.seedDraft = s;
+			}
+			return this.announce("saved"), !0;
+		} catch (e) {
+			return t === this.connectionGeneration && (this.error = U(this.language, e)), !1;
+		} finally {
+			t === this.connectionGeneration && (this.busy = !1);
+		}
+	}
+	renderSeeds() {
+		let e = [
+			"available",
+			"buy",
+			"unneeded",
+			"unplanned"
+		], n = this.plantList.filter((e) => t(e, "name").toLocaleLowerCase(this.language).includes(this.seedQuery.toLocaleLowerCase(this.language)) && (!this.seedFilter || (this.seedDraft.get(e.id) ?? (t(e, "seed_state") || "unplanned")) === this.seedFilter)).sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language));
+		return B`<p>${this.tr("seedIntro")}</p>
+      <div class="filters">
+        <label
+          >${this.tr("search")}<input
+            type="search"
+            .value=${this.seedQuery}
+            @input=${(e) => {
+			this.seedQuery = e.target.value;
+		}} /></label
+        ><label
+          >${this.tr("seedFilter")}<select
+            aria-label=${this.tr("seedFilter")}
+            .value=${this.seedFilter}
+            @change=${(e) => {
+			this.seedFilter = e.target.value;
+		}}
+          >
+            <option value="">${this.tr("seedAll")}</option>
+            ${e.map((e) => B`<option value=${e}>${this.tr("seed_" + e)}</option>`)}
+          </select></label
+        >
+      </div>
+      <p class="muted">${this.tr("seedHint")}</p>
+      ${this.editable ? B`<div class="toolbar seed-save">
+              <span role="status"
+                >${this.seedDraft.size ? `${this.tr("seedPending")}: ${this.seedDraft.size}` : ""}</span
+              >
+              <div class="actions">
+                <button
+                  ?disabled=${this.busy || !this.seedDraft.size}
+                  @click=${() => {
+			this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions.clear(), this.error = "", this.refresh();
+		}}
+                >
+                  ${this.tr("discardSeed")}</button
+                ><button
+                  class="primary"
+                  ?disabled=${this.busy || !this.seedDraft.size}
+                  @click=${() => this.saveSeedInventory()}
+                >
+                  ${this.tr("saveSeed")}
+                </button>
+              </div>
+            </div>` : H}
+      <div
+        class="seed-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("seeds")}
+      >
+        <table class="seed-table">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("plants")}</th>
+              ${e.map((e) => B`<th scope="col">${this.tr("seed_" + e)}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${n.map((n) => B`<tr>
+                  <th scope="row">${t(n, "name")}</th>
+                  ${e.map((e) => B`<td>
+                        <label class="seed-choice"
+                          ><input
+                            type="radio"
+                            name=${`seed-${n.id}`}
+                            aria-label=${`${t(n, "name")}: ${this.tr("seed_" + e)}`}
+                            .checked=${mt((this.seedDraft.get(n.id) ?? (t(n, "seed_state") || "unplanned")) === e)}
+                            ?disabled=${!this.editable || this.busy}
+                            @change=${() => this.changeSeed(n, e)}
+                        /></label>
+                      </td>`)}
+                </tr>`)}
+          </tbody>
+        </table>
+      </div>
+      ${n.length ? H : this.empty("noResults")}`;
+	}
 	renderTasks(e = !0) {
 		let n = this.tables.tasks.filter((t) => e || !t.data.completed).sort((e, n) => t(e, "date").localeCompare(t(n, "date")));
 		return B`${n.length ? (e ? n : n.slice(0, 6)).map((e) => B`<article
@@ -4766,16 +5272,7 @@ var Gn = class extends Ze {
                     ${g(e, this.language)}</small
                   >${t(e, "notes") ? B`<p>${t(e, "notes")}</p>` : H}${e.data.completed ? B`<span class="badge">${this.tr("completed")}</span>` : H}
                 </div>
-                ${e.data.personal_generated ? B`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("set_personal_task_completed", {
-			id: e.id,
-			revision: e.revision,
-			completed: !e.data.completed
-		})}>${$("check")}</button>` : this.editable ? B`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", {
-			table: "tasks",
-			id: e.id,
-			revision: e.revision,
-			data: { completed: !e.data.completed }
-		})}>${$("check")}</button><button @click=${() => this.startEditor("tasks", e)}>${this.tr("edit")}</button>` : H}
+                ${e.data.personal_generated ? B`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(e)}>${$("check")}</button>` : this.editable ? B`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(e)}>${$("check")}</button><button @click=${() => this.startEditor("tasks", e)}>${this.tr("edit")}</button>` : H}
               </article>`) : B`<p class="empty">${this.tr("noTasks")}</p>`}`;
 	}
 	calendarWindows() {
@@ -5314,7 +5811,7 @@ var Gn = class extends Ze {
 	}
 	renderData(e, t = []) {
 		return B`<dl>
-      ${Object.entries(e).filter(([e, n]) => !t.includes(e) && n != null && n !== "" && !e.endsWith("_id") && typeof n != "object").map(([e, t]) => B`<dt>${this.tr(e)}</dt>
+      ${Object.entries(e).filter(([e, n]) => !t.includes(e) && e !== "seed_state" && n != null && n !== "" && !e.endsWith("_id") && typeof n != "object").map(([e, t]) => B`<dt>${this.tr(e)}</dt>
               <dd>
                 ${[
 			"category",
@@ -6244,7 +6741,12 @@ var Gn = class extends Ze {
                 @click=${() => this.refresh()}
               >
                 ${$("refresh")}</button
-              >${this.editable && this.page !== "settings" && this.page !== "reminders" ? B`<button class="primary" ?disabled=${this.busy || !this.loaded || e[1] === "cultivations" && !this.plantList.length} @click=${() => this.startEditor(e[1])}>${$("plus")}${this.tr(e[0])}</button>` : H}
+              >${this.editable && ![
+			"settings",
+			"reminders",
+			"neighbors",
+			"seeds"
+		].includes(this.page) ? B`<button class="primary" ?disabled=${this.busy || !this.loaded || e[1] === "cultivations" && !this.plantList.length} @click=${() => this.startEditor(e[1])}>${$("plus")}${this.tr(e[0])}</button>` : H}
             </div>
           </header>
           ${this.error ? B`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : H}
@@ -6253,10 +6755,10 @@ var Gn = class extends Ze {
                                 ${pt(this.filteredPlants(), (e) => e.id, (e) => this.renderPlantCard(e))}
                               </div>` : this.empty("noResults") : this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}` : this.page === "cultures" ? this.renderCultures() : this.page === "history" ? B`<section class="panel">
                             ${this.renderHistory()}
-                          </section>` : this.page === "locations" ? this.renderLocations() : this.page === "reminders" ? this.renderPersonalReminders() : this.renderSettings() : B`<p role="status">${this.tr("loading")}</p>`}
+                          </section>` : this.page === "locations" ? this.renderLocations() : this.page === "reminders" ? this.renderPersonalReminders() : this.page === "neighbors" ? this.renderNeighbors() : this.page === "seeds" ? this.renderSeeds() : this.renderSettings() : B`<p role="status">${this.tr("loading")}</p>`}
         </main>
       </div>
-      ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}
+      ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}${this.renderTaskConfirmation()}${this.renderNeighborEditor()}
       <dialog
         id="delete-dialog"
         aria-labelledby="delete-title"

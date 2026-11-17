@@ -218,6 +218,10 @@ test("locations and tasks work without temperature sensors", async ({
   await task.getByRole("button", { name: "Speichern", exact: true }).click();
   await expect(task).not.toBeVisible();
   await page.getByRole("button", { name: "Als erledigt markieren" }).click();
+  await page
+    .getByRole("dialog", { name: "Gartenarbeit erledigen?", exact: true })
+    .getByRole("button", { name: "Ja, als erledigt markieren", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: "Wieder öffnen" }),
   ).toBeVisible();
@@ -1730,6 +1734,14 @@ test("selected activity periods become private tasks that readers can complete w
   await card
     .getByRole("button", { name: "Als erledigt markieren", exact: true })
     .click();
+  const confirmTask = page.getByRole("dialog", {
+    name: "Gartenarbeit erledigen?",
+    exact: true,
+  });
+  await confirmTask
+    .getByRole("button", { name: "Ja, als erledigt markieren", exact: true })
+    .click();
+  await expect(confirmTask).not.toBeVisible();
   await expect(
     card.getByRole("button", { name: "Wieder öffnen", exact: true }),
   ).toBeVisible();
@@ -2218,8 +2230,356 @@ test("generated work displays its full period in overview and task list", async 
   await card
     .getByRole("button", { name: "Als erledigt markieren", exact: true })
     .click();
+  const confirmTask = page.getByRole("dialog", {
+    name: "Gartenarbeit erledigen?",
+    exact: true,
+  });
+  await confirmTask
+    .getByRole("button", { name: "Ja, als erledigt markieren", exact: true })
+    .click();
+  await expect(confirmTask).not.toBeVisible();
   await page.reload();
   await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
   await navigate(page, "Aktuelle Kulturen");
   await expect(card).toContainText("15.01.2027 bis 28.02.2027");
+});
+
+test("task completion requires an explicit confirmation and cancel preserves the task", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", host: "1", role: "reader" });
+  const card = page
+    .locator(".task-card")
+    .filter({ hasText: "Blattkultur · Beispiel: Direktsaat" })
+    .first();
+  await expect(card).toBeVisible();
+  let writes = 0;
+  await page.route("**/__test_api/**", async (route) => {
+    if (
+      route.request().postDataJSON().operation === "set_personal_task_completed"
+    )
+      writes++;
+    await route.continue();
+  });
+  const button = card.getByRole("button", {
+    name: "Als erledigt markieren",
+    exact: true,
+  });
+  await button.click();
+  const dialog = page.getByRole("dialog", {
+    name: "Gartenarbeit erledigen?",
+    exact: true,
+  });
+  await expect(dialog).toContainText("Blattkultur · Beispiel: Direktsaat");
+  expect(writes).toBe(0);
+  await dialog.getByRole("button", { name: "Abbrechen", exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(button).toBeFocused();
+  await expect(card).toBeVisible();
+  await button.click();
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  expect(writes).toBe(0);
+  await button.click();
+  await dialog
+    .getByRole("button", { name: "Ja, als erledigt markieren", exact: true })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  expect(writes).toBe(1);
+});
+
+test("neighbors link catalog plants reciprocally and retain optional free names", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await addPlant(page, "Buschbohne");
+  await addPlant(page, "Erdbeere");
+  await navigate(page, "Nachbarn");
+  const selector = page.getByLabel("Pflanze auswählen", { exact: true });
+  await selector.selectOption({ label: "Buschbohne" });
+  await page
+    .getByRole("button", { name: "Nachbarn bearbeiten", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", {
+    name: "Nachbarn bearbeiten · Buschbohne",
+    exact: true,
+  });
+  await dialog
+    .getByRole("checkbox", { name: "Erdbeere: Gute Nachbarn", exact: true })
+    .check();
+  await expect(
+    dialog.getByRole("checkbox", {
+      name: "Buschbohne: Gute Nachbarn",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  await dialog
+    .getByLabel("Weitere schlechte Nachbarn (ein Name pro Zeile)", {
+      exact: true,
+    })
+    .fill("Fenchel\n<b>Ungepflegter Name</b>");
+  await dialog.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator(".neighbor-group").first()).toContainText(
+    "Erdbeere",
+  );
+  await expect(page.locator(".neighbor-group").last()).toContainText("Fenchel");
+  await expect(page.locator(".neighbor-group b")).toHaveCount(0);
+  await selector.selectOption({ label: "Erdbeere" });
+  await expect(page.locator(".neighbor-group").first()).toContainText(
+    "Buschbohne",
+  );
+  await page
+    .getByRole("button", { name: "Nachbarn bearbeiten", exact: true })
+    .click();
+  const reverse = page.getByRole("dialog", {
+    name: "Nachbarn bearbeiten · Erdbeere",
+    exact: true,
+  });
+  await reverse
+    .getByRole("checkbox", {
+      name: "Buschbohne: Schlechte Nachbarn",
+      exact: true,
+    })
+    .check();
+  await expect(
+    reverse.getByRole("checkbox", {
+      name: "Buschbohne: Gute Nachbarn",
+      exact: true,
+    }),
+  ).not.toBeChecked();
+  await reverse.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(reverse).not.toBeVisible();
+  await selector.selectOption({ label: "Buschbohne" });
+  await expect(page.locator(".neighbor-group").last()).toContainText(
+    "Erdbeere",
+  );
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Nachbarn");
+  await page
+    .getByLabel("Pflanze auswählen", { exact: true })
+    .selectOption({ label: "Buschbohne" });
+  await expect(page.locator(".neighbor-group").last()).toContainText("Fenchel");
+  await page.screenshot({
+    path: testInfo.outputPath("neighbors-v0111.png"),
+    scale: "css",
+  });
+});
+
+test("seed matrix batches choices and saves them before leaving the page", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Saatgut & Einkauf");
+  const plants = page.getByRole("row").filter({
+    has: page.getByRole("rowheader", {
+      name: "Blattkultur · Beispiel",
+      exact: true,
+    }),
+  });
+  await expect(
+    plants.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Offen",
+      exact: true,
+    }),
+  ).toBeChecked();
+  let batches = 0;
+  await page.route("**/__test_api/**", async (route) => {
+    if (route.request().postDataJSON().operation === "set_seed_inventory")
+      batches++;
+    await route.continue();
+  });
+  await plants
+    .getByRole("radio", { name: "Blattkultur · Beispiel: Kaufen", exact: true })
+    .check();
+  await expect(
+    plants.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Offen",
+      exact: true,
+    }),
+  ).not.toBeChecked();
+  expect(batches).toBe(0);
+  await page
+    .getByRole("button", { name: "Änderungen speichern", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Änderungen speichern", exact: true }),
+  ).toBeDisabled();
+  expect(batches).toBe(1);
+  await plants
+    .getByRole("radio", {
+      name: "Blattkultur · Beispiel: Vorhanden",
+      exact: true,
+    })
+    .check();
+  await navigate(page, "Übersicht");
+  await expect(
+    page.getByRole("heading", { name: "Übersicht", exact: true }),
+  ).toBeVisible();
+  expect(batches).toBe(2);
+  await navigate(page, "Saatgut & Einkauf");
+  await expect(
+    plants.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Vorhanden",
+      exact: true,
+    }),
+  ).toBeChecked();
+  await plants
+    .getByRole("radio", {
+      name: "Blattkultur · Beispiel: Nicht benötigt",
+      exact: true,
+    })
+    .check();
+  await page
+    .getByRole("button", { name: "Auswahl verwerfen", exact: true })
+    .click();
+  await expect(
+    plants.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Vorhanden",
+      exact: true,
+    }),
+  ).toBeChecked();
+  await page.getByLabel("Status filtern", { exact: true }).selectOption("buy");
+  await expect(plants).toHaveCount(0);
+  await page
+    .getByLabel("Status filtern", { exact: true })
+    .selectOption("available");
+  await expect(plants).toBeVisible();
+  await page.locator(".seed-scroll").screenshot({
+    path: testInfo.outputPath("seed-matrix-v0111.png"),
+    scale: "css",
+  });
+});
+
+test("read-only users can browse shared neighbors and seed planning without editing", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", role: "reader" });
+  await navigate(page, "Nachbarn");
+  await expect(
+    page.getByRole("button", { name: "Nachbarn bearbeiten", exact: true }),
+  ).toHaveCount(0);
+  await navigate(page, "Saatgut & Einkauf");
+  await expect(page.locator(".seed-table input:enabled")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Änderungen speichern", exact: true }),
+  ).toHaveCount(0);
+  const a11y = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(a11y.violations).toEqual([]);
+});
+
+test("clearing the authenticated user closes a neighbor draft", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Nachbarn");
+  await page
+    .getByRole("button", { name: "Nachbarn bearbeiten", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.locator("garden-planner-panel").evaluate((element) => {
+    const panel = element as HTMLElement & { hass: Hass };
+    panel.hass = { ...panel.hass, user: undefined };
+  });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByText("Blattkultur · Beispiel", { exact: true }),
+  ).toHaveCount(0);
+});
+
+test("a stale shared seed update keeps choices visible until discarded", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Saatgut & Einkauf");
+  const choice = page.getByRole("radio", {
+    name: "Blattkultur · Beispiel: Kaufen",
+    exact: true,
+  });
+  await choice.check();
+  const session = new URL(page.url()).searchParams.get("session");
+  const list = await page.request.post(`/__test_api/${session}`, {
+    data: { operation: "list", parameters: { table: "plants" }, role: "admin" },
+  });
+  const plant = (await list.json()).find(
+    (p: { data: { name: string } }) => p.data.name === "Blattkultur · Beispiel",
+  );
+  const updated = await page.request.post(`/__test_api/${session}`, {
+    data: {
+      operation: "update",
+      parameters: {
+        table: "plants",
+        id: plant.id,
+        revision: plant.revision,
+        data: { notes: "Concurrent edit" },
+      },
+      role: "admin",
+    },
+  });
+  expect(updated.ok()).toBe(true);
+  await page
+    .getByRole("button", { name: "Änderungen speichern", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(choice).toBeChecked();
+  await page
+    .getByRole("button", { name: "Auswahl verwerfen", exact: true })
+    .click();
+  await expect(
+    page.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Offen",
+      exact: true,
+    }),
+  ).toBeChecked();
+});
+
+test("losing garden edit rights discards unsavable seed choices and permits navigation", async ({
+  page,
+}) => {
+  await open(page, { demo: "1", role: "reader", host: "1" });
+  const session = new URL(page.url()).searchParams.get("session");
+  async function writers(value: string[]) {
+    const response = await page.request.post(`/__test_api/${session}`, {
+      data: {
+        operation: "set_settings",
+        parameters: { settings: { writers: value }, confirm: true },
+        role: "admin",
+        host: true,
+      },
+    });
+    expect(response.ok()).toBe(true);
+  }
+  await writers(["test-reader"]);
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await navigate(page, "Saatgut & Einkauf");
+  const input = page.getByRole("radio", {
+    name: "Blattkultur · Beispiel: Kaufen",
+    exact: true,
+  });
+  await expect(input).toBeEnabled();
+  await input.check();
+  await writers([]);
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await expect(input).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Änderungen speichern", exact: true }),
+  ).toHaveCount(0);
+  await navigate(page, "Übersicht");
+  await expect(
+    page.getByRole("heading", { name: "Übersicht", exact: true }),
+  ).toBeVisible();
+  await navigate(page, "Saatgut & Einkauf");
+  await expect(
+    page.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Offen",
+      exact: true,
+    }),
+  ).toBeChecked();
 });

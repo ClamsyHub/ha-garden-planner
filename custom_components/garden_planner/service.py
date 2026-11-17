@@ -16,6 +16,8 @@ WRITE_OPERATIONS = frozenset(
         "update",
         "delete",
         "duplicate_plant",
+        "set_neighbors",
+        "set_seed_inventory",
         "import",
         "restore",
         "set_settings",
@@ -54,6 +56,8 @@ class Actor:
 
 PARAMETERS: dict[str, tuple[set[str], set[str]]] = {
     "capabilities": (set(), set()),
+    "set_neighbors": ({"plant_id", "revision", "neighbors"}, set()),
+    "set_seed_inventory": ({"changes"}, set()),
     "get_user_reminders": (set(), set()),
     "set_personal_task_completed": ({"id", "revision", "completed"}, set()),
     "set_user_reminders": ({"changes"}, set()),
@@ -159,6 +163,15 @@ class PlannerService:
             return await self.host_handler(operation, params, actor)
         call = self.worker.async_call
         match operation:
+            case "set_neighbors":
+                return await call(
+                    "set_neighbors",
+                    params["plant_id"],
+                    params["revision"],
+                    params["neighbors"],
+                )
+            case "set_seed_inventory":
+                return await call("set_seed_inventory", params["changes"])
             case "get":
                 if (
                     params["table"] == "tasks"

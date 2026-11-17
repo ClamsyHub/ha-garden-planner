@@ -147,8 +147,18 @@ PLANT_FIELDS = {
     "source_url",
     "archived",
 }
+NEIGHBOR_FIELDS = {
+    "neighbor_good_ids",
+    "neighbor_bad_ids",
+    "neighbor_good_names",
+    "neighbor_bad_names",
+}
+GARDEN_FIELDS = NEIGHBOR_FIELDS | {"seed_state"}
+SEED_STATES = ("unplanned", "available", "buy", "unneeded")
+
+
 FIELDS: dict[str, set[str]] = {
-    "plants": PLANT_FIELDS,
+    "plants": PLANT_FIELDS | GARDEN_FIELDS,
     "varieties": PLANT_FIELDS | {"plant_id"},
     "growing_windows": {
         "plant_id",
@@ -324,6 +334,46 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
                 raise ValidationError(f"{key} must be boolean.")
         elif key == "date":
             iso_date(value)
+    if table == "plants":
+        if "seed_state" in result and result["seed_state"] not in SEED_STATES:
+            raise ValidationError("Unsupported seed inventory state.")
+        for field in NEIGHBOR_FIELDS:
+            if field not in result:
+                continue
+            values = result[field]
+            if not isinstance(values, list) or len(values) > 200:
+                raise ValidationError("Choose at most 200 neighbors per group.")
+            if field.endswith("_ids"):
+                for value in values:
+                    identifier(value)
+                normalized = values
+            else:
+                if any(
+                    not isinstance(v, str)
+                    or not v.strip()
+                    or len(v) > 120
+                    or "\n" in v
+                    or "\r" in v
+                    for v in values
+                ):
+                    raise ValidationError(
+                        "Neighbor names must be single lines of 1–120 characters."
+                    )
+                result[field] = [v.strip() for v in values]
+                normalized = [v.casefold() for v in result[field]]
+            if len(normalized) != len(set(normalized)):
+                raise ValidationError("Duplicate neighbor entries.")
+        for suffix in ("ids", "names"):
+            good = {
+                (str(v).casefold() if suffix == "names" else v)
+                for v in result.get(f"neighbor_good_{suffix}", [])
+            }
+            bad = {
+                (str(v).casefold() if suffix == "names" else v)
+                for v in result.get(f"neighbor_bad_{suffix}", [])
+            }
+            if good & bad:
+                raise ValidationError("A neighbor cannot be both good and bad.")
     enums = {
         "status": STATUSES,
         "initial_status": ("planned", "sown"),

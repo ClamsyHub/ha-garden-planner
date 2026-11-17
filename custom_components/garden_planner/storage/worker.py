@@ -21,6 +21,8 @@ OPERATIONS = frozenset(
         "update",
         "delete",
         "duplicate_plant",
+        "set_neighbors",
+        "set_seed_inventory",
         "history",
         "summary",
         "export_data",

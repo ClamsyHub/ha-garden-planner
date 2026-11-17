@@ -160,6 +160,74 @@ class FeatureTests(IntegrationHarness):
         self.assertTrue(late.is_admin)
         self.assertNotIn("garden-planner", store.data["sidebar"]["hiddenPanels"])
 
+    async def test_shared_neighbors_and_seed_choices_follow_garden_permissions(
+        self,
+    ) -> None:
+        admin = self.connection.user
+        plants = []
+        for name in ("Synthetic bean", "Synthetic partner"):
+            plants.append(
+                (
+                    await self.request(
+                        "create", {"table": "plants", "data": {"name": name}}
+                    )
+                )["result"]
+            )
+        a, b = plants
+        groups = {
+            "neighbor_good_ids": [b["id"]],
+            "neighbor_bad_ids": [],
+            "neighbor_good_names": [],
+            "neighbor_bad_names": ["Fenchel"],
+        }
+        response = await self.request(
+            "set_neighbors",
+            {"plant_id": a["id"], "revision": a["revision"], "neighbors": groups},
+        )
+        self.assertTrue(response["success"], response)
+        linked = response["result"]
+        other = (await self.request("get", {"table": "plants", "id": b["id"]}))[
+            "result"
+        ]
+        self.assertEqual(other["data"]["neighbor_good_ids"], [a["id"]])
+        changes = [{"id": a["id"], "revision": linked["revision"], "state": "buy"}]
+        self.connection.user = self.editor
+        self.assertFalse(
+            (await self.request("set_seed_inventory", {"changes": changes}))["success"]
+        )
+        self.assertFalse(
+            (
+                await self.request(
+                    "set_neighbors",
+                    {
+                        "plant_id": a["id"],
+                        "revision": linked["revision"],
+                        "neighbors": groups,
+                    },
+                )
+            )["success"]
+        )
+        self.assertEqual(
+            (await self.request("get", {"table": "plants", "id": a["id"]}))["result"][
+                "data"
+            ]["neighbor_bad_names"],
+            ["Fenchel"],
+        )
+        self.connection.user = admin
+        settings = await self.request(
+            "set_settings",
+            {
+                "settings": {**DEFAULT_OPTIONS, "writers": [self.editor.id]},
+                "confirm": True,
+            },
+        )
+        self.assertTrue(settings["success"], settings)
+        self.connection.user = self.editor
+        result = await self.request("set_seed_inventory", {"changes": changes})
+        self.assertTrue(result["success"], result)
+        self.assertEqual(result["result"][0]["data"]["seed_state"], "buy")
+        self.assertEqual(self.delivered, [])
+
     async def test_perennial_activity_preferences_tasks_and_push_email_delivery(
         self,
     ) -> None:

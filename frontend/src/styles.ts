@@ -1488,4 +1488,119 @@ export const styles = css`
       font-size: 12px;
     }
   }
+  .neighbor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+  }
+  .neighbor-grid > section {
+    min-width: 0;
+  }
+  .neighbor-group li {
+    margin: 10px 0;
+    overflow-wrap: anywhere;
+  }
+  .neighbor-options {
+    max-height: 280px;
+    overflow: auto;
+    margin-bottom: 14px;
+    border: 1px solid var(--gp-border);
+    padding: 8px;
+    border-radius: 9px;
+  }
+  .neighbor-options .check {
+    min-height: 44px;
+    overflow-wrap: anywhere;
+  }
+  .seed-save {
+    margin: 14px 0;
+  }
+  .seed-scroll {
+    overflow: auto;
+    max-height: 65dvh;
+    border: 1px solid var(--gp-border);
+    border-radius: 10px;
+    touch-action: pan-x pan-y;
+  }
+  .seed-table {
+    width: 100%;
+    min-width: 580px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+  .seed-table th,
+  .seed-table td {
+    padding: 8px;
+    border-right: 1px solid var(--gp-border);
+    border-bottom: 1px solid var(--gp-border);
+    text-align: center;
+  }
+  .seed-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-soft);
+  }
+  .seed-table th:first-child {
+    position: sticky;
+    left: 0;
+    width: 180px;
+    background: var(--gp-card);
+    text-align: left;
+    overflow-wrap: anywhere;
+    z-index: 1;
+  }
+  .seed-table thead th:first-child {
+    background: var(--gp-soft);
+    z-index: 3;
+  }
+  .seed-choice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .seed-choice input {
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    accent-color: var(--gp-green);
+  }
+  @media (max-width: 600px) {
+    .neighbor-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .seed-table {
+      min-width: 500px;
+    }
+    .seed-table th:first-child {
+      width: 100px;
+    }
+    .seed-save > .actions {
+      width: 100%;
+    }
+    .seed-save button {
+      flex: 1;
+    }
+  }
+  .neighbor-toolbar {
+    align-items: end;
+  }
+  .neighbor-toolbar > label {
+    width: min(100%, 320px);
+    min-width: 0;
+  }
+  .seed-table thead th {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 600px) {
+    .neighbor-toolbar > label,
+    .neighbor-toolbar > button {
+      width: 100%;
+    }
+  }
 `;

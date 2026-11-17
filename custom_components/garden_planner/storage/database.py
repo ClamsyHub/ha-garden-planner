@@ -14,8 +14,10 @@ from uuid import uuid4
 from ..models import (
     FIELDS,
     FORMAT_VERSION,
+    GARDEN_FIELDS,
     MAX_IMPORT_BYTES,
     MAX_RECORDS,
+    NEIGHBOR_FIELDS,
     PARENTS,
     PLANT_MEASURE_FIELDS,
     SCHEMA_VERSION,
@@ -246,8 +248,99 @@ class Database:
                 ):
                     raise ValidationError("Task and cultivation references disagree.")
 
+    @staticmethod
+    def _neighbor_graph(plants: dict[str, dict[str, Any]]) -> None:
+        for plant_id, record in plants.items():
+            for key in ("neighbor_good_ids", "neighbor_bad_ids"):
+                for target in record["data"].get(key, []):
+                    if target == plant_id or target not in plants:
+                        raise ValidationError(
+                            "Choose another existing plant as neighbor."
+                        )
+                    if plant_id not in plants[target]["data"].get(key, []):
+                        raise ValidationError(
+                            "Neighbor relationships must be reciprocal."
+                        )
+
+    def set_neighbors(
+        self, plant_id: str, revision: int, neighbors: dict[str, Any]
+    ) -> dict[str, Any]:
+        positive_revision(revision)
+        if not isinstance(neighbors, dict) or set(neighbors) != NEIGHBOR_FIELDS:
+            raise ValidationError("Expected all four neighbor groups.")
+        with self.transaction():
+            record = self.get("plants", plant_id)
+            if record["revision"] != revision:
+                raise ConflictError("Plant changed; reload before editing neighbors.")
+            clean = validate_data("plants", {**record["data"], **neighbors})
+            if any(
+                name.casefold() == clean["name"].strip().casefold()
+                for key in ("neighbor_good_names", "neighbor_bad_names")
+                for name in clean[key]
+            ):
+                raise ValidationError("A plant cannot be its own neighbor.")
+            plants = {p["id"]: p for p in self.list_records("plants")}
+            for key in ("neighbor_good_ids", "neighbor_bad_ids"):
+                if plant_id in clean[key] or any(
+                    target not in plants for target in clean[key]
+                ):
+                    raise ValidationError("Choose another existing plant as neighbor.")
+            for other_id, other in plants.items():
+                if other_id == plant_id:
+                    continue
+                data = dict(other["data"])
+                for key in ("neighbor_good_ids", "neighbor_bad_ids"):
+                    ids = [v for v in data.get(key, []) if v != plant_id]
+                    if other_id in clean[key]:
+                        ids.append(plant_id)
+                    if ids or key in data:
+                        data[key] = sorted(ids)
+                if data != other["data"]:
+                    self._write("plants", other, validate_data("plants", data))
+            if clean != record["data"]:
+                self._write("plants", record, clean)
+            self._touch()
+        return self.get("plants", plant_id)
+
+    def set_seed_inventory(self, changes: Any) -> list[dict[str, Any]]:
+        if not isinstance(changes, list) or not 1 <= len(changes) <= 500:
+            raise ValidationError("Choose between one and 500 seed changes.")
+        seen: set[str] = set()
+        with self.transaction():
+            writes = []
+            for change in changes:
+                if not isinstance(change, dict) or set(change) != {
+                    "id",
+                    "revision",
+                    "state",
+                }:
+                    raise ValidationError("Invalid seed inventory change.")
+                plant_id = identifier(change["id"])
+                positive_revision(change["revision"])
+                if plant_id in seen:
+                    raise ValidationError("Duplicate seed inventory change.")
+                seen.add(plant_id)
+                record = self.get("plants", plant_id)
+                if record["revision"] != change["revision"]:
+                    raise ConflictError(
+                        "Plant changed; discard and reload seed choices."
+                    )
+                clean = validate_data(
+                    "plants", {**record["data"], "seed_state": change["state"]}
+                )
+                writes.append((record, clean))
+            for record, clean in writes:
+                if clean != record["data"]:
+                    self._write("plants", record, clean)
+            self._touch()
+        return [self.get("plants", change["id"]) for change in changes]
+
     def _snapshot(self, data: dict[str, Any]) -> dict[str, Any]:
-        plant = self.get("plants", data["plant_id"])["data"]
+        plant = {
+            k: v
+            for k, v in self.get("plants", data["plant_id"])["data"].items()
+            if k not in GARDEN_FIELDS
+        }
         variety = (
             self.get("varieties", data["variety_id"])["data"]
             if data.get("variety_id")
@@ -324,6 +417,8 @@ class Database:
     def create(self, table: str, data: dict[str, Any]) -> dict[str, Any]:
         """Create validated records and an initial lifecycle event atomically."""
         clean = validate_data(table, clean_master_data(table, data))
+        if table == "plants" and any(clean.get(k) for k in NEIGHBOR_FIELDS):
+            raise ValidationError("Create a plant before assigning its neighbors.")
         with self.transaction():
             self._references(table, clean)
             if table == "cultivations":
@@ -369,6 +464,13 @@ class Database:
             record = self.get(table, record_id)
             if record["revision"] != revision:
                 raise ConflictError("Record was changed; reload before editing.")
+            if table == "plants" and any(
+                k in patch and patch[k] != record["data"].get(k)
+                for k in NEIGHBOR_FIELDS
+            ):
+                raise ValidationError(
+                    "Use the neighbor operation to keep links reciprocal."
+                )
             clean = validate_data(
                 table,
                 clean_master_data(table, {**record["data"], **patch}),
@@ -442,6 +544,14 @@ class Database:
                     and record["data"].get("origin") == "initial"
                 ):
                     raise ConflictError("Initial lifecycle event must be retained.")
+                if table == "plants" and any(
+                    record_id in p["data"].get(k, [])
+                    for p in self.list_records("plants")
+                    for k in ("neighbor_good_ids", "neighbor_bad_ids")
+                ):
+                    raise ConflictError(
+                        "Unlink neighbors before deleting this plant, or archive it."
+                    )
                 if table == "cultivations":
                     self.db.execute(
                         "DELETE FROM cultivation_events WHERE cultivation_id=?",
@@ -458,7 +568,12 @@ class Database:
         """Copy a plant and general windows without historical observations."""
         original = self.get("plants", record_id)
         data = validate_data(
-            "plants", {**original["data"], "name": name, "archived": False}
+            "plants",
+            {
+                **{k: v for k, v in original["data"].items() if k not in GARDEN_FIELDS},
+                "name": name,
+                "archived": False,
+            },
         )
         with self.transaction():
             result = self._new("plants", data)
@@ -640,6 +755,7 @@ class Database:
                         for k in ("plant_id", "location_id")
                     ):
                         raise ValidationError("Imported task relationships disagree.")
+        self._neighbor_graph(desired["plants"])
         initial_events: dict[str, list[dict[str, Any]]] = {}
         for event in desired["cultivation_events"].values():
             if event["data"].get("origin") == "initial":

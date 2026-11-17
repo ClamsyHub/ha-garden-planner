@@ -5,7 +5,14 @@ import json
 from io import StringIO
 from typing import Any
 
-from .models import FIELDS, MAX_IMPORT_BYTES, MAX_RECORDS, TABLES, ValidationError
+from .models import (
+    FIELDS,
+    GARDEN_FIELDS,
+    MAX_IMPORT_BYTES,
+    MAX_RECORDS,
+    TABLES,
+    ValidationError,
+)
 from .storage.database import encode
 
 META = ("id", "revision", "created_at", "updated_at")
@@ -63,8 +70,18 @@ def import_csv(files: Any) -> dict[str, Any]:
             reader = csv.reader(
                 StringIO(files[f"{table}.csv"], newline=""), strict=True
             )
-            if next(reader) != [*META, *fields]:
+            header = next(reader)
+            present = header[len(META) :]
+            missing = set(fields) - set(present)
+            optional = GARDEN_FIELDS if table == "plants" else set()
+            if (
+                header[: len(META)] != list(META)
+                or present != sorted(set(present))
+                or set(present) - set(fields)
+                or missing - optional
+            ):
                 raise ValueError
+            fields = present
             records = []
             for row in reader:
                 count += 1

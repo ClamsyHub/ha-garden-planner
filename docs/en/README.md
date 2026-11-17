@@ -10,8 +10,8 @@ release. Available in the official HACS community catalog. [Publication evidence
 
 ## Interface and features
 
-Eight German/English views: overview, year/month/week calendar, plants, current
-crops, multi-year history, beds/locations, personal generated tasks/reminders (from v0.1.7) and settings. Responsive light/dark
+Ten German/English views: overview, year/month/week calendar, plants, current
+crops, multi-year history, beds/locations, personal generated tasks/reminders, neighbors, seeds/shopping and settings. Responsive light/dark
 layouts, keyboard dialogs, multiple seasonal windows and dated cultivation events.
 Historical snapshots retain context after master-data edits. Outcomes are explicit
 observations. No horticultural recommendations or personal garden data are seeded.
@@ -122,3 +122,11 @@ Version **0.1.8** makes reminder selections respond immediately and saves rapid 
 The **Garden calendar** uses **activity periods** for vegetables, fruit trees and shrubs. **Fertilize** and **Prune** have distinct colors and personal reminder selections. Existing periods remain intact. [v0.1.9 update notes](../releases/v0.1.9.md).
 
 From **v0.1.10**, personal activity tasks display both start and end dates. Notifications remain scheduled from the start date. [Update notes](../releases/v0.1.10.md).
+
+## Neighbors and Seeds & shopping (v0.1.11)
+
+Choose catalog plants as multiple good/bad neighbors. Catalog links are reciprocal and saved atomically; changing the classification updates both sides. Optional free names (one per line) support plants outside the catalog. A unique catalog name entered as text is resolved to that existing plant by the editor; use catalog selection for ambiguous names. Entries without a catalog match remain attached to the selected plant. These are user observations, with no prefilled recommendations. Unlink or archive a linked plant before deleting it.
+
+**Seeds & shopping** is shared garden data. Select one state per plant: Available, Buy, Not needed or Undecided. Save multiple changes together; internal navigation also saves pending choices. Save before closing the app. Filter Buy to view your shopping choices. After a concurrent edit, unsaved choices remain visible; discard/reload before selecting again. Editors and administrators can change both sections; readers can browse them. Data lives with plants in SQLite and is included in garden JSON/CSV exports and database backups. Legacy CSV files without the optional columns remain supported. Schema 3/exchange 1 are unchanged.
+
+Completing shared or personal garden tasks now requires explicit confirmation. Cancel or Escape leaves the task unchanged. Reopen completed work through the task list.

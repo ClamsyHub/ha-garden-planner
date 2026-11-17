@@ -16,15 +16,15 @@ Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzei
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.10:** Aufgaben aus Tätigkeitszeiträumen zeigen Beginn und Ende,
-auch über den Jahreswechsel. Erledigte Aufgaben behalten ihren gespeicherten Zeitraum.
-[Updatehinweise und Datensicherung](docs/releases/v0.1.10.md).
+**Änderungen v0.1.11:** Sicherheitsfrage vor dem Erledigen von Gartenarbeiten,
+gegenseitige gute/schlechte Nachbarn und die gemeinsame Matrix **Saatgut & Einkauf**.
+[Updatehinweise und Datensicherung](docs/releases/v0.1.11.md).
 
 ## Oberfläche
 
 ![Garden Planner im nativen Home Assistant](docs/screenshots/native-marketplace.png)
 
-Eine zusammenhängende Anwendung mit acht Bereichen:
+Eine zusammenhängende Anwendung mit zehn Bereichen:
 
 1. **Übersicht:** hinterlegte Tätigkeitszeiträume des aktuellen Monats, Aufgaben und Kennzahlen.
 2. **Gartenkalender:** Jahr, Monat und Woche mit Tagesgrenzen, Filtern, Notiz-Tooltips und Zeitraum-/Pflanzendetails.
@@ -33,7 +33,9 @@ Eine zusammenhängende Anwendung mit acht Bereichen:
 5. **Aussaat-Historie:** tatsächliche Aussaattermine und Ergebnisse über mehrere Jahre vergleichen.
 6. **Beete & Standorte:** Standorte verwalten, optional Temperatursensor und Messart zuordnen.
 7. **Erinnerungen (ab v0.1.7):** persönlicher Pflanzen-/Tätigkeiten-Aufgabenplan mit dauerhaftem Erledigtstand und Push/E-Mail über die bestehenden Einstellungen; auch mit reinem Leserecht.
-8. **Einstellungen:** Sprache, Bearbeitungsrechte, optionale Erinnerungen, JSON-/CSV-Export, Importvorschau und Sicherungen.
+8. **Nachbarn:** gute/schlechte Nachbarn aus dem Pflanzenkatalog; Zuordnungen gelten gegenseitig, freie Namen sind zusätzlich möglich.
+9. **Saatgut & Einkauf:** gemeinsame Planung mit Vorhanden, Kaufen, Nicht benötigt und Offen; mehrere Änderungen gesammelt speichern.
+10. **Einstellungen:** Sprache, Bearbeitungsrechte, optionale Erinnerungen, JSON-/CSV-Export, Importvorschau und Sicherungen.
 
 Deutsch und Englisch, Hell-/Dunkelmodus, Smartphone-/Tablet-/Desktop-Layout,
 native zugängliche Dialoge, Tastaturbedienung und übersetzte Fehlerzustände.

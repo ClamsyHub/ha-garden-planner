@@ -74,6 +74,8 @@ const pages: Page[] = [
   "history",
   "locations",
   "reminders",
+  "neighbors",
+  "seeds",
   "settings",
 ];
 const activities = [
@@ -95,6 +97,9 @@ const paths: Record<string, string> = {
   cultures:
     "M5 20h14l2-10H3zM12 10V4m0 4C6 8 6 3 6 3s6 0 6 5zm0-2c0-5 6-5 6-5s0 5-6 5z",
   history: "M3 11a9 9 0 1 1 2 7M3 4v7h7m2-4v6l4 2",
+  neighbors:
+    "M4 20V8m16 12V8M4 10c0-6 8-6 8 0M12 10c0-6 8-6 8 0M8 20v-6m8 6v-6M2 20h20",
+  seeds: "M4 5h16v16H4zM8 2v6m8-6v6M8 12h8M8 16h5",
   reminders: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
   locations: "M3 3l6 3 6-3 6 3v15l-6-3-6 3-6-3zm6 3v15m6-18v15",
   settings:
@@ -152,6 +157,13 @@ export class GardenPlannerPanel extends LitElement {
     sensorAbove: { state: true },
     sensorMaxHeight: { state: true },
     deleting: { state: true },
+    completing: { state: true },
+    neighborPlant: { state: true },
+    neighborEditor: { state: true },
+    neighborQuery: { state: true },
+    seedDraft: { state: true },
+    seedQuery: { state: true },
+    seedFilter: { state: true },
     reviewed: { state: true },
     importMode: { state: true },
     replaceConfirmed: { state: true },
@@ -199,6 +211,20 @@ export class GardenPlannerPanel extends LitElement {
   private sensorIndex = -1;
   private sensorAbove = false;
   private sensorMaxHeight = 240;
+  private completing: Entity | null = null;
+  private neighborPlant = "";
+  private neighborQuery = "";
+  private neighborEditor: {
+    plant: Entity;
+    good: Set<string>;
+    bad: Set<string>;
+    goodNames: string;
+    badNames: string;
+  } | null = null;
+  private seedDraft = new Map<string, string>();
+  private seedRevisions = new Map<string, number>();
+  private seedQuery = "";
+  private seedFilter = "";
   private deleting: { table: Table; record: Entity } | null = null;
   private reviewed: Reviewed | null = null;
   private importMode: "merge" | "replace" = "merge";
@@ -335,7 +361,7 @@ export class GardenPlannerPanel extends LitElement {
   private readonly confirmPendingReminders = (
     event: BeforeUnloadEvent,
   ): void => {
-    if (this.reminderSaving) {
+    if (this.reminderSaving || this.seedDraft.size) {
       event.preventDefault();
       event.returnValue = "";
     }
@@ -415,6 +441,8 @@ export class GardenPlannerPanel extends LitElement {
     this.syncDialog("detail-dialog", this.selected !== null);
     this.syncDialog("editor-dialog", this.editor !== null);
     this.syncDialog("delete-dialog", this.deleting !== null);
+    this.syncDialog("complete-task-dialog", this.completing !== null);
+    this.syncDialog("neighbors-dialog", this.neighborEditor !== null);
     this.syncDialog("review-dialog", this.reviewed !== null);
   }
   private syncDialog(id: string, open: boolean): void {
@@ -459,6 +487,14 @@ export class GardenPlannerPanel extends LitElement {
     this.selected = null;
     this.editor = null;
     this.deleting = null;
+    this.completing = null;
+    this.neighborEditor = null;
+    this.neighborPlant = "";
+    this.neighborQuery = "";
+    this.seedDraft = new Map();
+    this.seedRevisions = new Map();
+    this.seedQuery = "";
+    this.seedFilter = "";
     this.reviewed = null;
     this.backups = [];
     this.lastTrigger = undefined;
@@ -496,6 +532,13 @@ export class GardenPlannerPanel extends LitElement {
       if (generation !== this.loadGeneration || !this.isConnected) return;
       this.tables = tables;
       this.capabilities = capabilities;
+      if (!capabilities.can_edit) {
+        this.neighborEditor = null;
+        this.seedDraft = new Map();
+        this.seedRevisions.clear();
+        if (this.completing && !this.completing.data.personal_generated)
+          this.completing = null;
+      }
       this.loaded = true;
       this.error = "";
       if (this.page === "reminders") await this.loadPersonalReminders();
@@ -510,6 +553,10 @@ export class GardenPlannerPanel extends LitElement {
         ) {
           this.tables = emptyTables();
           this.personalReminders = null;
+          this.completing = null;
+          this.neighborEditor = null;
+          this.seedDraft = new Map();
+          this.seedRevisions.clear();
           this.preferencesGeneration++;
           this.capabilities = null;
           this.selected = null;
@@ -553,6 +600,15 @@ export class GardenPlannerPanel extends LitElement {
   private async navigate(page: Page): Promise<void> {
     const navigation = ++this.navigationGeneration;
     const connection = this.connectionGeneration;
+    if (this.page === "seeds" && page !== "seeds" && this.seedDraft.size) {
+      if (!(await this.saveSeedInventory())) return;
+      if (
+        connection !== this.connectionGeneration ||
+        navigation !== this.navigationGeneration ||
+        !this.isConnected
+      )
+        return;
+    }
     if (this.page === "reminders" && page !== "reminders") {
       do {
         if (!(await this.flushReminderChanges())) return;
@@ -1323,6 +1379,451 @@ export class GardenPlannerPanel extends LitElement {
         </section>
       </div>`;
   }
+  private toggleTask(task: Entity): void {
+    if (this.busy) return;
+    if (!task.data.completed) this.completing = task;
+    else void this.setTaskCompleted(task, false);
+  }
+  private async setTaskCompleted(
+    task: Entity,
+    completed: boolean,
+  ): Promise<boolean> {
+    const value = task.data.personal_generated
+      ? await this.action("set_personal_task_completed", {
+          id: task.id,
+          revision: task.revision,
+          completed,
+        })
+      : await this.action("update", {
+          table: "tasks",
+          id: task.id,
+          revision: task.revision,
+          data: { completed },
+        });
+    return value !== undefined;
+  }
+  private renderTaskConfirmation(): TemplateResult {
+    const task = this.completing;
+    return html`<dialog
+      id="complete-task-dialog"
+      aria-labelledby="complete-task-title"
+      @cancel=${(e: Event) => {
+        if (this.busy) e.preventDefault();
+      }}
+      @close=${() => {
+        this.completing = null;
+      }}
+    >
+      <div class="dialog-head">
+        <h2 id="complete-task-title">${this.tr("completeTaskTitle")}</h2>
+      </div>
+      <div class="dialog-body">
+        <p>${this.tr("completeTaskBody")}</p>
+        ${
+          task
+            ? html`<h3>${text(task, "title")}</h3>
+                <p>${taskDateLabel(task, this.language)}</p>`
+            : nothing
+        }
+        ${this.error ? html`<p role="alert" class="notice error">${this.error}</p>` : nothing}
+      </div>
+      <div class="dialog-foot">
+        <button
+          ?disabled=${this.busy}
+          @click=${() => {
+            this.completing = null;
+          }}
+        >
+          ${this.tr("cancel")}
+        </button>
+        <button
+          class="primary"
+          ?disabled=${this.busy || !task}
+          @click=${async () => {
+            if (task && (await this.setTaskCompleted(task, true)))
+              this.completing = null;
+          }}
+        >
+          ${this.tr("confirmTask")}
+        </button>
+      </div>
+    </dialog>`;
+  }
+  private neighborIds(plant: Entity, group: "good" | "bad"): string[] {
+    const value = plant.data[`neighbor_${group}_ids`];
+    return Array.isArray(value)
+      ? value.filter((v): v is string => typeof v === "string")
+      : [];
+  }
+  private neighborNames(plant: Entity, group: "good" | "bad"): string[] {
+    const value = plant.data[`neighbor_${group}_names`];
+    return Array.isArray(value)
+      ? value.filter((v): v is string => typeof v === "string")
+      : [];
+  }
+  private beginNeighbors(plant: Entity): void {
+    this.error = "";
+    this.neighborQuery = "";
+    this.neighborEditor = {
+      plant,
+      good: new Set(this.neighborIds(plant, "good")),
+      bad: new Set(this.neighborIds(plant, "bad")),
+      goodNames: this.neighborNames(plant, "good").join("\n"),
+      badNames: this.neighborNames(plant, "bad").join("\n"),
+    };
+  }
+  private changeNeighbor(
+    group: "good" | "bad",
+    id: string,
+    checked: boolean,
+  ): void {
+    const draft = this.neighborEditor;
+    if (!draft) return;
+    const next = {
+      ...draft,
+      good: new Set(draft.good),
+      bad: new Set(draft.bad),
+    };
+    if (checked) {
+      next[group].add(id);
+      next[group === "good" ? "bad" : "good"].delete(id);
+    } else next[group].delete(id);
+    this.neighborEditor = next;
+  }
+  private async saveNeighbors(): Promise<void> {
+    const draft = this.neighborEditor;
+    if (!draft || this.busy) return;
+    const good = new Set(draft.good),
+      bad = new Set(draft.bad);
+    const resolve = (raw: string, ids: Set<string>): string[] => {
+      const names: string[] = [];
+      for (const name of raw
+        .split(/\r?\n/)
+        .map((v) => v.trim())
+        .filter(Boolean)) {
+        const matches = this.tables.plants.filter(
+          (p) =>
+            text(p, "name").toLocaleLowerCase(this.language) ===
+            name.toLocaleLowerCase(this.language),
+        );
+        if (matches.length > 1 || matches[0]?.id === draft.plant.id)
+          throw new Error("neighbors");
+        if (matches[0]) ids.add(matches[0].id);
+        else names.push(name);
+      }
+      return names;
+    };
+    let goodNames: string[], badNames: string[];
+    try {
+      goodNames = resolve(draft.goodNames, good);
+      badNames = resolve(draft.badNames, bad);
+      if ([...good].some((id) => bad.has(id))) throw new Error("neighbors");
+    } catch {
+      this.error = this.tr("neighborConflict");
+      return;
+    }
+    const result = await this.action("set_neighbors", {
+      plant_id: draft.plant.id,
+      revision: draft.plant.revision,
+      neighbors: {
+        neighbor_good_ids: [...good].sort(),
+        neighbor_bad_ids: [...bad].sort(),
+        neighbor_good_names: goodNames,
+        neighbor_bad_names: badNames,
+      },
+    });
+    if (result !== undefined) this.neighborEditor = null;
+  }
+  private renderNeighbors(): TemplateResult {
+    const plants = [...this.plantList].sort((a, b) =>
+      text(a, "name").localeCompare(text(b, "name"), this.language),
+    );
+    const plant = plants.find((p) => p.id === this.neighborPlant) ?? plants[0];
+    const group = (kind: "good" | "bad") =>
+      html`<section class="panel neighbor-group">
+        <h2>${this.tr(kind === "good" ? "goodNeighbors" : "badNeighbors")}</h2>
+        ${
+          plant &&
+          (this.neighborIds(plant, kind).length ||
+            this.neighborNames(plant, kind).length)
+            ? html`<ul>
+                ${this.neighborIds(plant, kind).map((id) => html`<li>${this.nameFor(id, "plants")}</li>`)}${this.neighborNames(plant, kind).map((name) => html`<li>${name} <small class="muted">${this.tr("freeNeighbor")}</small></li>`)}
+              </ul>`
+            : html`<p class="muted">${this.tr("noNeighbors")}</p>`
+        }
+      </section>`;
+    return html`<p>${this.tr("neighborIntro")}</p>
+      ${
+        plant
+          ? html`<div class="toolbar neighbor-toolbar">
+                <label
+                  >${this.tr("chooseNeighborPlant")}<select
+                    aria-label=${this.tr("chooseNeighborPlant")}
+                    .value=${plant.id}
+                    @change=${(e: Event) => {
+                      this.neighborPlant = (
+                        e.target as HTMLSelectElement
+                      ).value;
+                    }}
+                  >
+                    ${plants.map((p) => html`<option value=${p.id} .selected=${p.id === plant.id}>${text(p, "name")}</option>`)}
+                  </select></label
+                >${this.editable ? html`<button class="primary" @click=${() => this.beginNeighbors(plant)}>${this.tr("editNeighbors")}</button>` : nothing}
+              </div>
+              <div class="neighbor-grid">${group("good")}${group("bad")}</div>`
+          : this.empty("emptyPlants")
+      }`;
+  }
+  private renderNeighborEditor(): TemplateResult {
+    const draft = this.neighborEditor;
+    const candidates = draft
+      ? this.tables.plants
+          .filter(
+            (p) =>
+              p.id !== draft.plant.id &&
+              (!p.data.archived ||
+                draft.good.has(p.id) ||
+                draft.bad.has(p.id)) &&
+              text(p, "name")
+                .toLocaleLowerCase(this.language)
+                .includes(this.neighborQuery.toLocaleLowerCase(this.language)),
+          )
+          .sort((a, b) =>
+            text(a, "name").localeCompare(text(b, "name"), this.language),
+          )
+      : [];
+    const group = (kind: "good" | "bad") =>
+      html`<section>
+        <h3>${this.tr(kind === "good" ? "goodNeighbors" : "badNeighbors")}</h3>
+        <div class="neighbor-options">
+          ${candidates.map((p) => html`<label class="check"><input type="checkbox" .checked=${draft?.[kind].has(p.id) ?? false} ?disabled=${this.busy} aria-label=${`${text(p, "name")}: ${this.tr(kind === "good" ? "goodNeighbors" : "badNeighbors")}`} @change=${(e: Event) => this.changeNeighbor(kind, p.id, (e.target as HTMLInputElement).checked)} />${text(p, "name")}${p.data.archived ? html` <small>${this.tr("archived")}</small>` : nothing}</label>`)}
+        </div>
+        <label
+          >${this.tr(kind === "good" ? "extraGoodNeighbors" : "extraBadNeighbors")}<textarea
+            .value=${draft?.[kind === "good" ? "goodNames" : "badNames"] ?? ""}
+            ?disabled=${this.busy}
+            @input=${(e: Event) => {
+              if (this.neighborEditor)
+                this.neighborEditor = {
+                  ...this.neighborEditor,
+                  [kind === "good" ? "goodNames" : "badNames"]: (
+                    e.target as HTMLTextAreaElement
+                  ).value,
+                };
+            }}
+          ></textarea>
+        </label>
+      </section>`;
+    return html`<dialog
+      id="neighbors-dialog"
+      aria-labelledby="neighbors-title"
+      @cancel=${(e: Event) => {
+        if (this.busy) e.preventDefault();
+      }}
+      @close=${() => {
+        this.neighborEditor = null;
+      }}
+    >
+      <form
+        @submit=${(e: SubmitEvent) => {
+          e.preventDefault();
+          void this.saveNeighbors();
+        }}
+      >
+        <div class="dialog-head">
+          <h2 id="neighbors-title">
+            ${this.tr("editNeighbors")}${draft ? ` · ${text(draft.plant, "name")}` : ""}
+          </h2>
+        </div>
+        <div class="dialog-body">
+          <p>${this.tr("neighborIntro")}</p>
+          <label
+            >${this.tr("neighborSearch")}<input
+              type="search"
+              .value=${this.neighborQuery}
+              @input=${(e: Event) => {
+                this.neighborQuery = (e.target as HTMLInputElement).value;
+              }}
+          /></label>
+          <div class="neighbor-grid">${group("good")}${group("bad")}</div>
+          ${this.error ? html`<p role="alert" class="notice error">${this.error}</p>` : nothing}
+        </div>
+        <div class="dialog-foot">
+          <button
+            type="button"
+            ?disabled=${this.busy}
+            @click=${() => {
+              this.neighborEditor = null;
+            }}
+          >
+            ${this.tr("cancel")}</button
+          ><button type="submit" class="primary" ?disabled=${this.busy}>
+            ${this.tr("save")}
+          </button>
+        </div>
+      </form>
+    </dialog>`;
+  }
+  private changeSeed(plant: Entity, state: string): void {
+    if (!this.editable || this.busy) return;
+    const next = new Map(this.seedDraft);
+    if (state === (text(plant, "seed_state") || "unplanned")) {
+      next.delete(plant.id);
+      this.seedRevisions.delete(plant.id);
+    } else {
+      next.set(plant.id, state);
+      if (!this.seedRevisions.has(plant.id))
+        this.seedRevisions.set(plant.id, plant.revision);
+    }
+    this.seedDraft = next;
+  }
+  private async saveSeedInventory(): Promise<boolean> {
+    if (!this.api || this.busy || !this.editable) return false;
+    const api = this.api,
+      generation = this.connectionGeneration;
+    const pending = [...this.seedDraft].map(([id, state]) => ({
+      id,
+      state,
+      revision: this.seedRevisions.get(id)!,
+    }));
+    this.busy = true;
+    this.error = "";
+    try {
+      for (let i = 0; i < pending.length; i += 500) {
+        if (generation !== this.connectionGeneration) return false;
+        const batch = pending.slice(i, i + 500);
+        const plants = await api.command<Entity[]>("set_seed_inventory", {
+          changes: batch,
+        });
+        if (generation !== this.connectionGeneration) return false;
+        this.loadGeneration++;
+        const saved = new Map(plants.map((p) => [p.id, p]));
+        this.tables = {
+          ...this.tables,
+          plants: this.tables.plants.map((p) => saved.get(p.id) ?? p),
+        };
+        const remaining = new Map(this.seedDraft);
+        batch.forEach((p) => {
+          remaining.delete(p.id);
+          this.seedRevisions.delete(p.id);
+        });
+        this.seedDraft = remaining;
+      }
+      this.announce("saved");
+      return true;
+    } catch (error) {
+      if (generation === this.connectionGeneration)
+        this.error = errorText(this.language, error);
+      return false;
+    } finally {
+      if (generation === this.connectionGeneration) this.busy = false;
+    }
+  }
+  private renderSeeds(): TemplateResult {
+    const states = ["available", "buy", "unneeded", "unplanned"];
+    const rows = this.plantList
+      .filter(
+        (p) =>
+          text(p, "name")
+            .toLocaleLowerCase(this.language)
+            .includes(this.seedQuery.toLocaleLowerCase(this.language)) &&
+          (!this.seedFilter ||
+            (this.seedDraft.get(p.id) ??
+              (text(p, "seed_state") || "unplanned")) === this.seedFilter),
+      )
+      .sort((a, b) =>
+        text(a, "name").localeCompare(text(b, "name"), this.language),
+      );
+    return html`<p>${this.tr("seedIntro")}</p>
+      <div class="filters">
+        <label
+          >${this.tr("search")}<input
+            type="search"
+            .value=${this.seedQuery}
+            @input=${(e: Event) => {
+              this.seedQuery = (e.target as HTMLInputElement).value;
+            }} /></label
+        ><label
+          >${this.tr("seedFilter")}<select
+            aria-label=${this.tr("seedFilter")}
+            .value=${this.seedFilter}
+            @change=${(e: Event) => {
+              this.seedFilter = (e.target as HTMLSelectElement).value;
+            }}
+          >
+            <option value="">${this.tr("seedAll")}</option>
+            ${states.map((state) => html`<option value=${state}>${this.tr("seed_" + state)}</option>`)}
+          </select></label
+        >
+      </div>
+      <p class="muted">${this.tr("seedHint")}</p>
+      ${
+        this.editable
+          ? html`<div class="toolbar seed-save">
+              <span role="status"
+                >${this.seedDraft.size ? `${this.tr("seedPending")}: ${this.seedDraft.size}` : ""}</span
+              >
+              <div class="actions">
+                <button
+                  ?disabled=${this.busy || !this.seedDraft.size}
+                  @click=${() => {
+                    this.seedDraft = new Map();
+                    this.seedRevisions.clear();
+                    this.error = "";
+                    void this.refresh();
+                  }}
+                >
+                  ${this.tr("discardSeed")}</button
+                ><button
+                  class="primary"
+                  ?disabled=${this.busy || !this.seedDraft.size}
+                  @click=${() => this.saveSeedInventory()}
+                >
+                  ${this.tr("saveSeed")}
+                </button>
+              </div>
+            </div>`
+          : nothing
+      }
+      <div
+        class="seed-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("seeds")}
+      >
+        <table class="seed-table">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("plants")}</th>
+              ${states.map((state) => html`<th scope="col">${this.tr("seed_" + state)}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(
+              (plant) =>
+                html`<tr>
+                  <th scope="row">${text(plant, "name")}</th>
+                  ${states.map(
+                    (state) =>
+                      html`<td>
+                        <label class="seed-choice"
+                          ><input
+                            type="radio"
+                            name=${`seed-${plant.id}`}
+                            aria-label=${`${text(plant, "name")}: ${this.tr("seed_" + state)}`}
+                            .checked=${live((this.seedDraft.get(plant.id) ?? (text(plant, "seed_state") || "unplanned")) === state)}
+                            ?disabled=${!this.editable || this.busy}
+                            @change=${() => this.changeSeed(plant, state)}
+                        /></label>
+                      </td>`,
+                  )}
+                </tr>`,
+            )}
+          </tbody>
+        </table>
+      </div>
+      ${!rows.length ? this.empty("noResults") : nothing}`;
+  }
   private renderTasks(all = true): TemplateResult {
     const tasks = this.tables.tasks
       .filter((task) => all || !task.data.completed)
@@ -1349,7 +1850,7 @@ export class GardenPlannerPanel extends LitElement {
                     ${taskDateLabel(task, this.language)}</small
                   >${text(task, "notes") ? html`<p>${text(task, "notes")}</p>` : nothing}${task.data.completed ? html`<span class="badge">${this.tr("completed")}</span>` : nothing}
                 </div>
-                ${task.data.personal_generated ? html`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("set_personal_task_completed", { id: task.id, revision: task.revision, completed: !task.data.completed })}>${icon("check")}</button>` : this.editable ? html`<button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.action("update", { table: "tasks", id: task.id, revision: task.revision, data: { completed: !task.data.completed } })}>${icon("check")}</button><button @click=${() => this.startEditor("tasks", task)}>${this.tr("edit")}</button>` : nothing}
+                ${task.data.personal_generated ? html`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(task)}>${icon("check")}</button>` : this.editable ? html`<button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(task)}>${icon("check")}</button><button @click=${() => this.startEditor("tasks", task)}>${this.tr("edit")}</button>` : nothing}
               </article>`,
           )
         : html`<p class="empty">${this.tr("noTasks")}</p>`
@@ -2138,6 +2639,7 @@ export class GardenPlannerPanel extends LitElement {
         .filter(
           ([key, value]) =>
             !omit.includes(key) &&
+            key !== "seed_state" &&
             value !== undefined &&
             value !== null &&
             value !== "" &&
@@ -3354,7 +3856,7 @@ export class GardenPlannerPanel extends LitElement {
                 @click=${() => this.refresh()}
               >
                 ${icon("refresh")}</button
-              >${this.editable && this.page !== "settings" && this.page !== "reminders" ? html`<button class="primary" ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}${this.tr(newAction[0])}</button>` : nothing}
+              >${this.editable && !["settings", "reminders", "neighbors", "seeds"].includes(this.page) ? html`<button class="primary" ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}${this.tr(newAction[0])}</button>` : nothing}
             </div>
           </header>
           ${this.error ? html`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : nothing}
@@ -3395,11 +3897,15 @@ export class GardenPlannerPanel extends LitElement {
                           ? this.renderLocations()
                           : this.page === "reminders"
                             ? this.renderPersonalReminders()
-                            : this.renderSettings()
+                            : this.page === "neighbors"
+                              ? this.renderNeighbors()
+                              : this.page === "seeds"
+                                ? this.renderSeeds()
+                                : this.renderSettings()
           }
         </main>
       </div>
-      ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}
+      ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}${this.renderTaskConfirmation()}${this.renderNeighborEditor()}
       <dialog
         id="delete-dialog"
         aria-labelledby="delete-title"

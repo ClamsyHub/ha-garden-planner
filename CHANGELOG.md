@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.11 — 2026-11-17
+
+- Confirm manual and personal task completion before removing upcoming work; cancellation and Escape leave tasks untouched.
+- Add shared Neighbors management with reciprocal good/bad catalog relationships, multiple choices and optional free names.
+- Add a responsive Seeds & shopping matrix with available, buy, not-needed and undecided states, filtering and transactional batch saves.
+- Retain shared garden edit permissions, optimistic concurrency, JSON/CSV exchange and backups. Accept existing CSV plant headers without the new optional metadata.
+
 ## 0.1.10 — 2026-11-16
 
 - Show inclusive start and end dates for generated activity-period tasks in the overview and task list, including winter periods.

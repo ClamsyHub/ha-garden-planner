@@ -27,6 +27,8 @@ export type Page =
   | "history"
   | "locations"
   | "reminders"
+  | "neighbors"
+  | "seeds"
   | "settings";
 export type Language = "de" | "en";
 export interface Hass {

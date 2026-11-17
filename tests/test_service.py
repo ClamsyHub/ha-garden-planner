@@ -48,6 +48,41 @@ class ServiceTests(unittest.IsolatedAsyncioTestCase):
             await self.call("backup", actor=self.editor)
         self.assertEqual((await self.call("summary", actor=self.reader))["plants"], 1)
 
+    async def test_shared_catalog_write_permissions(self) -> None:
+        plant = await self.call(
+            "create", {"table": "plants", "data": {"name": "Seed crop"}}
+        )
+        cases: list[tuple[str, dict[str, Any]]] = [
+            (
+                "set_seed_inventory",
+                {"changes": [{"id": plant["id"], "revision": 1, "state": "buy"}]},
+            ),
+            (
+                "set_neighbors",
+                {
+                    "plant_id": plant["id"],
+                    "revision": 1,
+                    "neighbors": {
+                        "neighbor_good_ids": [],
+                        "neighbor_bad_ids": [],
+                        "neighbor_good_names": [],
+                        "neighbor_bad_names": ["Fenchel"],
+                    },
+                },
+            ),
+        ]
+        for operation, params in cases:
+            with self.assertRaises(AuthorizationError):
+                await self.call(operation, params, self.reader)
+        result = await self.call(cases[0][0], cases[0][1], self.editor)
+        self.assertEqual(result[0]["data"]["seed_state"], "buy")
+        cases[1][1]["revision"] = result[0]["revision"]
+        await self.call(cases[1][0], cases[1][1], self.editor)
+        saved = await self.call(
+            "get", {"table": "plants", "id": plant["id"]}, self.reader
+        )
+        self.assertEqual(saved["data"]["neighbor_bad_names"], ["Fenchel"])
+
     async def test_inactive_and_unauthenticated_users_denied(self) -> None:
         for actor in (Actor(""), Actor("inactive", is_admin=True, is_active=False)):
             with self.assertRaises(AuthorizationError):

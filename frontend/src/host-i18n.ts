@@ -1,5 +1,38 @@
 import type { Language } from "./types";
 const de = {
+  neighbors: "Nachbarn",
+  seeds: "Saatgut & Einkauf",
+  goodNeighbors: "Gute Nachbarn",
+  badNeighbors: "Schlechte Nachbarn",
+  editNeighbors: "Nachbarn bearbeiten",
+  neighborIntro:
+    "Pflege deine eigenen Mischkultur-Erfahrungen. Katalog-Zuordnungen gelten automatisch für beide Pflanzen.",
+  chooseNeighborPlant: "Pflanze auswählen",
+  neighborSearch: "Nachbarn suchen",
+  extraGoodNeighbors: "Weitere gute Nachbarn (ein Name pro Zeile)",
+  extraBadNeighbors: "Weitere schlechte Nachbarn (ein Name pro Zeile)",
+  freeNeighbor: "Freie Angabe",
+  noNeighbors: "Noch keine Nachbarn zugeordnet.",
+  neighborConflict:
+    "Bitte ordne jeden Nachbarn nur einer Gruppe zu und wähle nicht die Pflanze selbst. Bei gleichen Pflanzennamen nutze die Katalogauswahl.",
+  seedIntro:
+    "Gemeinsame Saatgutplanung für deinen Pflanzenkatalog. Wähle je Pflanze einen Status; mehrere Änderungen lassen sich gesammelt speichern. Beim Wechsel in einen anderen Bereich werden sie ebenfalls gespeichert.",
+  seed_available: "Vorhanden",
+  seed_buy: "Kaufen",
+  seed_unneeded: "Nicht benötigt",
+  seed_unplanned: "Offen",
+  seedPending: "Ungespeicherte Änderungen",
+  saveSeed: "Änderungen speichern",
+  discardSeed: "Auswahl verwerfen",
+  seedFilter: "Status filtern",
+  seedAll: "Alle Zustände",
+  seedHint:
+    "„Nicht benötigt“ passt zu Bäumen, Sträuchern oder einer Pause. „Offen“ bedeutet: noch nicht entschieden. Bei einem Änderungskonflikt Auswahl verwerfen und neu auswählen.",
+  completeTaskTitle: "Gartenarbeit erledigen?",
+  completeTaskBody:
+    "Möchtest du diese Aufgabe wirklich als erledigt markieren? Sie wird anschließend aus „Nächste Gartenarbeiten“ ausgeblendet.",
+  confirmTask: "Ja, als erledigt markieren",
+
   savingReminders: "Änderungen werden gespeichert …",
   matrixScrollHint: "Für weitere Tätigkeiten seitlich wischen.",
   reminders: "Erinnerungen",
@@ -90,6 +123,39 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  neighbors: "Neighbors",
+  seeds: "Seeds & shopping",
+  goodNeighbors: "Good neighbors",
+  badNeighbors: "Bad neighbors",
+  editNeighbors: "Edit neighbors",
+  neighborIntro:
+    "Record your own companion-planting observations. Catalog links automatically apply to both plants.",
+  chooseNeighborPlant: "Select plant",
+  neighborSearch: "Search neighbors",
+  extraGoodNeighbors: "Other good neighbors (one name per line)",
+  extraBadNeighbors: "Other bad neighbors (one name per line)",
+  freeNeighbor: "Free entry",
+  noNeighbors: "No neighbors assigned yet.",
+  neighborConflict:
+    "Assign each neighbor to only one group and do not select the plant itself. For duplicate plant names, use catalog selection.",
+  seedIntro:
+    "Shared seed planning for your plant catalog. Select one state per plant and save changes together. Leaving this section also saves your choices.",
+  seed_available: "Available",
+  seed_buy: "Buy",
+  seed_unneeded: "Not needed",
+  seed_unplanned: "Undecided",
+  seedPending: "Unsaved changes",
+  saveSeed: "Save changes",
+  discardSeed: "Discard choices",
+  seedFilter: "Filter by state",
+  seedAll: "All states",
+  seedHint:
+    "Use \u201cNot needed\u201d for trees, shrubs or a seasonal break. \u201cUndecided\u201d means no choice yet. If another edit conflicts, discard choices and select again.",
+  completeTaskTitle: "Complete garden task?",
+  completeTaskBody:
+    "Mark this task as complete? It will be removed from Upcoming garden work.",
+  confirmTask: "Yes, mark as complete",
+
   savingReminders: "Saving changes …",
   matrixScrollHint: "Swipe sideways for more activities.",
   reminders: "Reminders",

@@ -77,3 +77,9 @@ small commands and subscriptions use the native HA WebSocket connection.
 ## Plant-level traits (v0.1.4)
 
 Schema 3 removes retired numeric traits from live varieties and nulls variety links on activity periods. Plant traits and frozen cultivation snapshots are preserved. Legacy import/restore normalizes live masters; old numeric keys remain recognized only to validate historical snapshots and older exchange headers. New snapshots use plant traits across all varieties. Migration is transactional with a pre-migration backup; code-only downgrade to schema-2 releases is refused.
+
+## Shared plant planning (v0.1.11)
+
+Plants may contain optional `seed_state`, `neighbor_good_ids`, `neighbor_bad_ids`, `neighbor_good_names` and `neighbor_bad_names`. These fields are not copied to new plants or cultivation snapshots. SQLite schema 3 and exchange format 1 remain unchanged; the structured CSV reader accepts missing new optional plant columns while continuing to reject unknown/duplicate headers.
+
+`set_neighbors` validates the source revision and writes reciprocal catalog links in one worker transaction. Generic plant updates cannot change neighbor groups; imports validate the complete reciprocal graph before writing, and deletion protects linked plants. Free names have no implied catalog entity. `set_seed_inventory` validates bounded batches of revisions/states before writing in a transaction. The panel splits larger selections into batches of at most 500 plants and preserves unsaved choices on errors. Both operations require the existing shared garden edit permission and emit ordinary garden-change events.
