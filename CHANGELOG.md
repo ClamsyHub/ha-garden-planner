@@ -2,6 +2,8 @@
 
 ## 0.1.11 — 2026-11-17
 
+- Direkte Übersicht-Navigation, Nachbarschaftsmatrix mit fixierten Überschriften, lokale Pflanzen-/Sortenbilder und überarbeitete Pflanzenkarten/Profile mit Jahresübersicht.
+
 - Confirm manual and personal task completion before removing upcoming work; cancellation and Escape leave tasks untouched.
 - Add shared Neighbors management with reciprocal good/bad catalog relationships, multiple choices and optional free names.
 - Add a responsive Seeds & shopping matrix with available, buy, not-needed and undecided states, filtering and automatic transactional batch saves.

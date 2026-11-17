@@ -1747,4 +1747,419 @@ export const styles = css`
       min-height: 44px;
     }
   }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  .back-overview {
+    margin-bottom: 16px;
+  }
+  .plant-photo,
+  .profile-photo,
+  .variety-photo {
+    object-fit: cover;
+    border-radius: 18px;
+    background: var(--gp-soft);
+    flex-shrink: 0;
+  }
+  .plant-photo {
+    width: 86px;
+    height: 86px;
+  }
+  .profile-photo {
+    width: 180px;
+    height: 220px;
+  }
+  .variety-photo {
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+  }
+  .photo-placeholder {
+    display: grid;
+    place-items: center;
+    color: var(--gp-green);
+  }
+  .photo-placeholder svg {
+    width: 45%;
+    height: 45%;
+  }
+  .catalog-card {
+    gap: 18px;
+  }
+  .catalog-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+  .catalog-card-heading > div {
+    min-width: 0;
+  }
+  .catalog-card-heading h2 {
+    margin: 0;
+    font-size: 23px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .catalog-card-heading i {
+    display: block;
+    font-size: 12px;
+    color: var(--gp-muted);
+    margin: 5px 0;
+    overflow-wrap: anywhere;
+  }
+  .catalog-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+    margin: 4px 0;
+  }
+  .catalog-facts dd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .catalog-facts svg {
+    color: var(--gp-green);
+    width: 18px;
+    height: 18px;
+  }
+  .catalog-neighbors {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-top: 1px solid var(--gp-border);
+    padding-top: 15px;
+    font-size: 13px;
+  }
+  .catalog-neighbors > span:first-child {
+    margin-right: auto;
+    color: var(--gp-muted);
+  }
+  .catalog-details {
+    flex: 1;
+  }
+  .catalog-card .actions {
+    flex-wrap: nowrap;
+  }
+  .neighbor-good {
+    color: var(--success-color, #286644);
+  }
+  .neighbor-bad {
+    color: var(--error-color, #a52f32);
+  }
+  :host([dark]) .neighbor-good {
+    color: var(--success-color, #78c99a);
+  }
+  :host([dark]) .neighbor-bad {
+    color: var(--error-color, #ff9494);
+  }
+  .image-editor {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gp-border);
+    border-radius: 14px;
+  }
+  .image-editor > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .image-editor input {
+    max-width: 100%;
+    width: 100%;
+    padding: 8px 0;
+    border: 0;
+  }
+  .image-editor small {
+    display: block;
+    margin: 8px 0;
+  }
+  .matrix-search {
+    max-width: 440px;
+    margin-bottom: 10px;
+  }
+  .neighbor-matrix-scroll {
+    overflow: auto;
+    max-height: 60dvh;
+    border: 1px solid var(--gp-border);
+    border-radius: 14px;
+    isolation: isolate;
+  }
+  .neighbor-matrix {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+  }
+  .neighbor-matrix th,
+  .neighbor-matrix td {
+    padding: 5px;
+    border-bottom: 1px solid var(--gp-border);
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+  .neighbor-matrix thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-card);
+    height: 70px;
+    font-size: 12px;
+  }
+  .neighbor-matrix tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--gp-card);
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    text-align: left;
+    font-size: 13px;
+  }
+  .neighbor-matrix thead th:first-child {
+    z-index: 3;
+  }
+  .neighbor-matrix .matrix-highlight {
+    background: var(--gp-soft);
+  }
+  .matrix-cell {
+    width: 100%;
+    min-height: 46px;
+    padding: 5px;
+    font-size: 22px;
+    border-color: transparent;
+    border-radius: 10px;
+  }
+  .matrix-cell.neighbor-good {
+    background: color-mix(
+      in srgb,
+      var(--success-color, #397456) 13%,
+      var(--gp-card)
+    );
+  }
+  .matrix-cell.neighbor-bad {
+    background: color-mix(
+      in srgb,
+      var(--error-color, #a52f32) 13%,
+      var(--gp-card)
+    );
+  }
+  .matrix-cell:disabled {
+    opacity: 1;
+  }
+  .matrix-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .plant-profile {
+    padding-top: 14px;
+  }
+  .profile-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+  }
+  .profile-heading > div {
+    min-width: 0;
+  }
+  .profile-heading h3 {
+    font-size: 32px;
+    line-height: 1.15;
+    margin: 12px 0;
+  }
+  .profile-heading i {
+    color: var(--gp-muted);
+  }
+  .profile-condition {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-size: 13px;
+    margin: 10px 0;
+  }
+  .profile-condition strong {
+    color: var(--gp-muted);
+    font-weight: 500;
+  }
+  .profile-description {
+    color: var(--gp-muted);
+    white-space: pre-wrap;
+  }
+  .profile-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0 26px;
+  }
+  .profile-facts > div {
+    background: var(--gp-soft);
+    padding: 18px;
+    border-radius: 16px;
+    min-width: 0;
+  }
+  .profile-facts dt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--gp-muted);
+  }
+  .profile-facts dt svg {
+    color: var(--gp-green);
+  }
+  .profile-facts dd {
+    margin: 10px 0 0;
+  }
+  .profile-facts strong {
+    display: block;
+    font-size: 24px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .profile-facts small {
+    display: block;
+    font-size: 11px;
+    color: var(--gp-muted);
+    margin-top: 12px;
+  }
+  .plant-profile > section {
+    padding: 18px 0;
+    border-top: 1px solid var(--gp-border);
+  }
+  .temperature-scale {
+    height: 24px;
+    border-radius: 16px;
+    background: #ad8952;
+    position: relative;
+    overflow: hidden;
+    margin: 22px 0 10px;
+  }
+  .temperature-scale > span {
+    display: block;
+    position: absolute;
+    height: 100%;
+    background: #397456;
+  }
+  .temperature-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .temperature-profile p {
+    font-size: 12px;
+  }
+  .profile-year-scroll {
+    max-width: 100%;
+    overflow: auto;
+  }
+  .profile-year-grid {
+    display: grid;
+    grid-template-columns: 90px repeat(12, minmax(27px, 1fr));
+    min-width: 460px;
+    gap: 3px;
+    align-items: center;
+  }
+  .mini-month {
+    text-align: center;
+    font-size: 10px;
+    color: var(--gp-muted);
+  }
+  .mini-title {
+    font-size: 11px;
+    min-height: 35px;
+    border: 0;
+    padding: 5px 0;
+    justify-content: flex-start;
+    background: transparent;
+  }
+  .mini-cell > span {
+    display: block;
+    position: relative;
+    height: 13px;
+    background: var(--gp-soft);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .mini-cell .bar {
+    display: block;
+    position: absolute;
+    height: 100%;
+    background: var(--bar-color);
+  }
+  .neighbor-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .profile-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 600px) {
+    .catalog-card-heading {
+      gap: 12px;
+    }
+    .plant-photo {
+      width: 72px;
+      height: 72px;
+    }
+    .profile-photo {
+      width: 100px;
+      height: 130px;
+    }
+    .profile-heading {
+      gap: 14px;
+    }
+    .profile-heading h3 {
+      font-size: 25px;
+    }
+    .profile-facts > div {
+      padding: 12px;
+    }
+    .profile-facts strong {
+      font-size: 19px;
+    }
+    .image-editor {
+      flex-wrap: wrap;
+    }
+    .image-editor > div {
+      flex-basis: 100%;
+    }
+    .neighbor-matrix th,
+    .neighbor-matrix td {
+      width: 78px;
+      min-width: 78px;
+      max-width: 78px;
+    }
+    .neighbor-matrix tr > :first-child {
+      width: 108px;
+      min-width: 108px;
+      max-width: 108px;
+    }
+  }
 `;

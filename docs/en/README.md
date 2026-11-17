@@ -136,3 +136,10 @@ Completing shared or personal garden tasks now requires explicit confirmation. C
 Overview counts open matching plants, planned/active cultures and successful history. Those destination filters can be changed again. Open tasks jumps to upcoming work on narrow displays; wide layouts keep their scroll position if the section is already visible. The summary sticks below navigation as headings scroll away, using compact labels on small screens.
 
 Click one calendar legend activity to select only it, click another to replace it, or click the same activity again to restore all activities. Existing category/search filters are retained. The activity dropdown still supports multiple selections.
+
+
+## Plant images and updated views
+
+All main sections offer “Back to overview”. Neighbors also appear in a filterable matrix with pinned row and column names. Cells cycle reciprocally between unassigned, good and unfavorable; external names remain editable through “Edit neighbors”.
+
+Choose a JPEG, PNG or WebP up to 12 MiB in a plant or variety form. Only a local PNG preview (up to 512 px and 80 KiB, further reduced as needed) is stored. Originals and metadata are not retained; convert HEIC to JPEG first. Remove images in the same form. Previews are included in garden backups and JSON/CSV exports; the total JSON/CSV import limit remains 20 MiB. Profiles show stored growing facts, germination bounds and activity periods; missing values are never invented.

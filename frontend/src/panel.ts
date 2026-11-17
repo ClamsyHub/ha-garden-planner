@@ -21,6 +21,7 @@ import {
 import { repeat } from "lit/directives/repeat.js";
 import { live } from "lit/directives/live.js";
 import { guard } from "lit/directives/guard.js";
+import { imagePreview } from "./image";
 import { PlannerApi } from "./api";
 import {
   activeInMonth,
@@ -90,6 +91,9 @@ const activities = [
   "other",
 ];
 const paths: Record<string, string> = {
+  temperature: "M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0M12 8v10",
+  clock: "M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
+  ruler: "M3 7l4-4 14 14-4 4zM7 7l2-2M10 10l2-2M13 13l2-2",
   menu: "M3 6h18M3 12h18M3 18h18",
   overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
   calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
@@ -162,6 +166,8 @@ export class GardenPlannerPanel extends LitElement {
     neighborEditor: { state: true },
     neighborQuery: { state: true },
     seedDraft: { state: true },
+    imageLoading: { state: true },
+    matrixQuery: { state: true },
     seedSaving: { state: true },
     seedFailed: { state: true },
     seedFlight: { state: true },
@@ -226,6 +232,9 @@ export class GardenPlannerPanel extends LitElement {
     goodNames: string;
     badNames: string;
   } | null = null;
+  private imageLoading = false;
+  private imageGeneration = 0;
+  private matrixQuery = "";
   private cultureScope = "current";
   private historySuccessOnly = false;
   private layoutObserver?: ResizeObserver;
@@ -720,6 +729,8 @@ export class GardenPlannerPanel extends LitElement {
     return cultureStatus(culture, this.tables.cultivation_events);
   }
   private startEditor(table: Table, record?: Entity, seed: Data = {}): void {
+    this.imageGeneration++;
+    this.imageLoading = false;
     this.sensorOpen = false;
     this.sensorIndex = -1;
     this.error = "";
@@ -758,7 +769,7 @@ export class GardenPlannerPanel extends LitElement {
   }
   private async saveEditor(event: SubmitEvent): Promise<void> {
     event.preventDefault();
-    if (!this.editor || this.busy) return;
+    if (!this.editor || this.busy || this.imageLoading) return;
     const form = event.currentTarget as HTMLFormElement;
     if (!form.reportValidity()) return;
     const editor = this.editor;
@@ -1028,6 +1039,71 @@ export class GardenPlannerPanel extends LitElement {
       }
     </label>`;
   }
+  private async uploadImage(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.editor || this.busy || !this.editable) return;
+    const generation = ++this.imageGeneration;
+    const connection = this.connectionGeneration;
+    this.imageLoading = true;
+    this.error = "";
+    try {
+      const data = await imagePreview(file);
+      if (
+        generation === this.imageGeneration &&
+        connection === this.connectionGeneration &&
+        this.editor &&
+        this.editable
+      )
+        this.changeField("image_data", data);
+    } catch {
+      if (
+        generation === this.imageGeneration &&
+        connection === this.connectionGeneration &&
+        this.editor
+      )
+        this.error = this.tr("imageInvalid");
+    } finally {
+      if (generation === this.imageGeneration) this.imageLoading = false;
+      input.value = "";
+    }
+  }
+  private plantImage(
+    record: Entity,
+    className = "plant-photo",
+  ): TemplateResult {
+    const image = text(record, "image_data");
+    return image.startsWith("data:image/png;base64,")
+      ? html`<img
+          class=${className}
+          src=${image}
+          alt=${text(record, "name")}
+          loading="lazy"
+        />`
+      : html`<span class=${`${className} photo-placeholder`} aria-hidden="true"
+          >${icon("plants")}</span
+        >`;
+  }
+  private renderImageEditor(): TemplateResult | typeof nothing {
+    const editor = this.editor;
+    if (!editor || !["plants", "varieties"].includes(editor.table))
+      return nothing;
+    return html`<section class="image-editor">
+      ${typeof editor.draft.image_data === "string" && editor.draft.image_data ? html`<img class="plant-photo" src=${editor.draft.image_data} alt=${this.tr("imagePreview")} />` : nothing}
+      <div>
+        <label
+          >${this.tr("uploadImage")}<input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            ?disabled=${this.busy || this.imageLoading}
+            @change=${this.uploadImage}
+        /></label>
+        <small class="muted">${this.tr("imageHint")}</small>
+        ${this.imageLoading ? html`<p role="status">${this.tr("imageProcessing")}</p>` : nothing}
+        ${editor.draft.image_data ? html`<button type="button" ?disabled=${this.busy || this.imageLoading} @click=${() => this.changeField("image_data", null)}>${this.tr("removeImage")}</button>` : nothing}
+      </div>
+    </section>`;
+  }
   private renderEditor(): TemplateResult {
     const editor = this.editor;
     const titles: Partial<Record<Table, string>> = {
@@ -1072,6 +1148,7 @@ export class GardenPlannerPanel extends LitElement {
                 ${this.error ? html`<p class="notice error" role="alert">${this.error}</p>` : nothing}
                 ${["plants", "varieties", "growing_windows", "cultivations", "locations"].includes(editor.table) ? html`<p class="notice">${this.tr("temperatureHint")}</p>` : nothing}
                 ${editor.draft.origin === "initial" ? html`<p class="notice">${this.tr("initialEventHint")}</p>` : nothing}
+                ${this.renderImageEditor()}
                 <div class="form-grid">
                   ${this.fieldList(editor).map((field) => this.renderField(field))}
                 </div>
@@ -1085,7 +1162,11 @@ export class GardenPlannerPanel extends LitElement {
                   }}
                 >
                   ${this.tr("cancel")}</button
-                ><button class="primary" type="submit" ?disabled=${this.busy}>
+                ><button
+                  class="primary"
+                  type="submit"
+                  ?disabled=${this.busy || this.imageLoading}
+                >
                   ${this.tr(this.busy ? "busy" : "save")}
                 </button>
               </div>
@@ -1269,12 +1350,57 @@ export class GardenPlannerPanel extends LitElement {
       ${body ? html`<p>${this.tr(body)}</p>` : nothing}${action && this.editable ? html`<button class="primary" @click=${callback}>${icon("plus")}${this.tr(action)}</button>` : nothing}
     </div>`;
   }
+  private plantRange(
+    plant: Entity,
+    low: string,
+    high: string,
+    unit: string,
+  ): string {
+    const a = plant.data[low],
+      b = plant.data[high];
+    const fmt = (v: unknown) =>
+      typeof v === "number" ? v.toLocaleString(this.language) : "—";
+    return typeof a === "number" || typeof b === "number"
+      ? `${fmt(a)}–${fmt(b)} ${unit}`
+      : "—";
+  }
   private renderPlantCard(plant: Entity): TemplateResult {
-    const windows = this.plantWindows(plant.id);
-    const next = windows.length ? nextDay(windows, this.today) : undefined;
-    return html`<article class="plant">
-      <div class="plant-title">
-        <div class="plant-symbol">${icon("plants")}</div>
+    const days = this.language === "de" ? "Tage" : "days";
+    const facts = [
+      [
+        "temperature",
+        "optimalGermination",
+        this.plantRange(
+          plant,
+          "germination_optimal_min_c",
+          "germination_optimal_max_c",
+          "°C",
+        ),
+      ],
+      [
+        "clock",
+        "germinationDuration",
+        this.plantRange(
+          plant,
+          "germination_days_min",
+          "germination_days_max",
+          days,
+        ),
+      ],
+      [
+        "ruler",
+        "plantRowSpacing",
+        `${plant.data.spacing_cm ?? "—"} × ${plant.data.row_spacing_cm ?? "—"} cm`,
+      ],
+      [
+        "calendar",
+        "cultivationDuration",
+        this.plantRange(plant, "duration_days_min", "duration_days_max", days),
+      ],
+    ];
+    return html`<article class="plant catalog-card">
+      <div class="catalog-card-heading">
+        ${this.plantImage(plant)}
         <div>
           <h2>
             <button
@@ -1286,27 +1412,42 @@ export class GardenPlannerPanel extends LitElement {
               ${text(plant, "name")}
             </button>
           </h2>
-          <small
-            >${text(plant, "botanical_name") || this.lab(text(plant, "category"))}</small
-          >
+          <i>${text(plant, "botanical_name")}</i>
+          <div>
+            <span class="badge"
+              >${this.lab(text(plant, "category")) || this.tr("other")}</span
+            >${plant.data.archived ? html`<span class="badge unknown">${this.tr("archived")}</span>` : nothing}
+          </div>
         </div>
       </div>
-      <div>
-        <span class="badge"
-          >${this.lab(text(plant, "category")) || this.tr("other")}</span
-        >${plant.data.archived ? html` <span class="badge unknown">${this.tr("archived")}</span>` : nothing}
+      <dl class="catalog-facts">
+        ${facts.map(
+          ([symbol, key, value]) =>
+            html`<div title=${this.tr(key!)}>
+              <dt class="visually-hidden">${this.tr(key!)}</dt>
+              <dd>${icon(symbol!)}<span>${value}</span></dd>
+            </div>`,
+        )}
+      </dl>
+      <div class="catalog-neighbors">
+        <span>${this.tr("plantNeighbors")}</span
+        ><span class="neighbor-good"
+          >✓
+          ${this.neighborIds(plant, "good").length + this.neighborNames(plant, "good").length}</span
+        ><span class="neighbor-bad"
+          >×
+          ${this.neighborIds(plant, "bad").length + this.neighborNames(plant, "bad").length}</span
+        >
       </div>
-      <p class="muted">
-        ${next ? `${this.tr("nextSowing")} · ${formatDate(next, this.language)}` : this.tr("noAllWindows")}
-      </p>
       <div class="actions">
         <button
+          class="catalog-details"
           @click=${() => {
             this.selected = { kind: "plant", id: plant.id };
           }}
         >
           ${this.tr("details")}${icon("arrow")}</button
-        >${this.editable && !plant.data.archived ? html`<button class="icon" aria-label=${`${this.tr("newSowing")}: ${text(plant, "name")}`} @click=${() => this.startEditor("cultivations", undefined, { plant_id: plant.id })}>${icon("plus")}</button>` : nothing}
+        >${this.editable && !plant.data.archived ? html`<button class="primary icon" aria-label=${`${this.tr("newSowing")}: ${text(plant, "name")}`} @click=${() => this.startEditor("cultivations", undefined, { plant_id: plant.id })}>${icon("plus")}</button>` : nothing}
       </div>
     </article>`;
   }
@@ -1636,6 +1777,90 @@ export class GardenPlannerPanel extends LitElement {
     });
     if (result !== undefined) this.neighborEditor = null;
   }
+  private async cycleNeighbor(a: Entity, b: Entity): Promise<void> {
+    if (this.busy || !this.editable || a.id === b.id) return;
+    const good = new Set(this.neighborIds(a, "good")),
+      bad = new Set(this.neighborIds(a, "bad"));
+    if (good.has(b.id)) {
+      good.delete(b.id);
+      bad.add(b.id);
+    } else if (bad.has(b.id)) bad.delete(b.id);
+    else good.add(b.id);
+    await this.action("set_neighbors", {
+      plant_id: a.id,
+      revision: a.revision,
+      neighbors: {
+        neighbor_good_ids: [...good].sort(),
+        neighbor_bad_ids: [...bad].sort(),
+        neighbor_good_names: this.neighborNames(a, "good"),
+        neighbor_bad_names: this.neighborNames(a, "bad"),
+      },
+    });
+  }
+  private renderNeighborMatrix(plants: Entity[]): TemplateResult {
+    const query = this.matrixQuery.trim().toLocaleLowerCase(this.language);
+    const filtered = plants.filter(
+      (p) =>
+        !query ||
+        text(p, "name").toLocaleLowerCase(this.language).includes(query),
+    );
+    return html`<label class="matrix-search"
+        >${this.tr("matrixFilter")}<input
+          type="search"
+          .value=${this.matrixQuery}
+          @input=${(e: Event) => {
+            this.matrixQuery = (e.target as HTMLInputElement).value;
+          }}
+      /></label>
+      <p class="muted">${this.tr("matrixHint")}</p>
+      <div
+        class="neighbor-matrix-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("neighborMatrix")}
+      >
+        <table class="neighbor-matrix">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("plants")}</th>
+              ${filtered.map((p) => html`<th scope="col" class=${p.id === this.neighborPlant ? "matrix-highlight" : ""}>${text(p, "name")}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.map(
+              (a) =>
+                html`<tr
+                  class=${a.id === this.neighborPlant ? "matrix-highlight" : ""}
+                >
+                  <th scope="row">${text(a, "name")}</th>
+                  ${filtered.map((b) => {
+                    const state =
+                      a.id === b.id
+                        ? "self"
+                        : this.neighborIds(a, "good").includes(b.id)
+                          ? "good"
+                          : this.neighborIds(a, "bad").includes(b.id)
+                            ? "bad"
+                            : "neutral";
+                    const label = this.tr("neighbor_" + state);
+                    return html`<td
+                      class=${b.id === this.neighborPlant ? "matrix-highlight" : ""}
+                    >
+                      ${state === "self" ? html`<span aria-label=${label}>·</span>` : html`<button class=${"matrix-cell neighbor-" + state} title=${`${text(a, "name")} / ${text(b, "name")}: ${label}`} aria-label=${`${text(a, "name")} / ${text(b, "name")}: ${label}`} ?disabled=${this.busy || !this.editable} @click=${() => this.cycleNeighbor(a, b)}>${state === "good" ? "✓" : state === "bad" ? "×" : "−"}</button>`}
+                    </td>`;
+                  })}
+                </tr>`,
+            )}
+          </tbody>
+        </table>
+      </div>
+      ${!filtered.length ? html`<p class="muted">${this.tr("noPlantsMatch")}</p>` : nothing}
+      <p class="matrix-legend">
+        <span class="neighbor-good">✓ ${this.tr("goodNeighbors")}</span
+        ><span class="neighbor-bad">× ${this.tr("badNeighbors")}</span
+        ><span>− ${this.tr("neighbor_neutral")}</span>
+      </p>`;
+  }
   private renderNeighbors(): TemplateResult {
     const plants = [...this.plantList].sort((a, b) =>
       text(a, "name").localeCompare(text(b, "name"), this.language),
@@ -1672,6 +1897,7 @@ export class GardenPlannerPanel extends LitElement {
                   </select></label
                 >${this.editable ? html`<button class="primary" @click=${() => this.beginNeighbors(plant)}>${this.tr("editNeighbors")}</button>` : nothing}
               </div>
+              ${this.renderNeighborMatrix(plants)}
               <div class="neighbor-grid">${group("good")}${group("bad")}</div>`
           : this.empty("emptyPlants")
       }`;
@@ -2856,6 +3082,7 @@ export class GardenPlannerPanel extends LitElement {
           ([key, value]) =>
             !omit.includes(key) &&
             key !== "seed_state" &&
+            key !== "image_data" &&
             value !== undefined &&
             value !== null &&
             value !== "" &&
@@ -3132,11 +3359,161 @@ export class GardenPlannerPanel extends LitElement {
           )}
       </dl>`;
   }
+  private renderPlantProfile(plant: Entity): TemplateResult {
+    const days = this.language === "de" ? "Tage" : "days";
+    const facts = [
+      [
+        "optimalGermination",
+        this.plantRange(
+          plant,
+          "germination_optimal_min_c",
+          "germination_optimal_max_c",
+          "°C",
+        ),
+        `${this.tr("germinationLimits")}: ${this.plantRange(plant, "germination_min_c", "germination_max_c", "°C")}`,
+        "temperature",
+      ],
+      [
+        "germinationDuration",
+        this.plantRange(
+          plant,
+          "germination_days_min",
+          "germination_days_max",
+          days,
+        ),
+        this.tr("germinationHint"),
+        "clock",
+      ],
+      [
+        "spacing_cm",
+        typeof plant.data.spacing_cm === "number"
+          ? `${plant.data.spacing_cm.toLocaleString(this.language)} cm`
+          : "—",
+        `${this.tr("row_spacing_cm")}: ${plant.data.row_spacing_cm ?? "—"} cm`,
+        "ruler",
+      ],
+      [
+        "cultivationDuration",
+        this.plantRange(plant, "duration_days_min", "duration_days_max", days),
+        `${this.tr("depth_cm")}: ${plant.data.depth_cm ?? "—"} cm`,
+        "calendar",
+      ],
+    ];
+    const low = plant.data.germination_min_c,
+      a = plant.data.germination_optimal_min_c,
+      b = plant.data.germination_optimal_max_c,
+      high = plant.data.germination_max_c;
+    const hasScale =
+      [low, a, b, high].every((v) => typeof v === "number") &&
+      Number(high) > Number(low);
+    const start = hasScale
+      ? ((Number(a) - Number(low)) / (Number(high) - Number(low))) * 100
+      : 0;
+    const width = hasScale
+      ? ((Number(b) - Number(a)) / (Number(high) - Number(low))) * 100
+      : 0;
+    return html`<section class="plant-profile">
+      <div class="profile-heading">
+        ${this.plantImage(plant, "profile-photo")}
+        <div>
+          <span class="badge">${this.lab(text(plant, "category"))}</span>
+          <h3>${text(plant, "name")}</h3>
+          <i>${text(plant, "botanical_name")}</i>
+          ${["site", "light", "water", "frost"].filter((k) => text(plant, k)).map((k) => html`<p class="profile-condition"><strong>${this.tr(k)}</strong><span>${text(plant, k)}</span></p>`)}
+        </div>
+      </div>
+      ${text(plant, "description") ? html`<p class="profile-description">${text(plant, "description")}</p>` : nothing}
+      <h3>${this.tr("growingAtGlance")}</h3>
+      <dl class="profile-facts">
+        ${facts.map(
+          ([key, value, note, symbol]) =>
+            html`<div>
+              <dt>${icon(symbol!)}${this.tr(key!)}</dt>
+              <dd><strong>${value}</strong><small>${note}</small></dd>
+            </div>`,
+        )}
+      </dl>
+      ${
+        hasScale
+          ? html`<section class="temperature-profile">
+              <h3>${this.tr("germinationTemperature")}</h3>
+              <div
+                class="temperature-scale"
+                role="img"
+                aria-label=${`${low}–${high} °C; ${this.tr("optimalGermination")}: ${a}–${b} °C`}
+              >
+                <span style=${`left:${start}%;width:${width}%`}></span>
+              </div>
+              <div class="temperature-labels">
+                <span>${low} °C</span
+                ><strong>${a}–${b} °C ${this.tr("optimalShort")}</strong
+                ><span>${high} °C</span>
+              </div>
+              <p class="muted">${this.tr("substrateHint")}</p>
+            </section>`
+          : nothing
+      }
+      ${this.renderPlantYear(plant)}
+      <section class="profile-neighbors">
+        <h3>${this.tr("plantNeighbors")}</h3>
+        ${(["good", "bad"] as const).map(
+          (kind) =>
+            html`<h4 class=${"neighbor-" + kind}>
+                ${this.tr(kind === "good" ? "goodNeighbors" : "badNeighbors")}
+              </h4>
+              <div class="neighbor-chips">
+                ${[...this.neighborIds(plant, kind).map((id) => this.nameFor(id, "plants")), ...this.neighborNames(plant, kind)].map((name) => html`<span class=${"badge neighbor-" + kind}>${name}</span>`)}${!this.neighborIds(plant, kind).length && !this.neighborNames(plant, kind).length ? html`<small class="muted">${this.tr("noNeighbors")}</small>` : nothing}
+              </div>`,
+        )}
+      </section>
+      ${
+        text(plant, "care")
+          ? html`<section>
+              <h3>${this.tr("care")}</h3>
+              <p class="profile-text">${text(plant, "care")}</p>
+            </section>`
+          : nothing
+      }
+      ${text(plant, "source") || text(plant, "source_url") ? html`<p class="muted profile-text">${this.tr("source")}: ${text(plant, "source")} ${text(plant, "source_url")}</p>` : nothing}
+    </section>`;
+  }
+  private renderPlantYear(plant: Entity): TemplateResult {
+    const windows = this.plantWindows(plant.id),
+      year = Number(this.today.slice(0, 4));
+    if (!windows.length) return html``;
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    return html`<section class="profile-year">
+      <h3>${this.tr("plantYear")} · ${year}</h3>
+      <div
+        class="profile-year-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("plantYear")}
+      >
+        <div class="profile-year-grid">
+          <div></div>
+          ${months.map((month) => html`<div class="mini-month">${monthLabel(year, month, this.language, true)}</div>`)}
+          ${windows.map(
+            (w) =>
+              html`<button
+                  class="mini-title"
+                  title=${this.windowTooltip(w)}
+                  @click=${() => {
+                    this.selected = { kind: "window", id: w.id };
+                  }}
+                >
+                  ${this.lab(text(w, "activity"))}</button
+                >${months.map((month) => html`<div class=${`mini-cell ${text(w, "activity")}`} title=${`${this.lab(text(w, "activity"))}: ${this.windowTooltip(w)}`}><span>${monthSegments(w, year, month).map((segment) => html`<span class="bar" style=${`left:${segment.offset}%;width:${segment.width}%`}></span>`)}</span></div>`)}`,
+          )}
+        </div>
+      </div>
+    </section>`;
+  }
   private renderPlantDetail(plant: Entity): TemplateResult {
     const varieties = this.tables.varieties.filter(
       (v) => text(v, "plant_id") === plant.id,
     );
-    return html`${this.renderPlantSummary(plant)}
+    return html`${this.renderPlantProfile(plant)}
       <div
         class="detail-jumps"
         role="group"
@@ -3186,6 +3563,7 @@ export class GardenPlannerPanel extends LitElement {
           ? varieties.map(
               (v) =>
                 html`<article class="item">
+                  ${text(v, "image_data") ? this.plantImage(v, "variety-photo") : nothing}
                   <div class="item-content">
                     <h3>
                       ${text(v, "name")}${text(v, "botanical_name") ? html` <span style="font-weight: normal">(${text(v, "botanical_name")})</span>` : nothing}
@@ -4056,6 +4434,7 @@ export class GardenPlannerPanel extends LitElement {
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
         <main class=${this.page === "overview" ? "overview-page" : ""}>
+          ${this.page !== "overview" ? html`<button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button>` : nothing}
           <header class="topbar">
             <div>
               <div class="eyebrow">Garden Planner</div>

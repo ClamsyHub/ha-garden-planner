@@ -1,5 +1,32 @@
 import type { Language } from "./types";
 const de = {
+  backOverview: "Zurück zur Übersicht",
+  uploadImage: "Bild hochladen",
+  imagePreview: "Bildvorschau",
+  imageHint:
+    "JPEG, PNG oder WebP bis 12 MiB. Wird lokal als kleine PNG-Vorschau gespeichert; Originaldatei und Metadaten werden nicht übernommen.",
+  imageProcessing: "Bild wird vorbereitet …",
+  removeImage: "Bild entfernen",
+  imageInvalid:
+    "Das Bild konnte nicht verarbeitet werden. Bitte ein gültiges JPEG-, PNG- oder WebP-Bild bis 12 MiB wählen.",
+  plantNeighbors: "Pflanznachbarn",
+  neighborMatrix: "Nachbarschaftsmatrix",
+  matrixFilter: "Pflanzen in Zeilen und Spalten filtern",
+  matrixHint:
+    "Zelle anklicken: nicht zugeordnet → gut → ungünstig → nicht zugeordnet. Jede Änderung gilt automatisch gegenseitig. Freie Namen lassen sich weiterhin unter „Nachbarn bearbeiten“ ergänzen.",
+  neighbor_self: "Dieselbe Pflanze",
+  neighbor_good: "Gut",
+  neighbor_bad: "Ungünstig",
+  neighbor_neutral: "Nicht zugeordnet / unklar",
+  noPlantsMatch: "Keine Pflanzen für diese Auswahl.",
+  growingAtGlance: "Anzucht auf einen Blick",
+  germinationHint: "Abhängig von Temperatur und Saatgut",
+  germinationTemperature: "Keimtemperatur",
+  optimalShort: "optimal",
+  substrateHint:
+    "Grün zeigt den optimalen Bereich der Keimsubstrat-Temperatur.",
+  plantYear: "Jahresübersicht",
+
   compact_managedPlants: "Pflanzen",
   compact_planned: "Geplant",
   compact_active: "Laufend",
@@ -139,6 +166,33 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  backOverview: "Back to overview",
+  uploadImage: "Upload image",
+  imagePreview: "Image preview",
+  imageHint:
+    "JPEG, PNG or WebP up to 12 MiB. Saved locally as a small PNG preview; the original file and metadata are not retained.",
+  imageProcessing: "Preparing image …",
+  removeImage: "Remove image",
+  imageInvalid:
+    "The image could not be processed. Choose a valid JPEG, PNG or WebP image up to 12 MiB.",
+  plantNeighbors: "Plant neighbors",
+  neighborMatrix: "Neighbor matrix",
+  matrixFilter: "Filter plants in rows and columns",
+  matrixHint:
+    "Click a cell: unassigned → good → unfavorable → unassigned. Changes apply reciprocally. Add external names using “Edit neighbors”.",
+  neighbor_self: "Same plant",
+  neighbor_good: "Good",
+  neighbor_bad: "Unfavorable",
+  neighbor_neutral: "Unassigned / unknown",
+  noPlantsMatch: "No plants match this selection.",
+  growingAtGlance: "Growing at a glance",
+  germinationHint: "Depends on temperature and seed",
+  germinationTemperature: "Germination temperature",
+  optimalShort: "optimal",
+  substrateHint:
+    "Green indicates the optimal germination substrate temperature.",
+  plantYear: "Year overview",
+
   compact_managedPlants: "Plants",
   compact_planned: "Planned",
   compact_active: "Active",

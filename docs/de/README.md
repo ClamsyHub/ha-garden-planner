@@ -167,3 +167,10 @@ Die Übersichtskacheln führen zu den passenden Daten: Pflanzen im Garten zur ak
 Beim Scrollen verschwinden Titel und Einleitung; die Übersichtskacheln bleiben unter der Navigation stehen. Auf kleinen Displays sind die Kacheln mit kurzen Beschriftungen in einer kompakten Reihe angeordnet. Der übrige Inhalt scrollt normal weiter.
 
 In der Kalenderlegende eine Tätigkeit anklicken, um ausschließlich diese Tätigkeit anzuzeigen. Eine andere Tätigkeit ersetzt die Auswahl; ein zweiter Klick auf dieselbe Tätigkeit zeigt wieder alle. Kategorie- und Pflanzenfilter bleiben bestehen. Mehrfachauswahl ist weiterhin über das Tätigkeits-Dropdown möglich.
+
+
+## Pflanzenbilder und neue Ansichten
+
+Alle Hauptbereiche bieten „Zurück zur Übersicht“. Nachbarn werden zusätzlich als filterbare Matrix mit fixierten Zeilen-/Spaltennamen dargestellt; Zellen wechseln gegenseitig zwischen nicht zugeordnet, gut und ungünstig. Freie Nachbarn bleiben über „Nachbarn bearbeiten“ pflegbar.
+
+Im Pflanzen- oder Sortenformular ein JPEG-, PNG- oder WebP-Bild bis 12 MiB wählen. Gespeichert wird nur eine lokale PNG-Vorschau (maximal 512 px und 80 KiB; weitere Verkleinerung je Motiv). Originale und Metadaten werden nicht aufbewahrt; HEIC vorher in JPEG umwandeln. Bilder lassen sich im Formular wieder entfernen und sind in Gartensicherungen und JSON/CSV enthalten. Der gesamte JSON-/CSV-Import ist weiterhin auf 20 MiB begrenzt. Die Detailansicht zeigt vorhandene Kennzahlen, Keimtemperaturen und Tätigkeitszeiträume; fehlende Werte werden nicht ergänzt oder geschätzt.

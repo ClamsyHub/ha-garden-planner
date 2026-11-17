@@ -840,7 +840,36 @@ var $e = {
 		} else if (this.ot === t) return V;
 		return this.ot = Array.isArray(t) ? Array.from(t) : t, this.render(t, n);
 	}
-}), _t = class {
+});
+// src/image.ts
+async function _t(e) {
+	if (![
+		"image/jpeg",
+		"image/png",
+		"image/webp"
+	].includes(e.type) || e.size > 12582912) throw Error("invalid_image");
+	let t = URL.createObjectURL(e);
+	try {
+		let e = new Image();
+		if (e.src = t, await e.decode(), !e.naturalWidth || !e.naturalHeight || e.naturalWidth * e.naturalHeight > 4e7) throw Error("invalid_image");
+		let n = 512;
+		for (; n >= 64;) {
+			let t = Math.min(1, n / Math.max(e.naturalWidth, e.naturalHeight)), r = document.createElement("canvas");
+			r.width = Math.max(1, Math.round(e.naturalWidth * t)), r.height = Math.max(1, Math.round(e.naturalHeight * t));
+			let i = r.getContext("2d");
+			if (!i) throw Error("invalid_image");
+			i.drawImage(e, 0, 0, r.width, r.height);
+			let a = r.toDataURL("image/png");
+			if (a.startsWith("data:image/png;base64,") && a.length <= 109250) return a;
+			n = Math.floor(n * .8);
+		}
+		throw Error("invalid_image");
+	} finally {
+		URL.revokeObjectURL(t);
+	}
+}
+// src/api.ts
+var vt = class {
 	constructor(e) {
 		this.hass = e, this.connection = e.connection;
 	}
@@ -877,7 +906,29 @@ var $e = {
 	subscribe(e) {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
-}, vt = {
+}, yt = {
+	backOverview: "Zurück zur Übersicht",
+	uploadImage: "Bild hochladen",
+	imagePreview: "Bildvorschau",
+	imageHint: "JPEG, PNG oder WebP bis 12 MiB. Wird lokal als kleine PNG-Vorschau gespeichert; Originaldatei und Metadaten werden nicht übernommen.",
+	imageProcessing: "Bild wird vorbereitet …",
+	removeImage: "Bild entfernen",
+	imageInvalid: "Das Bild konnte nicht verarbeitet werden. Bitte ein gültiges JPEG-, PNG- oder WebP-Bild bis 12 MiB wählen.",
+	plantNeighbors: "Pflanznachbarn",
+	neighborMatrix: "Nachbarschaftsmatrix",
+	matrixFilter: "Pflanzen in Zeilen und Spalten filtern",
+	matrixHint: "Zelle anklicken: nicht zugeordnet → gut → ungünstig → nicht zugeordnet. Jede Änderung gilt automatisch gegenseitig. Freie Namen lassen sich weiterhin unter „Nachbarn bearbeiten“ ergänzen.",
+	neighbor_self: "Dieselbe Pflanze",
+	neighbor_good: "Gut",
+	neighbor_bad: "Ungünstig",
+	neighbor_neutral: "Nicht zugeordnet / unklar",
+	noPlantsMatch: "Keine Pflanzen für diese Auswahl.",
+	growingAtGlance: "Anzucht auf einen Blick",
+	germinationHint: "Abhängig von Temperatur und Saatgut",
+	germinationTemperature: "Keimtemperatur",
+	optimalShort: "optimal",
+	substrateHint: "Grün zeigt den optimalen Bereich der Keimsubstrat-Temperatur.",
+	plantYear: "Jahresübersicht",
 	compact_managedPlants: "Pflanzen",
 	compact_planned: "Geplant",
 	compact_active: "Laufend",
@@ -989,7 +1040,29 @@ var $e = {
 	noDeliveries: "Noch keine Versandversuche.",
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
-}, yt = {
+}, bt = {
+	backOverview: "Back to overview",
+	uploadImage: "Upload image",
+	imagePreview: "Image preview",
+	imageHint: "JPEG, PNG or WebP up to 12 MiB. Saved locally as a small PNG preview; the original file and metadata are not retained.",
+	imageProcessing: "Preparing image …",
+	removeImage: "Remove image",
+	imageInvalid: "The image could not be processed. Choose a valid JPEG, PNG or WebP image up to 12 MiB.",
+	plantNeighbors: "Plant neighbors",
+	neighborMatrix: "Neighbor matrix",
+	matrixFilter: "Filter plants in rows and columns",
+	matrixHint: "Click a cell: unassigned → good → unfavorable → unassigned. Changes apply reciprocally. Add external names using “Edit neighbors”.",
+	neighbor_self: "Same plant",
+	neighbor_good: "Good",
+	neighbor_bad: "Unfavorable",
+	neighbor_neutral: "Unassigned / unknown",
+	noPlantsMatch: "No plants match this selection.",
+	growingAtGlance: "Growing at a glance",
+	germinationHint: "Depends on temperature and seed",
+	germinationTemperature: "Germination temperature",
+	optimalShort: "optimal",
+	substrateHint: "Green indicates the optimal germination substrate temperature.",
+	plantYear: "Year overview",
 	compact_managedPlants: "Plants",
 	compact_planned: "Planned",
 	compact_active: "Active",
@@ -1102,11 +1175,11 @@ var $e = {
 	grantedEditor: "You have permission to edit this shared garden.",
 	notifyEntityHint: "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. Enabling a user destination switches off the existing shared channel. It sends additionally to its configured defaults only if explicitly switched back on."
 };
-function bt(e, t) {
-	return (e === "de" ? vt : yt)[t];
+function xt(e, t) {
+	return (e === "de" ? yt : bt)[t];
 }
 // src/i18n.ts
-var xt = {
+var St = {
 	overview: "Übersicht",
 	calendar: "Gartenkalender",
 	plants: "Meine Pflanzen",
@@ -1337,7 +1410,7 @@ var xt = {
 	busy: "Wird gespeichert …",
 	new: "Neu",
 	historicalName: "Name zum Zeitpunkt der Aussaat"
-}, St = {
+}, Ct = {
 	overview: "Overview",
 	calendar: "Garden calendar",
 	plants: "My plants",
@@ -1569,11 +1642,11 @@ var xt = {
 	new: "New",
 	historicalName: "Name at sowing time"
 };
-function Ct(e, t) {
-	return (e === "de" ? xt : St)[t] ?? bt(e, t) ?? t;
-}
 function wt(e, t) {
-	return Ct(e, {
+	return (e === "de" ? St : Ct)[t] ?? xt(e, t) ?? t;
+}
+function Tt(e, t) {
+	return wt(e, {
 		soil: "soilTemperature",
 		care: "careActivity",
 		completed: "completedStatus",
@@ -1582,7 +1655,7 @@ function wt(e, t) {
 }
 function U(e, t) {
 	let n = t && typeof t == "object" && "code" in t ? String(t.code) : "";
-	return Ct(e, [
+	return wt(e, [
 		"invalid_data",
 		"not_found",
 		"conflict",
@@ -1592,7 +1665,7 @@ function U(e, t) {
 	].includes(n) ? n : "unexpected");
 }
 // src/fields.ts
-var Tt = [
+var Et = [
 	"name",
 	"botanical_name",
 	"category",
@@ -1605,7 +1678,7 @@ var Tt = [
 	"care",
 	"source",
 	"source_url"
-], Et = [
+], Dt = [
 	"germination_min_c",
 	"germination_optimal_min_c",
 	"germination_optimal_max_c",
@@ -1617,15 +1690,15 @@ var Tt = [
 	"row_spacing_cm",
 	"duration_days_min",
 	"duration_days_max"
-], Dt = (e, t) => e.map((e) => ({
+], Ot = (e, t) => e.map((e) => ({
 	value: e,
-	label: wt(t, e)
-})), Ot = (e, n) => e.map((e) => ({
+	label: Tt(t, e)
+})), kt = (e, n) => e.map((e) => ({
 	value: e.id,
-	label: t(e, "name") || t(e, "title") || Ct(n, "untitled")
+	label: t(e, "name") || t(e, "title") || wt(n, "untitled")
 }));
 function W(e) {
-	return Et.includes(e) || [
+	return Dt.includes(e) || [
 		"quantity",
 		"temperature_c",
 		"start_day",
@@ -1646,16 +1719,16 @@ function W(e) {
 		required: e === "name" || e === "title"
 	};
 }
-function kt(e, n, r, i, a) {
+function At(e, n, r, i, a) {
 	let o = (e, t, n = !1) => ({
 		key: e,
 		type: "select",
-		options: Dt(t, i),
+		options: Ot(t, i),
 		required: n
 	}), s = (e, t, n = !1, r = !1) => ({
 		key: e,
 		type: "select",
-		options: Ot(t, i),
+		options: kt(t, i),
 		required: n,
 		disabled: r
 	}), c = (e, t) => e.filter((e) => !e.data.archived || e.id === t), l = String(n.plant_id ?? ""), u = s("plant_id", c(r.plants, l), !0, a && [
@@ -1669,10 +1742,10 @@ function kt(e, n, r, i, a) {
 	])];
 	return e === "plants" || e === "varieties" ? [
 		...e === "varieties" ? [u] : [],
-		...Tt.map((e) => e === "category" ? {
+		...Et.map((e) => e === "category" ? {
 			key: e,
 			type: "select",
-			options: Dt([.../* @__PURE__ */ new Set([
+			options: Ot([.../* @__PURE__ */ new Set([
 				"vegetables",
 				"herbs",
 				"flowers",
@@ -1681,7 +1754,7 @@ function kt(e, n, r, i, a) {
 				...r.plants.map((e) => t(e, "category")).filter(Boolean)
 			])], i)
 		} : W(e)),
-		...e === "plants" ? Et.map((e) => ({
+		...e === "plants" ? Dt.map((e) => ({
 			...W(e),
 			rowStart: ["depth_cm", "spacing_cm"].includes(e)
 		})) : []
@@ -1822,7 +1895,7 @@ function kt(e, n, r, i, a) {
 		W("notes")
 	];
 }
-function At(e, t, n = {}) {
+function jt(e, t, n = {}) {
 	return {
 		...{
 			plants: { category: "vegetables" },
@@ -1852,7 +1925,7 @@ function At(e, t, n = {}) {
 		...n
 	};
 }
-function jt(e, t, n, r) {
+function Mt(e, t, n, r) {
 	let i = {};
 	for (let e of n) {
 		if (e.disabled) continue;
@@ -1862,7 +1935,7 @@ function jt(e, t, n, r) {
 			r && r.data[e.key] !== void 0 && (i[e.key] = null);
 		} else i[e.key] = e.type === "number" || e.key.endsWith("_month") ? Number(n) : n;
 	}
-	e === "cultivation_events" && !r && (i.cultivation_id = t.cultivation_id);
+	e === "cultivation_events" && !r && (i.cultivation_id = t.cultivation_id), ["plants", "varieties"].includes(e) && t.image_data !== void 0 && (i.image_data = t.image_data || null);
 	let a = {
 		...r?.data,
 		...i
@@ -1881,7 +1954,7 @@ function jt(e, t, n, r) {
 	return i;
 }
 // node_modules/fflate/esm/browser.js
-var G = Uint8Array, K = Uint16Array, Mt = Int32Array, Nt = new G([
+var G = Uint8Array, K = Uint16Array, Nt = Int32Array, Pt = new G([
 	0,
 	0,
 	0,
@@ -1912,42 +1985,42 @@ var G = Uint8Array, K = Uint16Array, Mt = Int32Array, Nt = new G([
 	5,
 	0,
 	0,
-	0,
-	0
-]), Pt = new G([
-	0,
-	0,
-	0,
-	0,
-	1,
-	1,
-	2,
-	2,
-	3,
-	3,
-	4,
-	4,
-	5,
-	5,
-	6,
-	6,
-	7,
-	7,
-	8,
-	8,
-	9,
-	9,
-	10,
-	10,
-	11,
-	11,
-	12,
-	12,
-	13,
-	13,
 	0,
 	0
 ]), Ft = new G([
+	0,
+	0,
+	0,
+	0,
+	1,
+	1,
+	2,
+	2,
+	3,
+	3,
+	4,
+	4,
+	5,
+	5,
+	6,
+	6,
+	7,
+	7,
+	8,
+	8,
+	9,
+	9,
+	10,
+	10,
+	11,
+	11,
+	12,
+	12,
+	13,
+	13,
+	0,
+	0
+]), It = new G([
 	16,
 	17,
 	18,
@@ -1967,18 +2040,18 @@ var G = Uint8Array, K = Uint16Array, Mt = Int32Array, Nt = new G([
 	14,
 	1,
 	15
-]), It = function(e, t) {
+]), Lt = function(e, t) {
 	for (var n = new K(31), r = 0; r < 31; ++r) n[r] = t += 1 << e[r - 1];
-	for (var i = new Mt(n[30]), r = 1; r < 30; ++r) for (var a = n[r]; a < n[r + 1]; ++a) i[a] = a - n[r] << 5 | r;
+	for (var i = new Nt(n[30]), r = 1; r < 30; ++r) for (var a = n[r]; a < n[r + 1]; ++a) i[a] = a - n[r] << 5 | r;
 	return {
 		b: n,
 		r: i
 	};
-}, Lt = It(Nt, 2), Rt = Lt.b, zt = Lt.r;
-Rt[28] = 258, zt[258] = 28;
-for (var Bt = It(Pt, 0), Vt = Bt.b, Ht = Bt.r, Ut = new K(32768), q = 0; q < 32768; ++q) {
-	var Wt = (q & 43690) >> 1 | (q & 21845) << 1;
-	Wt = (Wt & 52428) >> 2 | (Wt & 13107) << 2, Wt = (Wt & 61680) >> 4 | (Wt & 3855) << 4, Ut[q] = ((Wt & 65280) >> 8 | (Wt & 255) << 8) >> 1;
+}, Rt = Lt(Pt, 2), zt = Rt.b, Bt = Rt.r;
+zt[28] = 258, Bt[258] = 28;
+for (var Vt = Lt(Ft, 0), Ht = Vt.b, Ut = Vt.r, Wt = new K(32768), q = 0; q < 32768; ++q) {
+	var Gt = (q & 43690) >> 1 | (q & 21845) << 1;
+	Gt = (Gt & 52428) >> 2 | (Gt & 13107) << 2, Gt = (Gt & 61680) >> 4 | (Gt & 3855) << 4, Wt[q] = ((Gt & 65280) >> 8 | (Gt & 255) << 8) >> 1;
 }
 for (var J = (function(e, t, n) {
 	for (var r = e.length, i = 0, a = new K(t); i < r; ++i) e[i] && ++a[e[i] - 1];
@@ -1988,28 +2061,28 @@ for (var J = (function(e, t, n) {
 	if (n) {
 		s = new K(1 << t);
 		var c = 15 - t;
-		for (i = 0; i < r; ++i) if (e[i]) for (var l = i << 4 | e[i], u = t - e[i], d = o[e[i] - 1]++ << u, f = d | (1 << u) - 1; d <= f; ++d) s[Ut[d] >> c] = l;
-	} else for (s = new K(r), i = 0; i < r; ++i) e[i] && (s[i] = Ut[o[e[i] - 1]++] >> 15 - e[i]);
+		for (i = 0; i < r; ++i) if (e[i]) for (var l = i << 4 | e[i], u = t - e[i], d = o[e[i] - 1]++ << u, f = d | (1 << u) - 1; d <= f; ++d) s[Wt[d] >> c] = l;
+	} else for (s = new K(r), i = 0; i < r; ++i) e[i] && (s[i] = Wt[o[e[i] - 1]++] >> 15 - e[i]);
 	return s;
-}), Gt = new G(288), q = 0; q < 144; ++q) Gt[q] = 8;
-for (var q = 144; q < 256; ++q) Gt[q] = 9;
-for (var q = 256; q < 280; ++q) Gt[q] = 7;
-for (var q = 280; q < 288; ++q) Gt[q] = 8;
-for (var Kt = new G(32), q = 0; q < 32; ++q) Kt[q] = 5;
-var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PURE__*/ J(Kt, 5, 0), Xt = /*#__PURE__*/ J(Kt, 5, 1), Zt = function(e) {
+}), Kt = new G(288), q = 0; q < 144; ++q) Kt[q] = 8;
+for (var q = 144; q < 256; ++q) Kt[q] = 9;
+for (var q = 256; q < 280; ++q) Kt[q] = 7;
+for (var q = 280; q < 288; ++q) Kt[q] = 8;
+for (var qt = new G(32), q = 0; q < 32; ++q) qt[q] = 5;
+var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PURE__*/ J(qt, 5, 0), Zt = /*#__PURE__*/ J(qt, 5, 1), Qt = function(e) {
 	for (var t = e[0], n = 1; n < e.length; ++n) e[n] > t && (t = e[n]);
 	return t;
 }, Y = function(e, t, n) {
 	var r = t / 8 | 0;
 	return (e[r] | e[r + 1] << 8) >> (t & 7) & n;
-}, Qt = function(e, t) {
+}, $t = function(e, t) {
 	var n = t / 8 | 0;
 	return (e[n] | e[n + 1] << 8 | e[n + 2] << 16) >> (t & 7);
-}, $t = function(e) {
+}, en = function(e) {
 	return (e + 7) / 8 | 0;
-}, en = function(e, t, n) {
+}, tn = function(e, t, n) {
 	return (t == null || t < 0) && (t = 0), (n == null || n > e.length) && (n = e.length), new G(e.subarray(t, n));
-}, tn = [
+}, nn = [
 	"unexpected EOF",
 	"invalid block type",
 	"invalid length/literal",
@@ -2025,10 +2098,10 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 	"stream finishing",
 	"invalid zip data"
 ], X = function(e, t, n) {
-	var r = Error(t || tn[e]);
+	var r = Error(t || nn[e]);
 	if (r.code = e, Error.captureStackTrace && Error.captureStackTrace(r, X), !n) throw r;
 	return r;
-}, nn = function(e, t, n, r) {
+}, rn = function(e, t, n, r) {
 	var i = e.length, a = r ? r.length : 0;
 	if (!i || t.f && !t.l) return n || new G(0);
 	var o = !n, s = o || t.i != 2, c = t.i;
@@ -2045,7 +2118,7 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 			u = Y(e, d, 1);
 			var v = Y(e, d + 1, 3);
 			if (d += 3, !v) {
-				var y = $t(d) + 4, b = e[y - 4] | e[y - 3] << 8, x = y + b;
+				var y = en(d) + 4, b = e[y - 4] | e[y - 3] << 8, x = y + b;
 				if (x > i) {
 					c && X(0);
 					break;
@@ -2053,13 +2126,13 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 				s && l(f + b), n.set(e.subarray(y, x), f), t.b = f += b, t.p = d = x * 8, t.f = u;
 				continue;
 			}
-			if (v == 1) p = Jt, m = Xt, h = 9, g = 5;
+			if (v == 1) p = Yt, m = Zt, h = 9, g = 5;
 			else if (v == 2) {
 				var S = Y(e, d, 31) + 257, C = Y(e, d + 10, 15) + 4, w = S + Y(e, d + 5, 31) + 1;
 				d += 14;
-				for (var T = new G(w), E = new G(19), D = 0; D < C; ++D) E[Ft[D]] = Y(e, d + D * 3, 7);
+				for (var T = new G(w), E = new G(19), D = 0; D < C; ++D) E[It[D]] = Y(e, d + D * 3, 7);
 				d += C * 3;
-				for (var O = Zt(E), ee = (1 << O) - 1, k = J(E, O, 1), D = 0; D < w;) {
+				for (var O = Qt(E), ee = (1 << O) - 1, k = J(E, O, 1), D = 0; D < w;) {
 					var A = k[Y(e, d, ee)];
 					d += A & 15;
 					var y = A >> 4;
@@ -2070,7 +2143,7 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 					}
 				}
 				var N = T.subarray(0, S), P = T.subarray(S);
-				h = Zt(N), g = Zt(P), p = J(N, h, 1), m = J(P, g, 1);
+				h = Qt(N), g = Qt(P), p = J(N, h, 1), m = J(P, g, 1);
 			} else X(1);
 			if (d > _) {
 				c && X(0);
@@ -2079,7 +2152,7 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 		}
 		s && l(f + 131072);
 		for (var te = (1 << h) - 1, F = (1 << g) - 1, ne = d;; ne = d) {
-			var j = p[Qt(e, d) & te], I = j >> 4;
+			var j = p[$t(e, d) & te], I = j >> 4;
 			if (d += j & 15, d > _) {
 				c && X(0);
 				break;
@@ -2091,15 +2164,15 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 			} else {
 				var L = I - 254;
 				if (I > 264) {
-					var D = I - 257, R = Nt[D];
-					L = Y(e, d, (1 << R) - 1) + Rt[D], d += R;
+					var D = I - 257, R = Pt[D];
+					L = Y(e, d, (1 << R) - 1) + zt[D], d += R;
 				}
-				var z = m[Qt(e, d) & F], re = z >> 4;
+				var z = m[$t(e, d) & F], re = z >> 4;
 				z || X(3), d += z & 15;
-				var P = Vt[re];
+				var P = Ht[re];
 				if (re > 3) {
-					var R = Pt[re];
-					P += Qt(e, d) & (1 << R) - 1, d += R;
+					var R = Ft[re];
+					P += $t(e, d) & (1 << R) - 1, d += R;
 				}
 				if (d > _) {
 					c && X(0);
@@ -2116,23 +2189,23 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 		}
 		t.l = p, t.p = ne, t.b = f, t.f = u, p && (u = 1, t.m = h, t.d = m, t.n = g);
 	} while (!u);
-	return f != n.length && o ? en(n, 0, f) : n.subarray(0, f);
-}, rn = function(e, t, n) {
-	n <<= t & 7;
-	var r = t / 8 | 0;
-	e[r] |= n, e[r + 1] |= n >> 8;
+	return f != n.length && o ? tn(n, 0, f) : n.subarray(0, f);
 }, an = function(e, t, n) {
 	n <<= t & 7;
 	var r = t / 8 | 0;
+	e[r] |= n, e[r + 1] |= n >> 8;
+}, on = function(e, t, n) {
+	n <<= t & 7;
+	var r = t / 8 | 0;
 	e[r] |= n, e[r + 1] |= n >> 8, e[r + 2] |= n >> 16;
-}, on = function(e, t) {
+}, sn = function(e, t) {
 	for (var n = [], r = 0; r < e.length; ++r) e[r] && n.push({
 		s: r,
 		f: e[r]
 	});
 	var i = n.length, a = n.slice();
 	if (!i) return {
-		t: pn,
+		t: mn,
 		l: 0
 	};
 	if (i == 1) {
@@ -2161,7 +2234,7 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 		r: c
 	};
 	for (var f = a[0].s, r = 1; r < i; ++r) a[r].s > f && (f = a[r].s);
-	var p = new K(f + 1), m = sn(n[u - 1], p, 0);
+	var p = new K(f + 1), m = cn(n[u - 1], p, 0);
 	if (m > t) {
 		var r = 0, h = 0, g = m - t, _ = 1 << g;
 		for (a.sort(function(e, t) {
@@ -2185,9 +2258,9 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 		t: new G(p),
 		l: m
 	};
-}, sn = function(e, t, n) {
-	return e.s == -1 ? Math.max(sn(e.l, t, n + 1), sn(e.r, t, n + 1)) : t[e.s] = n;
-}, cn = function(e) {
+}, cn = function(e, t, n) {
+	return e.s == -1 ? Math.max(cn(e.l, t, n + 1), cn(e.r, t, n + 1)) : t[e.s] = n;
+}, ln = function(e) {
 	for (var t = e.length; t && !e[--t];);
 	for (var n = new K(++t), r = 0, i = e[0], a = 1, o = function(e) {
 		n[r++] = e;
@@ -2207,44 +2280,44 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 		c: n.subarray(0, r),
 		n: t
 	};
-}, ln = function(e, t) {
+}, un = function(e, t) {
 	for (var n = 0, r = 0; r < t.length; ++r) n += e[r] * t[r];
 	return n;
-}, un = function(e, t, n) {
-	var r = n.length, i = $t(t + 2);
+}, dn = function(e, t, n) {
+	var r = n.length, i = en(t + 2);
 	e[i] = r & 255, e[i + 1] = r >> 8, e[i + 2] = e[i] ^ 255, e[i + 3] = e[i + 1] ^ 255;
 	for (var a = 0; a < r; ++a) e[i + a + 4] = n[a];
 	return (i + 4 + r) * 8;
-}, dn = function(e, t, n, r, i, a, o, s, c, l, u) {
-	rn(t, u++, n), ++i[256];
-	for (var d = on(i, 15), f = d.t, p = d.l, m = on(a, 15), h = m.t, g = m.l, _ = cn(f), v = _.c, y = _.n, b = cn(h), x = b.c, S = b.n, C = new K(19), w = 0; w < v.length; ++w) ++C[v[w] & 31];
+}, fn = function(e, t, n, r, i, a, o, s, c, l, u) {
+	an(t, u++, n), ++i[256];
+	for (var d = sn(i, 15), f = d.t, p = d.l, m = sn(a, 15), h = m.t, g = m.l, _ = ln(f), v = _.c, y = _.n, b = ln(h), x = b.c, S = b.n, C = new K(19), w = 0; w < v.length; ++w) ++C[v[w] & 31];
 	for (var w = 0; w < x.length; ++w) ++C[x[w] & 31];
-	for (var T = on(C, 7), E = T.t, D = T.l, O = 19; O > 4 && !E[Ft[O - 1]]; --O);
-	var ee = l + 5 << 3, k = ln(i, Gt) + ln(a, Kt) + o, A = ln(i, f) + ln(a, h) + o + 14 + 3 * O + ln(C, E) + 2 * C[16] + 3 * C[17] + 7 * C[18];
-	if (c >= 0 && ee <= k && ee <= A) return un(t, u, e.subarray(c, c + l));
+	for (var T = sn(C, 7), E = T.t, D = T.l, O = 19; O > 4 && !E[It[O - 1]]; --O);
+	var ee = l + 5 << 3, k = un(i, Kt) + un(a, qt) + o, A = un(i, f) + un(a, h) + o + 14 + 3 * O + un(C, E) + 2 * C[16] + 3 * C[17] + 7 * C[18];
+	if (c >= 0 && ee <= k && ee <= A) return dn(t, u, e.subarray(c, c + l));
 	var j, M, N, P;
-	if (rn(t, u, 1 + (A < k)), u += 2, A < k) {
+	if (an(t, u, 1 + (A < k)), u += 2, A < k) {
 		j = J(f, p, 0), M = f, N = J(h, g, 0), P = h;
 		var te = J(E, D, 0);
-		rn(t, u, y - 257), rn(t, u + 5, S - 1), rn(t, u + 10, O - 4), u += 14;
-		for (var w = 0; w < O; ++w) rn(t, u + 3 * w, E[Ft[w]]);
+		an(t, u, y - 257), an(t, u + 5, S - 1), an(t, u + 10, O - 4), u += 14;
+		for (var w = 0; w < O; ++w) an(t, u + 3 * w, E[It[w]]);
 		u += 3 * O;
 		for (var F = [v, x], ne = 0; ne < 2; ++ne) for (var I = F[ne], w = 0; w < I.length; ++w) {
 			var L = I[w] & 31;
-			rn(t, u, te[L]), u += E[L], L > 15 && (rn(t, u, I[w] >> 5 & 127), u += I[w] >> 12);
+			an(t, u, te[L]), u += E[L], L > 15 && (an(t, u, I[w] >> 5 & 127), u += I[w] >> 12);
 		}
-	} else j = qt, M = Gt, N = Yt, P = Kt;
+	} else j = Jt, M = Kt, N = Xt, P = qt;
 	for (var w = 0; w < s; ++w) {
 		var R = r[w];
 		if (R > 255) {
 			var L = R >> 18 & 31;
-			an(t, u, j[L + 257]), u += M[L + 257], L > 7 && (rn(t, u, R >> 23 & 31), u += Nt[L]);
+			on(t, u, j[L + 257]), u += M[L + 257], L > 7 && (an(t, u, R >> 23 & 31), u += Pt[L]);
 			var z = R & 31;
-			an(t, u, N[z]), u += P[z], z > 3 && (an(t, u, R >> 5 & 8191), u += Pt[z]);
-		} else an(t, u, j[R]), u += M[R];
+			on(t, u, N[z]), u += P[z], z > 3 && (on(t, u, R >> 5 & 8191), u += Ft[z]);
+		} else on(t, u, j[R]), u += M[R];
 	}
-	return an(t, u, j[256]), u + M[256];
-}, fn = /*#__PURE__*/ new Mt([
+	return on(t, u, j[256]), u + M[256];
+}, pn = /*#__PURE__*/ new Nt([
 	65540,
 	131080,
 	131088,
@@ -2254,18 +2327,18 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 	1048832,
 	2114560,
 	2117632
-]), pn = /*#__PURE__*/ new G(0), mn = function(e, t, n, r, i, a) {
+]), mn = /*#__PURE__*/ new G(0), hn = function(e, t, n, r, i, a) {
 	var o = a.z || e.length, s = new G(r + o + 5 * (1 + Math.ceil(o / 7e3)) + i), c = s.subarray(r, s.length - i), l = a.l, u = (a.r || 0) & 7;
 	if (t) {
 		u && (c[0] = a.r >> 3);
-		for (var d = fn[t - 1], f = d >> 13, p = d & 8191, m = (1 << n) - 1, h = a.p || new K(32768), g = a.h || new K(m + 1), _ = Math.ceil(n / 3), v = 2 * _, y = function(t) {
+		for (var d = pn[t - 1], f = d >> 13, p = d & 8191, m = (1 << n) - 1, h = a.p || new K(32768), g = a.h || new K(m + 1), _ = Math.ceil(n / 3), v = 2 * _, y = function(t) {
 			return (e[t] ^ e[t + 1] << _ ^ e[t + 2] << v) & m;
-		}, b = new Mt(25e3), x = new K(288), S = new K(32), C = 0, w = 0, T = a.i || 0, E = 0, D = a.w || 0, O = 0; T + 2 < o; ++T) {
+		}, b = new Nt(25e3), x = new K(288), S = new K(32), C = 0, w = 0, T = a.i || 0, E = 0, D = a.w || 0, O = 0; T + 2 < o; ++T) {
 			var ee = y(T), k = T & 32767, A = g[ee];
 			if (h[k] = A, g[ee] = k, D <= T) {
 				var j = o - T;
 				if ((C > 7e3 || E > 24576) && (j > 423 || !l)) {
-					u = dn(e, c, 0, b, x, S, w, E, O, T - O, u), E = C = w = 0, O = T;
+					u = fn(e, c, 0, b, x, S, w, E, O, T - O, u), E = C = w = 0, O = T;
 					for (var M = 0; M < 286; ++M) x[M] = 0;
 					for (var M = 0; M < 30; ++M) S[M] = 0;
 				}
@@ -2284,63 +2357,63 @@ var qt = /*#__PURE__*/ J(Gt, 9, 0), Jt = /*#__PURE__*/ J(Gt, 9, 1), Yt = /*#__PU
 					k = A, A = h[k], F += k - A & 32767;
 				}
 				if (P) {
-					b[E++] = 268435456 | zt[N] << 18 | Ht[P];
-					var oe = zt[N] & 31, se = Ht[P] & 31;
-					w += Nt[oe] + Pt[se], ++x[257 + oe], ++S[se], D = T + N, ++C;
+					b[E++] = 268435456 | Bt[N] << 18 | Ut[P];
+					var oe = Bt[N] & 31, se = Ut[P] & 31;
+					w += Pt[oe] + Ft[se], ++x[257 + oe], ++S[se], D = T + N, ++C;
 				} else b[E++] = e[T], ++x[e[T]];
 			}
 		}
 		for (T = Math.max(T, D); T < o; ++T) b[E++] = e[T], ++x[e[T]];
-		u = dn(e, c, l, b, x, S, w, E, O, T - O, u), l || (a.r = u & 7 | c[u / 8 | 0] << 3, u -= 7, a.h = g, a.p = h, a.i = T, a.w = D);
+		u = fn(e, c, l, b, x, S, w, E, O, T - O, u), l || (a.r = u & 7 | c[u / 8 | 0] << 3, u -= 7, a.h = g, a.p = h, a.i = T, a.w = D);
 	} else {
 		for (var T = a.w || 0; T < o + l; T += 65535) {
 			var ce = T + 65535;
-			ce >= o && (c[u / 8 | 0] = l, ce = o), u = un(c, u + 1, e.subarray(T, ce));
+			ce >= o && (c[u / 8 | 0] = l, ce = o), u = dn(c, u + 1, e.subarray(T, ce));
 		}
 		a.i = o;
 	}
-	return en(s, 0, r + $t(u) + i);
-}, hn = /*#__PURE__*/ (function() {
+	return tn(s, 0, r + en(u) + i);
+}, gn = /*#__PURE__*/ (function() {
 	for (var e = /* @__PURE__ */ new Int32Array(256), t = 0; t < 256; ++t) {
 		for (var n = t, r = 9; --r;) n = (n & 1 && -306674912) ^ n >>> 1;
 		e[t] = n;
 	}
 	return e;
-})(), gn = function() {
+})(), _n = function() {
 	var e = -1;
 	return {
 		p: function(t) {
-			for (var n = e, r = 0; r < t.length; ++r) n = hn[n & 255 ^ t[r]] ^ n >>> 8;
+			for (var n = e, r = 0; r < t.length; ++r) n = gn[n & 255 ^ t[r]] ^ n >>> 8;
 			e = n;
 		},
 		d: function() {
 			return ~e;
 		}
 	};
-}, _n = function(e, t, n, r, i) {
+}, vn = function(e, t, n, r, i) {
 	if (!i && (i = { l: 1 }, t.dictionary)) {
 		var a = t.dictionary.subarray(-32768), o = new G(a.length + e.length);
 		o.set(a), o.set(e, a.length), e = o, i.w = a.length;
 	}
-	return mn(e, t.level == null ? 6 : t.level, t.mem == null ? i.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(e.length))) * 1.5) : 20 : 12 + t.mem, n, r, i);
-}, vn = function(e, t) {
+	return hn(e, t.level == null ? 6 : t.level, t.mem == null ? i.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(e.length))) * 1.5) : 20 : 12 + t.mem, n, r, i);
+}, yn = function(e, t) {
 	var n = {};
 	for (var r in e) n[r] = e[r];
 	for (var r in t) n[r] = t[r];
 	return n;
-}, yn = function(e, t) {
-	return e[t] | e[t + 1] << 8;
 }, bn = function(e, t) {
-	return (e[t] | e[t + 1] << 8 | e[t + 2] << 16 | e[t + 3] << 24) >>> 0;
+	return e[t] | e[t + 1] << 8;
 }, xn = function(e, t) {
-	return bn(e, t) + bn(e, t + 4) * 4294967296;
+	return (e[t] | e[t + 1] << 8 | e[t + 2] << 16 | e[t + 3] << 24) >>> 0;
+}, Sn = function(e, t) {
+	return xn(e, t) + xn(e, t + 4) * 4294967296;
 }, Z = function(e, t, n) {
 	for (; n; ++t) e[t] = n, n >>>= 8;
 };
-function Sn(e, t) {
-	return _n(e, t || {}, 0, 0);
+function Cn(e, t) {
+	return vn(e, t || {}, 0, 0);
 }
-var Cn = /* @__PURE__ */ function() {
+var wn = /* @__PURE__ */ function() {
 	function e(e, t) {
 		typeof e == "function" && (t = e, e = {}), this.ondata = t;
 		var n = e && e.dictionary && e.dictionary.subarray(-32768);
@@ -2357,36 +2430,36 @@ var Cn = /* @__PURE__ */ function() {
 		}
 	}, e.prototype.c = function(e) {
 		this.s.i = +(this.d = e || !1);
-		var t = this.s.b, n = nn(this.p, this.s, this.o);
-		this.ondata(en(n, t, this.s.b), this.d), this.o = en(n, this.s.b - 32768), this.s.b = this.o.length, this.p = en(this.p, this.s.p / 8 | 0), this.s.p &= 7;
+		var t = this.s.b, n = rn(this.p, this.s, this.o);
+		this.ondata(tn(n, t, this.s.b), this.d), this.o = tn(n, this.s.b - 32768), this.s.b = this.o.length, this.p = tn(this.p, this.s.p / 8 | 0), this.s.p &= 7;
 	}, e.prototype.push = function(e, t) {
 		this.e(e), this.c(t);
 	}, e;
-}(), wn = function(e, t, n, r) {
+}(), Tn = function(e, t, n, r) {
 	for (var i in e) {
 		var a = e[i], o = t + i, s = r;
-		Array.isArray(a) && (s = vn(r, a[1]), a = a[0]), ArrayBuffer.isView(a) ? n[o] = [a, s] : (n[o += "/"] = [new G(0), s], wn(a, o, n, r));
+		Array.isArray(a) && (s = yn(r, a[1]), a = a[0]), ArrayBuffer.isView(a) ? n[o] = [a, s] : (n[o += "/"] = [new G(0), s], Tn(a, o, n, r));
 	}
-}, Tn = typeof TextEncoder < "u" && /*#__PURE__*/ new TextEncoder(), En = typeof TextDecoder < "u" && /*#__PURE__*/ new TextDecoder();
+}, En = typeof TextEncoder < "u" && /*#__PURE__*/ new TextEncoder(), Dn = typeof TextDecoder < "u" && /*#__PURE__*/ new TextDecoder();
 try {
-	En.decode(pn, { stream: !0 });
+	Dn.decode(mn, { stream: !0 });
 } catch {}
-var Dn = function(e) {
+var On = function(e) {
 	for (var t = "", n = 0;;) {
 		var r = e[n++], i = (r > 127) + (r > 223) + (r > 239);
 		if (n + i > e.length) return {
 			s: t,
-			r: en(e, n - 1)
+			r: tn(e, n - 1)
 		};
 		i ? i == 3 ? (r = ((r & 15) << 18 | (e[n++] & 63) << 12 | (e[n++] & 63) << 6 | e[n++] & 63) - 65536, t += String.fromCharCode(55296 | r >> 10, 56320 | r & 1023)) : i & 1 ? t += String.fromCharCode((r & 31) << 6 | e[n++] & 63) : t += String.fromCharCode((r & 15) << 12 | (e[n++] & 63) << 6 | e[n++] & 63) : t += String.fromCharCode(r);
 	}
 };
-function On(e, t) {
+function kn(e, t) {
 	if (t) {
 		for (var n = new G(e.length), r = 0; r < e.length; ++r) n[r] = e.charCodeAt(r);
 		return n;
 	}
-	if (Tn) return Tn.encode(e);
+	if (En) return En.encode(e);
 	for (var i = e.length, a = new G(e.length + (e.length >> 1)), o = 0, s = function(e) {
 		a[o++] = e;
 	}, r = 0; r < i; ++r) {
@@ -2397,24 +2470,24 @@ function On(e, t) {
 		var l = e.charCodeAt(r);
 		l < 128 || t ? s(l) : l < 2048 ? (s(192 | l >> 6), s(128 | l & 63)) : l > 55295 && l < 57344 ? (l = 65536 + (l & 1047552) | e.charCodeAt(++r) & 1023, s(240 | l >> 18), s(128 | l >> 12 & 63), s(128 | l >> 6 & 63), s(128 | l & 63)) : (s(224 | l >> 12), s(128 | l >> 6 & 63), s(128 | l & 63));
 	}
-	return en(a, 0, o);
+	return tn(a, 0, o);
 }
-function kn(e, t) {
+function An(e, t) {
 	if (t) {
 		for (var n = "", r = 0; r < e.length; r += 16384) n += String.fromCharCode.apply(null, e.subarray(r, r + 16384));
 		return n;
 	}
-	if (En) return En.decode(e);
-	var i = Dn(e), a = i.s, n = i.r;
+	if (Dn) return Dn.decode(e);
+	var i = On(e), a = i.s, n = i.r;
 	return n.length && X(8), a;
 }
-var An = function(e, t, n, r, i, a, o) {
+var jn = function(e, t, n, r, i, a, o) {
 	var s = i == 4294967295, c = a == 4294967295, l = o == 4294967295, u = t + n, d = s + c + l;
 	if (r && d) {
-		for (; t + 4 < u; t += 4 + yn(e, t + 2)) if (yn(e, t) == 1) return [
-			s ? xn(e, t + 4 + 8 * c) : i,
-			c ? xn(e, t + 4) : a,
-			l ? xn(e, t + 4 + 8 * (c + s)) : o,
+		for (; t + 4 < u; t += 4 + bn(e, t + 2)) if (bn(e, t) == 1) return [
+			s ? Sn(e, t + 4 + 8 * c) : i,
+			c ? Sn(e, t + 4) : a,
+			l ? Sn(e, t + 4 + 8 * (c + s)) : o,
 			1
 		];
 		r < 2 && X(13);
@@ -2425,15 +2498,15 @@ var An = function(e, t, n, r, i, a, o) {
 		o,
 		0
 	];
-}, jn = function(e) {
+}, Mn = function(e) {
 	var t = 0;
 	if (e) for (var n in e) {
 		var r = e[n].length;
 		r > 65535 && X(9), t += r + 4;
 	}
 	return t;
-}, Mn = function(e, t, n, r, i, a, o, s) {
-	var c = r.length, l = n.extra, u = s && s.length, d = jn(l);
+}, Nn = function(e, t, n, r, i, a, o, s) {
+	var c = r.length, l = n.extra, u = s && s.length, d = Mn(l);
 	Z(e, t, o == null ? 67324752 : 33639248), t += 4, o != null && (e[t++] = 20, e[t++] = n.os), e[t] = 20, t += 2, e[t++] = n.flag << 1 | (a < 0 && 8), e[t++] = i && 8, e[t++] = n.compression & 255, e[t++] = n.compression >> 8;
 	var f = new Date(n.mtime == null ? Date.now() : n.mtime), p = f.getFullYear() - 1980;
 	if ((p < 0 || p > 119) && X(10), Z(e, t, p << 25 | f.getMonth() + 1 << 21 | f.getDate() << 16 | f.getHours() << 11 | f.getMinutes() << 5 | f.getSeconds() >> 1), t += 4, a != -1 && (Z(e, t, n.crc), Z(e, t + 4, a < 0 ? -a - 2 : a), Z(e, t + 8, n.size)), Z(e, t + 12, c), Z(e, t + 14, d), t += 16, o != null && (Z(e, t, u), Z(e, t + 6, n.attrs), Z(e, t + 10, o), t += 14), e.set(r, t), t += c, d) for (var m in l) {
@@ -2441,19 +2514,19 @@ var An = function(e, t, n, r, i, a, o) {
 		Z(e, t, +m), Z(e, t + 2, g), e.set(h, t + 4), t += 4 + g;
 	}
 	return u && (e.set(s, t), t += u), t;
-}, Nn = function(e, t, n, r, i) {
+}, Pn = function(e, t, n, r, i) {
 	Z(e, t, 101010256), Z(e, t + 8, n), Z(e, t + 10, n), Z(e, t + 12, r), Z(e, t + 16, i);
 };
-function Pn(e, t) {
+function Fn(e, t) {
 	t ||= {};
 	var n = {}, r = [];
-	wn(e, "", n, t);
+	Tn(e, "", n, t);
 	var i = 0, a = 0;
 	for (var o in n) {
-		var s = n[o], c = s[0], l = s[1], u = l.level == 0 ? 0 : 8, d = On(o), f = d.length, p = l.comment, m = p && On(p), h = m && m.length, g = jn(l.extra);
+		var s = n[o], c = s[0], l = s[1], u = l.level == 0 ? 0 : 8, d = kn(o), f = d.length, p = l.comment, m = p && kn(p), h = m && m.length, g = Mn(l.extra);
 		f > 65535 && X(11);
-		var _ = u ? Sn(c, l) : c, v = _.length, y = gn();
-		y.p(c), r.push(vn(l, {
+		var _ = u ? Cn(c, l) : c, v = _.length, y = _n();
+		y.p(c), r.push(yn(l, {
 			size: c.length,
 			crc: y.d(),
 			c: _,
@@ -2466,21 +2539,21 @@ function Pn(e, t) {
 	}
 	for (var b = new G(a + 22), x = i, S = a - i, C = 0; C < r.length; ++C) {
 		var d = r[C];
-		Mn(b, d.o, d, d.f, d.u, d.c.length);
-		var w = 30 + d.f.length + jn(d.extra);
-		b.set(d.c, d.o + w), Mn(b, i, d, d.f, d.u, d.c.length, d.o, d.m), i += 16 + w + (d.m ? d.m.length : 0);
+		Nn(b, d.o, d, d.f, d.u, d.c.length);
+		var w = 30 + d.f.length + Mn(d.extra);
+		b.set(d.c, d.o + w), Nn(b, i, d, d.f, d.u, d.c.length, d.o, d.m), i += 16 + w + (d.m ? d.m.length : 0);
 	}
-	return Nn(b, i, r.length, S, x), b;
+	return Pn(b, i, r.length, S, x), b;
 }
-var Fn = /* @__PURE__ */ function() {
+var In = /* @__PURE__ */ function() {
 	function e() {}
 	return e.prototype.push = function(e, t) {
 		this.ondata(null, e, t);
 	}, e.compression = 0, e;
-}(), In = /* @__PURE__ */ function() {
+}(), Ln = /* @__PURE__ */ function() {
 	function e() {
 		var e = this;
-		this.i = new Cn(function(t, n) {
+		this.i = new wn(function(t, n) {
 			e.ondata(null, t, n);
 		});
 	}
@@ -2491,9 +2564,9 @@ var Fn = /* @__PURE__ */ function() {
 			this.ondata(e, null, t);
 		}
 	}, e.compression = 8, e;
-}(), Ln = /* @__PURE__ */ function() {
+}(), Rn = /* @__PURE__ */ function() {
 	function e(e) {
-		this.onfile = e, this.k = [], this.o = { 0: Fn }, this.p = pn;
+		this.onfile = e, this.k = [], this.o = { 0: In }, this.p = mn;
 	}
 	return e.prototype.push = function(e, t) {
 		var n = this;
@@ -2504,20 +2577,20 @@ var Fn = /* @__PURE__ */ function() {
 			var a = 0, o = 0, s = void 0, c = void 0;
 			this.p.length ? e.length ? (c = new G(this.p.length + e.length), c.set(this.p), c.set(e, this.p.length)) : c = this.p : c = e;
 			for (var l = c.length, u = this.c, d = u && this.d, f = function() {
-				var e = bn(c, o);
+				var e = xn(c, o);
 				if (e == 67324752) {
 					a = 1, s = o, p.d = null, p.c = 0;
-					var t = yn(c, o + 6), r = yn(c, o + 8), i = t & 2048, d = t & 8, f = yn(c, o + 26), m = yn(c, o + 28);
+					var t = bn(c, o + 6), r = bn(c, o + 8), i = t & 2048, d = t & 8, f = bn(c, o + 26), m = bn(c, o + 28);
 					if (l > o + 30 + f + m) {
 						var h = [];
 						p.k.unshift(h), a = 2;
-						var g = bn(c, o + 18), _ = bn(c, o + 22), v = kn(c.subarray(o + 30, o += 30 + f), !i), y = An(c, o, m, 2, g, _, 0), b = y[0], x = y[1], S = y[3];
+						var g = xn(c, o + 18), _ = xn(c, o + 22), v = An(c.subarray(o + 30, o += 30 + f), !i), y = jn(c, o, m, 2, g, _, 0), b = y[0], x = y[1], S = y[3];
 						d && (b = -1 - S), o += m, p.c = b;
 						var C, w = {
 							name: v,
 							compression: r,
 							start: function() {
-								if (w.ondata || X(5), !b) w.ondata(null, pn, !0);
+								if (w.ondata || X(5), !b) w.ondata(null, mn, !0);
 								else {
 									var e = n.o[r];
 									e || w.ondata(X(14, "unknown compression type " + r, 1), null, !1), C = b < 0 ? new e(v) : new e(v, b, x), C.ondata = function(e, t, n) {
@@ -2527,7 +2600,7 @@ var Fn = /* @__PURE__ */ function() {
 										var a = i[t];
 										C.push(a, !1);
 									}
-									n.k[0] == h && n.c ? n.d = C : C.push(pn, !0);
+									n.k[0] == h && n.c ? n.d = C : C.push(mn, !0);
 								}
 							},
 							terminate: function() {
@@ -2543,8 +2616,8 @@ var Fn = /* @__PURE__ */ function() {
 					if (e == 33639248) return s = o -= 4, a = 3, p.c = 0, "break";
 				}
 			}, p = this; o < l - 4 && f() !== "break"; ++o);
-			if (this.p = pn, u < 0) {
-				var m = a ? c.subarray(0, s - 12 - (u == -2 && 8) - (bn(c, s - 16) == 134695760 && 4)) : c.subarray(0, o);
+			if (this.p = mn, u < 0) {
+				var m = a ? c.subarray(0, s - 12 - (u == -2 && 8) - (xn(c, s - 16) == 134695760 && 4)) : c.subarray(0, o);
 				d ? d.push(m, !!a) : this.k[+(a == 2)].push(m);
 			}
 			if (a & 2) return this.push(c.subarray(o), t);
@@ -2555,16 +2628,16 @@ var Fn = /* @__PURE__ */ function() {
 		this.o[e.compression] = e;
 	}, e;
 }();
-function Rn(e, t, n) {
+function zn(e, t, n) {
 	let r = URL.createObjectURL(new Blob([e], { type: n })), i = document.createElement("a");
 	i.href = r, i.download = t, i.click(), setTimeout(() => URL.revokeObjectURL(r), 1e3);
 }
-function zn(e) {
-	return Pn(Object.fromEntries(Object.entries(e).map(([e, t]) => [e, [On(t), { mtime: /* @__PURE__ */ new Date("2000-01-01T00:00:00Z") }]])), { level: 6 });
+function Bn(e) {
+	return Fn(Object.fromEntries(Object.entries(e).map(([e, t]) => [e, [kn(t), { mtime: /* @__PURE__ */ new Date("2000-01-01T00:00:00Z") }]])), { level: 6 });
 }
-function Bn(t) {
+function Vn(t) {
 	if (t.byteLength > 20971520) throw Error("invalid_file");
-	let n = /* @__PURE__ */ new Set(["metadata.json", ...e.map((e) => `${e}.csv`)]), r = {}, i = 0, a, o = new Ln((e) => {
+	let n = /* @__PURE__ */ new Set(["metadata.json", ...e.map((e) => `${e}.csv`)]), r = {}, i = 0, a, o = new Rn((e) => {
 		if (!n.has(e.name) || e.name in r || (e.originalSize ?? 0) > 20971520) {
 			a = /* @__PURE__ */ Error("invalid_file"), e.terminate();
 			return;
@@ -2577,15 +2650,15 @@ function Bn(t) {
 			else if (t.push(o), s) {
 				let n = new Uint8Array(t.reduce((e, t) => e + t.byteLength, 0)), i = 0;
 				for (let e of t) n.set(e, i), i += e.byteLength;
-				r[e.name] = kn(n);
+				r[e.name] = An(n);
 			}
 		}, e.start();
 	});
-	if (o.register(In), o.push(t, !0), a || Object.keys(r).length !== n.size) throw Error("invalid_file");
+	if (o.register(Ln), o.push(t, !0), a || Object.keys(r).length !== n.size) throw Error("invalid_file");
 	return r;
 }
 // src/styles.ts
-var Vn = M`
+var Hn = M`
   :host {
     display: block;
     color: var(--primary-text-color, #263b30);
@@ -4333,7 +4406,422 @@ var Vn = M`
       min-height: 44px;
     }
   }
-`, Hn = [
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  .back-overview {
+    margin-bottom: 16px;
+  }
+  .plant-photo,
+  .profile-photo,
+  .variety-photo {
+    object-fit: cover;
+    border-radius: 18px;
+    background: var(--gp-soft);
+    flex-shrink: 0;
+  }
+  .plant-photo {
+    width: 86px;
+    height: 86px;
+  }
+  .profile-photo {
+    width: 180px;
+    height: 220px;
+  }
+  .variety-photo {
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
+  }
+  .photo-placeholder {
+    display: grid;
+    place-items: center;
+    color: var(--gp-green);
+  }
+  .photo-placeholder svg {
+    width: 45%;
+    height: 45%;
+  }
+  .catalog-card {
+    gap: 18px;
+  }
+  .catalog-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+  .catalog-card-heading > div {
+    min-width: 0;
+  }
+  .catalog-card-heading h2 {
+    margin: 0;
+    font-size: 23px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .catalog-card-heading i {
+    display: block;
+    font-size: 12px;
+    color: var(--gp-muted);
+    margin: 5px 0;
+    overflow-wrap: anywhere;
+  }
+  .catalog-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 12px;
+    margin: 4px 0;
+  }
+  .catalog-facts dd {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  .catalog-facts svg {
+    color: var(--gp-green);
+    width: 18px;
+    height: 18px;
+  }
+  .catalog-neighbors {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-top: 1px solid var(--gp-border);
+    padding-top: 15px;
+    font-size: 13px;
+  }
+  .catalog-neighbors > span:first-child {
+    margin-right: auto;
+    color: var(--gp-muted);
+  }
+  .catalog-details {
+    flex: 1;
+  }
+  .catalog-card .actions {
+    flex-wrap: nowrap;
+  }
+  .neighbor-good {
+    color: var(--success-color, #286644);
+  }
+  .neighbor-bad {
+    color: var(--error-color, #a52f32);
+  }
+  :host([dark]) .neighbor-good {
+    color: var(--success-color, #78c99a);
+  }
+  :host([dark]) .neighbor-bad {
+    color: var(--error-color, #ff9494);
+  }
+  .image-editor {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid var(--gp-border);
+    border-radius: 14px;
+  }
+  .image-editor > div {
+    min-width: 0;
+    flex: 1;
+  }
+  .image-editor input {
+    max-width: 100%;
+    width: 100%;
+    padding: 8px 0;
+    border: 0;
+  }
+  .image-editor small {
+    display: block;
+    margin: 8px 0;
+  }
+  .matrix-search {
+    max-width: 440px;
+    margin-bottom: 10px;
+  }
+  .neighbor-matrix-scroll {
+    overflow: auto;
+    max-height: 60dvh;
+    border: 1px solid var(--gp-border);
+    border-radius: 14px;
+    isolation: isolate;
+  }
+  .neighbor-matrix {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+  }
+  .neighbor-matrix th,
+  .neighbor-matrix td {
+    padding: 5px;
+    border-bottom: 1px solid var(--gp-border);
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+  .neighbor-matrix thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-card);
+    height: 70px;
+    font-size: 12px;
+  }
+  .neighbor-matrix tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--gp-card);
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    text-align: left;
+    font-size: 13px;
+  }
+  .neighbor-matrix thead th:first-child {
+    z-index: 3;
+  }
+  .neighbor-matrix .matrix-highlight {
+    background: var(--gp-soft);
+  }
+  .matrix-cell {
+    width: 100%;
+    min-height: 46px;
+    padding: 5px;
+    font-size: 22px;
+    border-color: transparent;
+    border-radius: 10px;
+  }
+  .matrix-cell.neighbor-good {
+    background: color-mix(
+      in srgb,
+      var(--success-color, #397456) 13%,
+      var(--gp-card)
+    );
+  }
+  .matrix-cell.neighbor-bad {
+    background: color-mix(
+      in srgb,
+      var(--error-color, #a52f32) 13%,
+      var(--gp-card)
+    );
+  }
+  .matrix-cell:disabled {
+    opacity: 1;
+  }
+  .matrix-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .plant-profile {
+    padding-top: 14px;
+  }
+  .profile-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+  }
+  .profile-heading > div {
+    min-width: 0;
+  }
+  .profile-heading h3 {
+    font-size: 32px;
+    line-height: 1.15;
+    margin: 12px 0;
+  }
+  .profile-heading i {
+    color: var(--gp-muted);
+  }
+  .profile-condition {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-size: 13px;
+    margin: 10px 0;
+  }
+  .profile-condition strong {
+    color: var(--gp-muted);
+    font-weight: 500;
+  }
+  .profile-description {
+    color: var(--gp-muted);
+    white-space: pre-wrap;
+  }
+  .profile-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0 26px;
+  }
+  .profile-facts > div {
+    background: var(--gp-soft);
+    padding: 18px;
+    border-radius: 16px;
+    min-width: 0;
+  }
+  .profile-facts dt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--gp-muted);
+  }
+  .profile-facts dt svg {
+    color: var(--gp-green);
+  }
+  .profile-facts dd {
+    margin: 10px 0 0;
+  }
+  .profile-facts strong {
+    display: block;
+    font-size: 24px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .profile-facts small {
+    display: block;
+    font-size: 11px;
+    color: var(--gp-muted);
+    margin-top: 12px;
+  }
+  .plant-profile > section {
+    padding: 18px 0;
+    border-top: 1px solid var(--gp-border);
+  }
+  .temperature-scale {
+    height: 24px;
+    border-radius: 16px;
+    background: #ad8952;
+    position: relative;
+    overflow: hidden;
+    margin: 22px 0 10px;
+  }
+  .temperature-scale > span {
+    display: block;
+    position: absolute;
+    height: 100%;
+    background: #397456;
+  }
+  .temperature-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .temperature-profile p {
+    font-size: 12px;
+  }
+  .profile-year-scroll {
+    max-width: 100%;
+    overflow: auto;
+  }
+  .profile-year-grid {
+    display: grid;
+    grid-template-columns: 90px repeat(12, minmax(27px, 1fr));
+    min-width: 460px;
+    gap: 3px;
+    align-items: center;
+  }
+  .mini-month {
+    text-align: center;
+    font-size: 10px;
+    color: var(--gp-muted);
+  }
+  .mini-title {
+    font-size: 11px;
+    min-height: 35px;
+    border: 0;
+    padding: 5px 0;
+    justify-content: flex-start;
+    background: transparent;
+  }
+  .mini-cell > span {
+    display: block;
+    position: relative;
+    height: 13px;
+    background: var(--gp-soft);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .mini-cell .bar {
+    display: block;
+    position: absolute;
+    height: 100%;
+    background: var(--bar-color);
+  }
+  .neighbor-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .profile-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 600px) {
+    .catalog-card-heading {
+      gap: 12px;
+    }
+    .plant-photo {
+      width: 72px;
+      height: 72px;
+    }
+    .profile-photo {
+      width: 100px;
+      height: 130px;
+    }
+    .profile-heading {
+      gap: 14px;
+    }
+    .profile-heading h3 {
+      font-size: 25px;
+    }
+    .profile-facts > div {
+      padding: 12px;
+    }
+    .profile-facts strong {
+      font-size: 19px;
+    }
+    .image-editor {
+      flex-wrap: wrap;
+    }
+    .image-editor > div {
+      flex-basis: 100%;
+    }
+    .neighbor-matrix th,
+    .neighbor-matrix td {
+      width: 78px;
+      min-width: 78px;
+      max-width: 78px;
+    }
+    .neighbor-matrix tr > :first-child {
+      width: 108px;
+      min-width: 108px;
+      max-width: 108px;
+    }
+  }
+`, Un = [
 	"overview",
 	"calendar",
 	"plants",
@@ -4354,7 +4842,10 @@ var Vn = M`
 	"prune",
 	"harvest",
 	"other"
-], Un = {
+], Wn = {
+	temperature: "M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0M12 8v10",
+	clock: "M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
+	ruler: "M3 7l4-4 14 14-4 4zM7 7l2-2M10 10l2-2M13 13l2-2",
 	menu: "M3 6h18M3 12h18M3 18h18",
 	overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
 	calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
@@ -4374,18 +4865,18 @@ var Vn = M`
 	check: "M4 12l5 5L20 6"
 };
 function $(e) {
-	return Ne`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${Un[e] ?? Un.plants}></path></svg>`;
+	return Ne`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${Wn[e] ?? Wn.plants}></path></svg>`;
 }
-function Wn() {
+function Gn() {
 	try {
 		return localStorage.getItem("garden-planner-language") ?? "";
 	} catch {
 		return "";
 	}
 }
-var Gn = class extends Ze {
+var Kn = class extends Ze {
 	constructor(...e) {
-		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Wn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Gn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.imageLoading = !1, this.imageGeneration = 0, this.matrixQuery = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -4433,7 +4924,7 @@ var Gn = class extends Ze {
 		};
 	}
 	static {
-		this.styles = Vn;
+		this.styles = Hn;
 	}
 	static {
 		this.properties = {
@@ -4474,6 +4965,8 @@ var Gn = class extends Ze {
 			neighborEditor: { state: !0 },
 			neighborQuery: { state: !0 },
 			seedDraft: { state: !0 },
+			imageLoading: { state: !0 },
+			matrixQuery: { state: !0 },
 			seedSaving: { state: !0 },
 			seedFailed: { state: !0 },
 			seedFlight: { state: !0 },
@@ -4493,10 +4986,10 @@ var Gn = class extends Ze {
 		return (this.languagePreference || this.hass?.locale?.language || this.hass?.language || "de").startsWith("de") ? "de" : "en";
 	}
 	tr(e) {
-		return Ct(this.language, e);
+		return wt(this.language, e);
 	}
 	lab(e) {
-		return wt(this.language, e);
+		return Tt(this.language, e);
 	}
 	get timeZone() {
 		return this.hass?.config.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -4545,7 +5038,7 @@ var Gn = class extends Ze {
 	async bind() {
 		this.flushReminderChanges(), this.saveSeedInventory();
 		let e = ++this.connectionGeneration;
-		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new _t(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
+		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new vt(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
 			this.anchor ||= this.today, this.boundConnection.addEventListener?.("ready", this.reconnect);
 			try {
 				let t = await this.api.subscribe(() => {
@@ -4623,14 +5116,14 @@ var Gn = class extends Ze {
 		return b(e, this.tables.cultivation_events);
 	}
 	startEditor(e, t, n = {}) {
-		this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
+		this.imageGeneration++, this.imageLoading = !1, this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
 			table: e,
 			record: t,
-			draft: t ? structuredClone(t.data) : At(e, this.timeZone, n)
+			draft: t ? structuredClone(t.data) : jt(e, this.timeZone, n)
 		};
 	}
 	fieldList(e) {
-		return kt(e.table, e.draft, this.tables, this.language, !!e.record);
+		return At(e.table, e.draft, this.tables, this.language, !!e.record);
 	}
 	changeField(e, n) {
 		if (!this.editor) return;
@@ -4655,10 +5148,10 @@ var Gn = class extends Ze {
 		};
 	}
 	async saveEditor(e) {
-		if (e.preventDefault(), !this.editor || this.busy || !e.currentTarget.reportValidity()) return;
+		if (e.preventDefault(), !this.editor || this.busy || this.imageLoading || !e.currentTarget.reportValidity()) return;
 		let t = this.editor, n;
 		try {
-			n = jt(t.table, t.draft, this.fieldList(t), t.record);
+			n = Mt(t.table, t.draft, this.fieldList(t), t.record);
 		} catch {
 			this.error = this.tr("numberRange");
 			return;
@@ -4815,6 +5308,49 @@ var Gn = class extends Ze {
               />`}
     </label>`;
 	}
+	async uploadImage(e) {
+		let t = e.target, n = t.files?.[0];
+		if (!n || !this.editor || this.busy || !this.editable) return;
+		let r = ++this.imageGeneration, i = this.connectionGeneration;
+		this.imageLoading = !0, this.error = "";
+		try {
+			let e = await _t(n);
+			r === this.imageGeneration && i === this.connectionGeneration && this.editor && this.editable && this.changeField("image_data", e);
+		} catch {
+			r === this.imageGeneration && i === this.connectionGeneration && this.editor && (this.error = this.tr("imageInvalid"));
+		} finally {
+			r === this.imageGeneration && (this.imageLoading = !1), t.value = "";
+		}
+	}
+	plantImage(e, n = "plant-photo") {
+		let r = t(e, "image_data");
+		return r.startsWith("data:image/png;base64,") ? B`<img
+          class=${n}
+          src=${r}
+          alt=${t(e, "name")}
+          loading="lazy"
+        />` : B`<span class=${`${n} photo-placeholder`} aria-hidden="true"
+          >${$("plants")}</span
+        >`;
+	}
+	renderImageEditor() {
+		let e = this.editor;
+		return !e || !["plants", "varieties"].includes(e.table) ? H : B`<section class="image-editor">
+      ${typeof e.draft.image_data == "string" && e.draft.image_data ? B`<img class="plant-photo" src=${e.draft.image_data} alt=${this.tr("imagePreview")} />` : H}
+      <div>
+        <label
+          >${this.tr("uploadImage")}<input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            ?disabled=${this.busy || this.imageLoading}
+            @change=${this.uploadImage}
+        /></label>
+        <small class="muted">${this.tr("imageHint")}</small>
+        ${this.imageLoading ? B`<p role="status">${this.tr("imageProcessing")}</p>` : H}
+        ${e.draft.image_data ? B`<button type="button" ?disabled=${this.busy || this.imageLoading} @click=${() => this.changeField("image_data", null)}>${this.tr("removeImage")}</button>` : H}
+      </div>
+    </section>`;
+	}
 	renderEditor() {
 		let e = this.editor;
 		return B`<dialog
@@ -4862,6 +5398,7 @@ var Gn = class extends Ze {
 			"locations"
 		].includes(e.table) ? B`<p class="notice">${this.tr("temperatureHint")}</p>` : H}
                 ${e.draft.origin === "initial" ? B`<p class="notice">${this.tr("initialEventHint")}</p>` : H}
+                ${this.renderImageEditor()}
                 <div class="form-grid">
                   ${this.fieldList(e).map((e) => this.renderField(e))}
                 </div>
@@ -4875,7 +5412,11 @@ var Gn = class extends Ze {
 		}}
                 >
                   ${this.tr("cancel")}</button
-                ><button class="primary" type="submit" ?disabled=${this.busy}>
+                ><button
+                  class="primary"
+                  type="submit"
+                  ?disabled=${this.busy || this.imageLoading}
+                >
                   ${this.tr(this.busy ? "busy" : "save")}
                 </button>
               </div>
@@ -4995,11 +5536,36 @@ var Gn = class extends Ze {
       ${t ? B`<p>${this.tr(t)}</p>` : H}${n && this.editable ? B`<button class="primary" @click=${r}>${$("plus")}${this.tr(n)}</button>` : H}
     </div>`;
 	}
+	plantRange(e, t, n, r) {
+		let i = e.data[t], a = e.data[n], o = (e) => typeof e == "number" ? e.toLocaleString(this.language) : "—";
+		return typeof i == "number" || typeof a == "number" ? `${o(i)}–${o(a)} ${r}` : "—";
+	}
 	renderPlantCard(e) {
-		let n = this.plantWindows(e.id), r = n.length ? p(n, this.today) : void 0;
-		return B`<article class="plant">
-      <div class="plant-title">
-        <div class="plant-symbol">${$("plants")}</div>
+		let n = this.language === "de" ? "Tage" : "days", r = [
+			[
+				"temperature",
+				"optimalGermination",
+				this.plantRange(e, "germination_optimal_min_c", "germination_optimal_max_c", "°C")
+			],
+			[
+				"clock",
+				"germinationDuration",
+				this.plantRange(e, "germination_days_min", "germination_days_max", n)
+			],
+			[
+				"ruler",
+				"plantRowSpacing",
+				`${e.data.spacing_cm ?? "—"} × ${e.data.row_spacing_cm ?? "—"} cm`
+			],
+			[
+				"calendar",
+				"cultivationDuration",
+				this.plantRange(e, "duration_days_min", "duration_days_max", n)
+			]
+		];
+		return B`<article class="plant catalog-card">
+      <div class="catalog-card-heading">
+        ${this.plantImage(e)}
         <div>
           <h2>
             <button
@@ -5014,21 +5580,33 @@ var Gn = class extends Ze {
               ${t(e, "name")}
             </button>
           </h2>
-          <small
-            >${t(e, "botanical_name") || this.lab(t(e, "category"))}</small
-          >
+          <i>${t(e, "botanical_name")}</i>
+          <div>
+            <span class="badge"
+              >${this.lab(t(e, "category")) || this.tr("other")}</span
+            >${e.data.archived ? B`<span class="badge unknown">${this.tr("archived")}</span>` : H}
+          </div>
         </div>
       </div>
-      <div>
-        <span class="badge"
-          >${this.lab(t(e, "category")) || this.tr("other")}</span
-        >${e.data.archived ? B` <span class="badge unknown">${this.tr("archived")}</span>` : H}
+      <dl class="catalog-facts">
+        ${r.map(([e, t, n]) => B`<div title=${this.tr(t)}>
+              <dt class="visually-hidden">${this.tr(t)}</dt>
+              <dd>${$(e)}<span>${n}</span></dd>
+            </div>`)}
+      </dl>
+      <div class="catalog-neighbors">
+        <span>${this.tr("plantNeighbors")}</span
+        ><span class="neighbor-good"
+          >✓
+          ${this.neighborIds(e, "good").length + this.neighborNames(e, "good").length}</span
+        ><span class="neighbor-bad"
+          >×
+          ${this.neighborIds(e, "bad").length + this.neighborNames(e, "bad").length}</span
+        >
       </div>
-      <p class="muted">
-        ${r ? `${this.tr("nextSowing")} · ${h(r, this.language)}` : this.tr("noAllWindows")}
-      </p>
       <div class="actions">
         <button
+          class="catalog-details"
           @click=${() => {
 			this.selected = {
 				kind: "plant",
@@ -5037,7 +5615,7 @@ var Gn = class extends Ze {
 		}}
         >
           ${this.tr("details")}${$("arrow")}</button
-        >${this.editable && !e.data.archived ? B`<button class="icon" aria-label=${`${this.tr("newSowing")}: ${t(e, "name")}`} @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}</button>` : H}
+        >${this.editable && !e.data.archived ? B`<button class="primary icon" aria-label=${`${this.tr("newSowing")}: ${t(e, "name")}`} @click=${() => this.startEditor("cultivations", void 0, { plant_id: e.id })}>${$("plus")}</button>` : H}
       </div>
     </article>`;
 	}
@@ -5248,6 +5826,68 @@ var Gn = class extends Ze {
 			}
 		}) !== void 0 && (this.neighborEditor = null);
 	}
+	async cycleNeighbor(e, t) {
+		if (this.busy || !this.editable || e.id === t.id) return;
+		let n = new Set(this.neighborIds(e, "good")), r = new Set(this.neighborIds(e, "bad"));
+		n.has(t.id) ? (n.delete(t.id), r.add(t.id)) : r.has(t.id) ? r.delete(t.id) : n.add(t.id), await this.action("set_neighbors", {
+			plant_id: e.id,
+			revision: e.revision,
+			neighbors: {
+				neighbor_good_ids: [...n].sort(),
+				neighbor_bad_ids: [...r].sort(),
+				neighbor_good_names: this.neighborNames(e, "good"),
+				neighbor_bad_names: this.neighborNames(e, "bad")
+			}
+		});
+	}
+	renderNeighborMatrix(e) {
+		let n = this.matrixQuery.trim().toLocaleLowerCase(this.language), r = e.filter((e) => !n || t(e, "name").toLocaleLowerCase(this.language).includes(n));
+		return B`<label class="matrix-search"
+        >${this.tr("matrixFilter")}<input
+          type="search"
+          .value=${this.matrixQuery}
+          @input=${(e) => {
+			this.matrixQuery = e.target.value;
+		}}
+      /></label>
+      <p class="muted">${this.tr("matrixHint")}</p>
+      <div
+        class="neighbor-matrix-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("neighborMatrix")}
+      >
+        <table class="neighbor-matrix">
+          <thead>
+            <tr>
+              <th scope="col">${this.tr("plants")}</th>
+              ${r.map((e) => B`<th scope="col" class=${e.id === this.neighborPlant ? "matrix-highlight" : ""}>${t(e, "name")}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${r.map((e) => B`<tr
+                  class=${e.id === this.neighborPlant ? "matrix-highlight" : ""}
+                >
+                  <th scope="row">${t(e, "name")}</th>
+                  ${r.map((n) => {
+			let r = e.id === n.id ? "self" : this.neighborIds(e, "good").includes(n.id) ? "good" : this.neighborIds(e, "bad").includes(n.id) ? "bad" : "neutral", i = this.tr("neighbor_" + r);
+			return B`<td
+                      class=${n.id === this.neighborPlant ? "matrix-highlight" : ""}
+                    >
+                      ${r === "self" ? B`<span aria-label=${i}>·</span>` : B`<button class=${"matrix-cell neighbor-" + r} title=${`${t(e, "name")} / ${t(n, "name")}: ${i}`} aria-label=${`${t(e, "name")} / ${t(n, "name")}: ${i}`} ?disabled=${this.busy || !this.editable} @click=${() => this.cycleNeighbor(e, n)}>${r === "good" ? "✓" : r === "bad" ? "×" : "−"}</button>`}
+                    </td>`;
+		})}
+                </tr>`)}
+          </tbody>
+        </table>
+      </div>
+      ${r.length ? H : B`<p class="muted">${this.tr("noPlantsMatch")}</p>`}
+      <p class="matrix-legend">
+        <span class="neighbor-good">✓ ${this.tr("goodNeighbors")}</span
+        ><span class="neighbor-bad">× ${this.tr("badNeighbors")}</span
+        ><span>− ${this.tr("neighbor_neutral")}</span>
+      </p>`;
+	}
 	renderNeighbors() {
 		let e = [...this.plantList].sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language)), n = e.find((e) => e.id === this.neighborPlant) ?? e[0], r = (e) => B`<section class="panel neighbor-group">
         <h2>${this.tr(e === "good" ? "goodNeighbors" : "badNeighbors")}</h2>
@@ -5269,6 +5909,7 @@ var Gn = class extends Ze {
                   </select></label
                 >${this.editable ? B`<button class="primary" @click=${() => this.beginNeighbors(n)}>${this.tr("editNeighbors")}</button>` : H}
               </div>
+              ${this.renderNeighborMatrix(e)}
               <div class="neighbor-grid">${r("good")}${r("bad")}</div>` : this.empty("emptyPlants")}`;
 	}
 	renderNeighborEditor() {
@@ -6082,7 +6723,7 @@ var Gn = class extends Ze {
 	}
 	renderData(e, t = []) {
 		return B`<dl>
-      ${Object.entries(e).filter(([e, n]) => !t.includes(e) && e !== "seed_state" && n != null && n !== "" && !e.endsWith("_id") && typeof n != "object").map(([e, t]) => B`<dt>${this.tr(e)}</dt>
+      ${Object.entries(e).filter(([e, n]) => !t.includes(e) && e !== "seed_state" && e !== "image_data" && n != null && n !== "" && !e.endsWith("_id") && typeof n != "object").map(([e, t]) => B`<dt>${this.tr(e)}</dt>
               <dd>
                 ${[
 			"category",
@@ -6284,9 +6925,128 @@ var Gn = class extends Ze {
               </div>`)}
       </dl>`;
 	}
+	renderPlantProfile(e) {
+		let n = this.language === "de" ? "Tage" : "days", r = [
+			[
+				"optimalGermination",
+				this.plantRange(e, "germination_optimal_min_c", "germination_optimal_max_c", "°C"),
+				`${this.tr("germinationLimits")}: ${this.plantRange(e, "germination_min_c", "germination_max_c", "°C")}`,
+				"temperature"
+			],
+			[
+				"germinationDuration",
+				this.plantRange(e, "germination_days_min", "germination_days_max", n),
+				this.tr("germinationHint"),
+				"clock"
+			],
+			[
+				"spacing_cm",
+				typeof e.data.spacing_cm == "number" ? `${e.data.spacing_cm.toLocaleString(this.language)} cm` : "—",
+				`${this.tr("row_spacing_cm")}: ${e.data.row_spacing_cm ?? "—"} cm`,
+				"ruler"
+			],
+			[
+				"cultivationDuration",
+				this.plantRange(e, "duration_days_min", "duration_days_max", n),
+				`${this.tr("depth_cm")}: ${e.data.depth_cm ?? "—"} cm`,
+				"calendar"
+			]
+		], i = e.data.germination_min_c, a = e.data.germination_optimal_min_c, o = e.data.germination_optimal_max_c, s = e.data.germination_max_c, c = [
+			i,
+			a,
+			o,
+			s
+		].every((e) => typeof e == "number") && Number(s) > Number(i), l = c ? (Number(a) - Number(i)) / (Number(s) - Number(i)) * 100 : 0, u = c ? (Number(o) - Number(a)) / (Number(s) - Number(i)) * 100 : 0;
+		return B`<section class="plant-profile">
+      <div class="profile-heading">
+        ${this.plantImage(e, "profile-photo")}
+        <div>
+          <span class="badge">${this.lab(t(e, "category"))}</span>
+          <h3>${t(e, "name")}</h3>
+          <i>${t(e, "botanical_name")}</i>
+          ${[
+			"site",
+			"light",
+			"water",
+			"frost"
+		].filter((n) => t(e, n)).map((n) => B`<p class="profile-condition"><strong>${this.tr(n)}</strong><span>${t(e, n)}</span></p>`)}
+        </div>
+      </div>
+      ${t(e, "description") ? B`<p class="profile-description">${t(e, "description")}</p>` : H}
+      <h3>${this.tr("growingAtGlance")}</h3>
+      <dl class="profile-facts">
+        ${r.map(([e, t, n, r]) => B`<div>
+              <dt>${$(r)}${this.tr(e)}</dt>
+              <dd><strong>${t}</strong><small>${n}</small></dd>
+            </div>`)}
+      </dl>
+      ${c ? B`<section class="temperature-profile">
+              <h3>${this.tr("germinationTemperature")}</h3>
+              <div
+                class="temperature-scale"
+                role="img"
+                aria-label=${`${i}–${s} °C; ${this.tr("optimalGermination")}: ${a}–${o} °C`}
+              >
+                <span style=${`left:${l}%;width:${u}%`}></span>
+              </div>
+              <div class="temperature-labels">
+                <span>${i} °C</span
+                ><strong>${a}–${o} °C ${this.tr("optimalShort")}</strong
+                ><span>${s} °C</span>
+              </div>
+              <p class="muted">${this.tr("substrateHint")}</p>
+            </section>` : H}
+      ${this.renderPlantYear(e)}
+      <section class="profile-neighbors">
+        <h3>${this.tr("plantNeighbors")}</h3>
+        ${["good", "bad"].map((t) => B`<h4 class=${"neighbor-" + t}>
+                ${this.tr(t === "good" ? "goodNeighbors" : "badNeighbors")}
+              </h4>
+              <div class="neighbor-chips">
+                ${[...this.neighborIds(e, t).map((e) => this.nameFor(e, "plants")), ...this.neighborNames(e, t)].map((e) => B`<span class=${"badge neighbor-" + t}>${e}</span>`)}${!this.neighborIds(e, t).length && !this.neighborNames(e, t).length ? B`<small class="muted">${this.tr("noNeighbors")}</small>` : H}
+              </div>`)}
+      </section>
+      ${t(e, "care") ? B`<section>
+              <h3>${this.tr("care")}</h3>
+              <p class="profile-text">${t(e, "care")}</p>
+            </section>` : H}
+      ${t(e, "source") || t(e, "source_url") ? B`<p class="muted profile-text">${this.tr("source")}: ${t(e, "source")} ${t(e, "source_url")}</p>` : H}
+    </section>`;
+	}
+	renderPlantYear(e) {
+		let n = this.plantWindows(e.id), r = Number(this.today.slice(0, 4));
+		if (!n.length) return B``;
+		let i = Array.from({ length: 12 }, (e, t) => t + 1);
+		return B`<section class="profile-year">
+      <h3>${this.tr("plantYear")} · ${r}</h3>
+      <div
+        class="profile-year-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("plantYear")}
+      >
+        <div class="profile-year-grid">
+          <div></div>
+          ${i.map((e) => B`<div class="mini-month">${_(r, e, this.language, !0)}</div>`)}
+          ${n.map((e) => B`<button
+                  class="mini-title"
+                  title=${this.windowTooltip(e)}
+                  @click=${() => {
+			this.selected = {
+				kind: "window",
+				id: e.id
+			};
+		}}
+                >
+                  ${this.lab(t(e, "activity"))}</button
+                >${i.map((n) => B`<div class=${`mini-cell ${t(e, "activity")}`} title=${`${this.lab(t(e, "activity"))}: ${this.windowTooltip(e)}`}><span>${d(e, r, n).map((e) => B`<span class="bar" style=${`left:${e.offset}%;width:${e.width}%`}></span>`)}</span></div>`)}`)}
+        </div>
+      </div>
+    </section>`;
+	}
 	renderPlantDetail(e) {
 		let n = this.tables.varieties.filter((n) => t(n, "plant_id") === e.id);
-		return B`${this.renderPlantSummary(e)}
+		return B`${this.renderPlantProfile(e)}
       <div
         class="detail-jumps"
         role="group"
@@ -6319,6 +7079,7 @@ var Gn = class extends Ze {
         ${this.editable ? B`<button @click=${() => this.startEditor("varieties", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newVariety")}</button>` : H}
       </div>
       ${n.length ? n.map((e) => B`<article class="item">
+                  ${t(e, "image_data") ? this.plantImage(e, "variety-photo") : H}
                   <div class="item-content">
                     <h3>
                       ${t(e, "name")}${t(e, "botanical_name") ? B` <span style="font-weight: normal">(${t(e, "botanical_name")})</span>` : H}
@@ -6458,11 +7219,11 @@ var Gn = class extends Ze {
 			if (e === "json") {
 				let r = await t.command("export", { format: e });
 				if (n !== this.connectionGeneration) return;
-				Rn(JSON.stringify(r, null, 2), `garden-planner-${this.today}.json`, "application/json");
+				zn(JSON.stringify(r, null, 2), `garden-planner-${this.today}.json`, "application/json");
 			} else {
 				let r = await t.command("export", { format: e });
 				if (n !== this.connectionGeneration) return;
-				Rn(zn(r).slice().buffer, `garden-planner-csv-${this.today}.zip`, "application/zip");
+				zn(Bn(r).slice().buffer, `garden-planner-csv-${this.today}.zip`, "application/zip");
 			}
 		} catch (e) {
 			n === this.connectionGeneration && (this.error = U(this.language, e));
@@ -6479,7 +7240,7 @@ var Gn = class extends Ze {
 			if (n.size > 20971520) throw Error("invalid_file");
 			let e = new Uint8Array(await n.arrayBuffer());
 			if (i !== this.connectionGeneration) return;
-			let t = e[0] === 80 && e[1] === 75 ? "csv" : "json", a = t === "csv" ? Bn(e) : JSON.parse(new TextDecoder("utf-8", { fatal: !0 }).decode(e)), o = await r.command("preview_import", {
+			let t = e[0] === 80 && e[1] === 75 ? "csv" : "json", a = t === "csv" ? Vn(e) : JSON.parse(new TextDecoder("utf-8", { fatal: !0 }).decode(e)), o = await r.command("preview_import", {
 				payload: a,
 				format: t,
 				mode: this.importMode
@@ -6991,11 +7752,12 @@ var Gn = class extends Ze {
             </div>
           </div>
           <nav aria-label="Garden Planner">
-            ${Hn.map((e) => B`<button aria-current=${this.page === e ? "page" : H} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
+            ${Un.map((e) => B`<button aria-current=${this.page === e ? "page" : H} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
         <main class=${this.page === "overview" ? "overview-page" : ""}>
+          ${this.page === "overview" ? H : B`<button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button>`}
           <header class="topbar">
             <div>
               <div class="eyebrow">Garden Planner</div>
@@ -7069,5 +7831,5 @@ var Gn = class extends Ze {
       </div>`;
 	}
 };
-customElements.get("garden-planner-panel") || customElements.define("garden-planner-panel", Gn);
-export { Gn as GardenPlannerPanel };
+customElements.get("garden-planner-panel") || customElements.define("garden-planner-panel", Kn);
+export { Kn as GardenPlannerPanel };

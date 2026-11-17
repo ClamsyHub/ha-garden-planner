@@ -339,10 +339,14 @@ class Database:
         plant = {
             k: v
             for k, v in self.get("plants", data["plant_id"])["data"].items()
-            if k not in GARDEN_FIELDS
+            if k not in GARDEN_FIELDS | {"image_data"}
         }
         variety = (
-            self.get("varieties", data["variety_id"])["data"]
+            {
+                k: v
+                for k, v in self.get("varieties", data["variety_id"])["data"].items()
+                if k != "image_data"
+            }
             if data.get("variety_id")
             else None
         )

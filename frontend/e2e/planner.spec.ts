@@ -1266,12 +1266,8 @@ test("plant summary is compact and full information remains available", async ({
   const detail = page.locator("#detail-dialog");
   const full = detail.locator(".plant-full-information");
   await expect(full).toHaveJSProperty("open", false);
-  await expect(detail.locator(".plant-quick-facts")).toContainText(
-    "22 – 28 °C",
-  );
-  await expect(detail.locator(".plant-quick-facts")).toContainText(
-    "40 / 60 cm",
-  );
+  await expect(detail.locator(".profile-facts")).toContainText("22–28 °C");
+  await expect(detail.locator(".profile-facts")).toContainText("40 cm");
   await expect(detail.getByText(note, { exact: true })).not.toBeVisible();
   await detail
     .getByText("Alle Pflanzeninformationen anzeigen", { exact: true })
@@ -2902,4 +2898,199 @@ test("a transient seed autosave error retries only after explicit recovery", asy
   await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
   await navigate(page, "Saatgut & Einkauf");
   await expect(input).toBeChecked();
+});
+
+test("all sections provide a direct return to overview", async ({ page }) => {
+  await open(page, { demo: "1" });
+  for (const name of [
+    "Gartenkalender",
+    "Meine Pflanzen",
+    "Aktuelle Kulturen",
+    "Aussaat-Historie",
+    "Beete & Standorte",
+    "Erinnerungen",
+    "Nachbarn",
+    "Saatgut & Einkauf",
+    "Einstellungen",
+  ]) {
+    await navigate(page, name);
+    await page
+      .getByRole("button", { name: "Zurück zur Übersicht", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Übersicht", exact: true }),
+    ).toBeVisible();
+  }
+});
+
+test("neighbor matrix saves reciprocal states and pins both headings", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await addPlant(page, "Matrix A");
+  await addPlant(page, "Matrix B");
+  await navigate(page, "Nachbarn");
+  const cell = (a: string, b: string, state: string) =>
+    page.getByRole("button", { name: `${a} / ${b}: ${state}`, exact: true });
+  await cell("Matrix A", "Matrix B", "Nicht zugeordnet / unklar").click();
+  await expect(cell("Matrix B", "Matrix A", "Gut")).toBeEnabled();
+  await cell("Matrix A", "Matrix B", "Gut").click();
+  await expect(cell("Matrix B", "Matrix A", "Ungünstig")).toBeEnabled();
+  await cell("Matrix B", "Matrix A", "Ungünstig").click();
+  await expect(
+    cell("Matrix A", "Matrix B", "Nicht zugeordnet / unklar"),
+  ).toBeEnabled();
+  await page
+    .getByLabel("Pflanzen in Zeilen und Spalten filtern", { exact: true })
+    .fill("Matrix");
+  await expect(page.locator(".neighbor-matrix tbody tr")).toHaveCount(2);
+  await page
+    .getByLabel("Pflanzen in Zeilen und Spalten filtern", { exact: true })
+    .fill("");
+  await page.evaluate(() => {
+    const panel = document.querySelector(
+      "garden-planner-panel",
+    ) as HTMLElement & {
+      tables: import("../src/types").Tables;
+      requestUpdate(): void;
+    };
+    const base = panel.tables.plants[0]!;
+    panel.tables = {
+      ...panel.tables,
+      plants: [
+        ...panel.tables.plants,
+        ...Array.from({ length: 45 }, (_, i) => ({
+          ...base,
+          id: `synthetic-matrix-${i}`,
+          data: { ...base.data, name: `Test ${i}` },
+        })),
+      ],
+    };
+    panel.requestUpdate();
+  });
+  await expect(page.locator(".neighbor-matrix tbody tr")).toHaveCount(50);
+  const scroll = page.locator(".neighbor-matrix-scroll");
+  const head = scroll.locator("thead th").first(),
+    row = scroll.locator("tbody th").first();
+  const headBefore = await head.boundingBox(),
+    rowBefore = await row.boundingBox();
+  await scroll.evaluate((el) => {
+    el.scrollTop = 200;
+    el.scrollLeft = 200;
+  });
+  expect(Math.abs((await head.boundingBox())!.y - headBefore!.y)).toBeLessThan(
+    2,
+  );
+  expect(Math.abs((await row.boundingBox())!.x - rowBefore!.x)).toBeLessThan(2);
+  await page.screenshot({
+    path: testInfo.outputPath("neighbor-matrix.png"),
+    scale: "css",
+  });
+});
+
+test("plant and variety photos persist independently and profile has real year bars", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Meine Pflanzen");
+  const card = page.locator(".catalog-card").first();
+  await expect(card.locator(".catalog-facts dd")).toHaveCount(4);
+  await card
+    .getByRole("button", { name: "Details ansehen", exact: true })
+    .click();
+  const detail = page.locator("#detail-dialog");
+  await detail
+    .locator(".plant-detail-actions")
+    .getByRole("button", { name: "Bearbeiten", exact: true })
+    .click();
+  const editor = page.locator("#editor-dialog");
+  await editor
+    .getByLabel("Botanischer Name", { exact: true })
+    .fill("Solanum lycopersicum");
+  await editor
+    .getByLabel("Keimtemperatur: optimal ab (°C)", { exact: true })
+    .fill("20");
+  await editor
+    .getByLabel("Keimtemperatur: optimal bis (°C)", { exact: true })
+    .fill("25");
+  await editor
+    .getByLabel("Keimtemperatur: Minimum (°C)", { exact: true })
+    .fill("12");
+  await editor
+    .getByLabel("Keimtemperatur: Maximum (°C)", { exact: true })
+    .fill("35");
+  const png = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 32;
+    c.height = 24;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#328852";
+    ctx.fillRect(0, 0, 32, 24);
+    return c.toDataURL("image/png").split(",")[1]!;
+  });
+  await editor
+    .getByLabel("Bild hochladen", { exact: true })
+    .setInputFiles({
+      name: "bad.svg",
+      mimeType: "image/svg+xml",
+      buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'),
+    });
+  await expect(editor.getByRole("alert")).toContainText(
+    "Bild konnte nicht verarbeitet",
+  );
+  await editor.getByLabel("Bild hochladen", { exact: true }).setInputFiles({
+    name: "plant.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(detail.locator("img.profile-photo")).toBeVisible();
+  await expect(
+    detail.locator(".profile-year-grid .bar").first(),
+  ).toBeAttached();
+  await detail
+    .getByRole("button", { name: "Sorte hinzufügen", exact: true })
+    .click();
+  await editor.getByLabel("Name *", { exact: true }).fill("Foto-Sorte");
+  await editor.getByLabel("Bild hochladen", { exact: true }).setInputFiles({
+    name: "variety.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(detail.locator("img.variety-photo")).toBeAttached();
+  await detail
+    .locator(".plant-detail-actions")
+    .getByRole("button", { name: "Bearbeiten", exact: true })
+    .click();
+  await editor
+    .getByRole("button", { name: "Bild entfernen", exact: true })
+    .click();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(detail.locator("img.profile-photo")).toHaveCount(0);
+  await expect(detail.locator("img.variety-photo")).toBeAttached();
+  await detail.evaluate((e) => (e.scrollTop = 0));
+  await detail.screenshot({
+    path: testInfo.outputPath("plant-profile.png"),
+    scale: "css",
+  });
+  const result = await new AxeBuilder({ page })
+    .include("garden-planner-panel")
+    .analyze();
+  expect(result.violations).toEqual([]);
+  await detail.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Meine Pflanzen");
+  await page
+    .locator(".catalog-card")
+    .first()
+    .getByRole("button", { name: "Details ansehen", exact: true })
+    .click();
+  await expect(detail.locator("img.variety-photo")).toBeAttached();
 });

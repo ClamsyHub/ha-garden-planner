@@ -327,6 +327,8 @@ export function formData(
   }
   if (table === "cultivation_events" && !original)
     result.cultivation_id = draft.cultivation_id;
+  if (["plants", "varieties"].includes(table) && draft.image_data !== undefined)
+    result.image_data = draft.image_data || null;
   const merged = { ...original?.data, ...result };
   const temperatures = [
     "germination_min_c",

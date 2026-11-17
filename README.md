@@ -17,7 +17,8 @@ Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzei
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
 **Änderungen v0.1.11:** Sicherheitsfrage vor dem Erledigen von Gartenarbeiten,
-gegenseitige gute/schlechte Nachbarn und die automatisch speichernde Matrix **Saatgut & Einkauf**.
+gegenseitige gute/schlechte Nachbarn mit Matrix und die automatisch speichernde Matrix **Saatgut & Einkauf**.
+Pflanzen und Sorten unterstützen lokale Bilder; Pflanzenkarten und Detailprofile zeigen Kennzahlen und Jahresübersichten.
 Klickbare Übersichtskacheln bleiben beim Scrollen sichtbar; die Kalenderlegende dient zusätzlich als Quick-Filter.
 [Updatehinweise und Datensicherung](docs/releases/v0.1.11.md).
 

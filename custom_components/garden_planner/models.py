@@ -5,6 +5,8 @@ import re
 from datetime import date, datetime
 from typing import Any
 
+from .images import validate_image
+
 MAX_TEXT = 20000
 MAX_RECORDS = 50000
 MAX_IMPORT_BYTES = 20 * 1024 * 1024
@@ -122,6 +124,7 @@ def clean_master_data(table: str, data: Any) -> Any:
 
 
 PLANT_FIELDS = {
+    "image_data",
     "name",
     "botanical_name",
     "category",
@@ -313,7 +316,12 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
             }:
                 raise ValidationError(f"{key} must not be null.")
             continue
-        if key in TEXT_FIELDS:
+        if key == "image_data":
+            try:
+                result[key] = validate_image(value)
+            except ValueError as err:
+                raise ValidationError(str(err)) from err
+        elif key in TEXT_FIELDS:
             if not isinstance(value, str) or len(value) > MAX_TEXT:
                 raise ValidationError(
                     f"{key} must be text of at most {MAX_TEXT} characters."

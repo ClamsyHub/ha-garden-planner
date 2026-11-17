@@ -73,7 +73,11 @@ def import_csv(files: Any) -> dict[str, Any]:
             header = next(reader)
             present = header[len(META) :]
             missing = set(fields) - set(present)
-            optional = GARDEN_FIELDS if table == "plants" else set()
+            optional = (
+                (GARDEN_FIELDS | {"image_data"})
+                if table == "plants"
+                else ({"image_data"} if table == "varieties" else set())
+            )
             if (
                 header[: len(META)] != list(META)
                 or present != sorted(set(present))
