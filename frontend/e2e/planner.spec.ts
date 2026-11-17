@@ -929,13 +929,6 @@ test("all nine calendar activities have distinct bars and lifecycle order", asyn
 }) => {
   await open(page);
   await addPlant(page, "Calendar colors");
-  await page
-    .getByRole("button", { name: "Calendar colors", exact: true })
-    .click();
-  const detail = page.getByRole("dialog", {
-    name: "Calendar colors",
-    exact: true,
-  });
   const sequence = [
     "indoors",
     "direct",
@@ -947,27 +940,39 @@ test("all nine calendar activities have distinct bars and lifecycle order", asyn
     "harvest",
     "other",
   ];
+  // This case verifies calendar rendering, not nine repetitions of form CRUD.
+  // The form save path is exercised independently by the CRUD/calendar tests.
+  const session = new URL(page.url()).searchParams.get("session");
+  const response = await page.request.post(`/__test_api/${session}`, {
+    data: { operation: "list", parameters: { table: "plants" }, role: "admin" },
+  });
+  expect(response.ok()).toBe(true);
+  const plant = (await response.json()).find(
+    (p: { data: { name: string } }) => p.data.name === "Calendar colors",
+  );
   for (const activity of [...sequence].reverse()) {
-    await detail
-      .getByRole("button", {
-        name: "Tätigkeitszeitraum hinzufügen",
-        exact: true,
-      })
-      .click();
-    const editor = page.locator("#editor-dialog");
-    await editor
-      .getByLabel("Tätigkeit *", { exact: true })
-      .selectOption(activity);
-    await editor.getByLabel("Startmonat *", { exact: true }).selectOption("11");
-    await editor.getByLabel("Starttag *", { exact: true }).fill("1");
-    await editor.getByLabel("Endmonat *", { exact: true }).selectOption("11");
-    await editor.getByLabel("Endtag *", { exact: true }).fill("28");
-    await editor
-      .getByRole("button", { name: "Speichern", exact: true })
-      .click();
-    await expect(editor).not.toBeVisible();
+    const created = await page.request.post(`/__test_api/${session}`, {
+      data: {
+        operation: "create",
+        role: "admin",
+        parameters: {
+          table: "growing_windows",
+          data: {
+            plant_id: plant.id,
+            activity,
+            environment: "outdoors",
+            start_month: 11,
+            start_day: 1,
+            end_month: 11,
+            end_day: 28,
+          },
+        },
+      },
+    });
+    expect(created.ok()).toBe(true);
   }
-  await detail.getByRole("button", { name: "Schließen", exact: true }).click();
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
   await navigate(page, "Gartenkalender");
   await expect(page.locator(".legend > button")).toHaveCount(9);
   const colors = await page
