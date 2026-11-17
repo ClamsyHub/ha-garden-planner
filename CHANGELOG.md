@@ -4,7 +4,10 @@
 
 - Confirm manual and personal task completion before removing upcoming work; cancellation and Escape leave tasks untouched.
 - Add shared Neighbors management with reciprocal good/bad catalog relationships, multiple choices and optional free names.
-- Add a responsive Seeds & shopping matrix with available, buy, not-needed and undecided states, filtering and transactional batch saves.
+- Add a responsive Seeds & shopping matrix with available, buy, not-needed and undecided states, filtering and automatic transactional batch saves.
+- Make overview counts navigate to matching filtered views and upcoming work; keep a compact summary visible while scrolling.
+- Make calendar legend activities exclusive quick filters with a second click restoring all activities; retain dropdown multi-selection.
+- Keep seed choices responsive during saving, preserve newer choices and expose explicit recovery after failed saves.
 - Retain shared garden edit permissions, optimistic concurrency, JSON/CSV exchange and backups. Accept existing CSV plant headers without the new optional metadata.
 
 ## 0.1.10 — 2026-11-16

@@ -1,5 +1,21 @@
 import type { Language } from "./types";
 const de = {
+  compact_managedPlants: "Pflanzen",
+  compact_planned: "Geplant",
+  compact_active: "Laufend",
+  compact_successful: "Erfolgreich",
+  compact_openTasks: "Aufgaben",
+  cultureScope: "Kulturen anzeigen",
+  currentCultures: "Alle aktuellen Kulturen",
+  noCulturesMatch: "Keine Kulturen für diese Auswahl.",
+  historySuccessOnly: "Nur erfolgreich dokumentiert",
+  quickActivities: "Tätigkeit schnell filtern",
+  showOnly: "Nur anzeigen:",
+  seedSaving: "Saatgutauswahl wird gespeichert …",
+  seedSaveFailed:
+    "Die Auswahl ist noch nicht bestätigt gespeichert. Bitte erneut versuchen oder die Auswahl verwerfen und neu laden.",
+  retrySeed: "Erneut speichern",
+
   neighbors: "Nachbarn",
   seeds: "Saatgut & Einkauf",
   goodNeighbors: "Gute Nachbarn",
@@ -16,7 +32,7 @@ const de = {
   neighborConflict:
     "Bitte ordne jeden Nachbarn nur einer Gruppe zu und wähle nicht die Pflanze selbst. Bei gleichen Pflanzennamen nutze die Katalogauswahl.",
   seedIntro:
-    "Gemeinsame Saatgutplanung für deinen Pflanzenkatalog. Wähle je Pflanze einen Status; mehrere Änderungen lassen sich gesammelt speichern. Beim Wechsel in einen anderen Bereich werden sie ebenfalls gespeichert.",
+    "Gemeinsame Saatgutplanung für deinen Pflanzenkatalog. Wähle je Pflanze einen Status. Deine Auswahl wird automatisch gespeichert; warte vor dem Schließen auf das Ende des Speichervorgangs.",
   seed_available: "Vorhanden",
   seed_buy: "Kaufen",
   seed_unneeded: "Nicht benötigt",
@@ -123,6 +139,22 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  compact_managedPlants: "Plants",
+  compact_planned: "Planned",
+  compact_active: "Active",
+  compact_successful: "Successful",
+  compact_openTasks: "Tasks",
+  cultureScope: "Show cultures",
+  currentCultures: "All current cultures",
+  noCulturesMatch: "No cultures match this selection.",
+  historySuccessOnly: "Successful records only",
+  quickActivities: "Quick activity filter",
+  showOnly: "Show only:",
+  seedSaving: "Saving seed choices …",
+  seedSaveFailed:
+    "Your choices have not been confirmed as saved. Retry or discard and reload.",
+  retrySeed: "Retry save",
+
   neighbors: "Neighbors",
   seeds: "Seeds & shopping",
   goodNeighbors: "Good neighbors",
@@ -139,7 +171,7 @@ const en: Record<keyof typeof de, string> = {
   neighborConflict:
     "Assign each neighbor to only one group and do not select the plant itself. For duplicate plant names, use catalog selection.",
   seedIntro:
-    "Shared seed planning for your plant catalog. Select one state per plant and save changes together. Leaving this section also saves your choices.",
+    "Shared seed planning for your plant catalog. Select one state per plant. Choices save automatically; wait for saving to finish before closing.",
   seed_available: "Available",
   seed_buy: "Buy",
   seed_unneeded: "Not needed",

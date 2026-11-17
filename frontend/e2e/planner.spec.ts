@@ -969,7 +969,7 @@ test("all nine calendar activities have distinct bars and lifecycle order", asyn
   }
   await detail.getByRole("button", { name: "Schließen", exact: true }).click();
   await navigate(page, "Gartenkalender");
-  await expect(page.locator(".legend > span")).toHaveCount(9);
+  await expect(page.locator(".legend > button")).toHaveCount(9);
   const colors = await page
     .locator(".legend .dot")
     .evaluateAll((nodes) =>
@@ -2367,47 +2367,28 @@ test("neighbors link catalog plants reciprocally and retain optional free names"
   });
 });
 
-test("seed matrix batches choices and saves them before leaving the page", async ({
+test("seed choices save automatically and navigation drains pending saves", async ({
   page,
 }, testInfo) => {
   await open(page, { demo: "1" });
   await navigate(page, "Saatgut & Einkauf");
-  const plants = page.getByRole("row").filter({
-    has: page.getByRole("rowheader", {
-      name: "Blattkultur · Beispiel",
-      exact: true,
-    }),
+  const buy = page.getByRole("radio", {
+    name: "Blattkultur · Beispiel: Kaufen",
+    exact: true,
   });
-  await expect(
-    plants.getByRole("radio", {
-      name: "Blattkultur · Beispiel: Offen",
-      exact: true,
-    }),
-  ).toBeChecked();
   let batches = 0;
   await page.route("**/__test_api/**", async (route) => {
     if (route.request().postDataJSON().operation === "set_seed_inventory")
       batches++;
     await route.continue();
   });
-  await plants
-    .getByRole("radio", { name: "Blattkultur · Beispiel: Kaufen", exact: true })
-    .check();
-  await expect(
-    plants.getByRole("radio", {
-      name: "Blattkultur · Beispiel: Offen",
-      exact: true,
-    }),
-  ).not.toBeChecked();
-  expect(batches).toBe(0);
-  await page
-    .getByRole("button", { name: "Änderungen speichern", exact: true })
-    .click();
+  await buy.check();
+  await expect.poll(() => batches).toBe(1);
+  await expect(page.locator(".seed-save-status")).toHaveText("");
   await expect(
     page.getByRole("button", { name: "Änderungen speichern", exact: true }),
-  ).toBeDisabled();
-  expect(batches).toBe(1);
-  await plants
+  ).toHaveCount(0);
+  await page
     .getByRole("radio", {
       name: "Blattkultur · Beispiel: Vorhanden",
       exact: true,
@@ -2420,34 +2401,19 @@ test("seed matrix batches choices and saves them before leaving the page", async
   expect(batches).toBe(2);
   await navigate(page, "Saatgut & Einkauf");
   await expect(
-    plants.getByRole("radio", {
-      name: "Blattkultur · Beispiel: Vorhanden",
-      exact: true,
-    }),
-  ).toBeChecked();
-  await plants
-    .getByRole("radio", {
-      name: "Blattkultur · Beispiel: Nicht benötigt",
-      exact: true,
-    })
-    .check();
-  await page
-    .getByRole("button", { name: "Auswahl verwerfen", exact: true })
-    .click();
-  await expect(
-    plants.getByRole("radio", {
+    page.getByRole("radio", {
       name: "Blattkultur · Beispiel: Vorhanden",
       exact: true,
     }),
   ).toBeChecked();
   await page.getByLabel("Status filtern", { exact: true }).selectOption("buy");
-  await expect(plants).toHaveCount(0);
+  await expect(buy).toHaveCount(0);
   await page
     .getByLabel("Status filtern", { exact: true })
     .selectOption("available");
-  await expect(plants).toBeVisible();
+  await expect(buy).toBeVisible();
   await page.locator(".seed-scroll").screenshot({
-    path: testInfo.outputPath("seed-matrix-v0111.png"),
+    path: testInfo.outputPath("seed-auto-v0111.png"),
     scale: "css",
   });
 });
@@ -2490,16 +2456,33 @@ test("clearing the authenticated user closes a neighbor draft", async ({
   ).toHaveCount(0);
 });
 
-test("a stale shared seed update keeps choices visible until discarded", async ({
+test("a failed seed autosave preserves choices without retrying or claiming success", async ({
   page,
 }) => {
   await open(page, { demo: "1" });
   await navigate(page, "Saatgut & Einkauf");
+  let release!: () => void, started!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const received = new Promise<void>((resolve) => {
+    started = resolve;
+  });
+  let writes = 0;
+  await page.route("**/__test_api/**", async (route) => {
+    if (route.request().postDataJSON().operation === "set_seed_inventory") {
+      writes++;
+      started();
+      await gate;
+    }
+    await route.continue();
+  });
   const choice = page.getByRole("radio", {
     name: "Blattkultur · Beispiel: Kaufen",
     exact: true,
   });
   await choice.check();
+  await received;
   const session = new URL(page.url()).searchParams.get("session");
   const list = await page.request.post(`/__test_api/${session}`, {
     data: { operation: "list", parameters: { table: "plants" }, role: "admin" },
@@ -2507,7 +2490,7 @@ test("a stale shared seed update keeps choices visible until discarded", async (
   const plant = (await list.json()).find(
     (p: { data: { name: string } }) => p.data.name === "Blattkultur · Beispiel",
   );
-  const updated = await page.request.post(`/__test_api/${session}`, {
+  const edit = await page.request.post(`/__test_api/${session}`, {
     data: {
       operation: "update",
       parameters: {
@@ -2519,12 +2502,18 @@ test("a stale shared seed update keeps choices visible until discarded", async (
       role: "admin",
     },
   });
-  expect(updated.ok()).toBe(true);
-  await page
-    .getByRole("button", { name: "Änderungen speichern", exact: true })
-    .click();
+  expect(edit.ok()).toBe(true);
+  release();
   await expect(page.getByRole("alert")).toBeVisible();
   await expect(choice).toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Erneut speichern", exact: true }),
+  ).toBeVisible();
+  await navigate(page, "Übersicht");
+  await expect(
+    page.getByRole("heading", { name: "Saatgut & Einkauf", exact: true }),
+  ).toBeVisible();
+  expect(writes).toBe(1);
   await page
     .getByRole("button", { name: "Auswahl verwerfen", exact: true })
     .click();
@@ -2536,7 +2525,7 @@ test("a stale shared seed update keeps choices visible until discarded", async (
   ).toBeChecked();
 });
 
-test("losing garden edit rights discards unsavable seed choices and permits navigation", async ({
+test("losing edit rights during seed autosave clears pending state and permits navigation", async ({
   page,
 }) => {
   await open(page, { demo: "1", role: "reader", host: "1" });
@@ -2557,20 +2546,33 @@ test("losing garden edit rights discards unsavable seed choices and permits navi
     .getByRole("button", { name: "Aktualisieren", exact: true })
     .click();
   await navigate(page, "Saatgut & Einkauf");
+  let release!: () => void, started!: () => void;
+  const gate = new Promise<void>((r) => {
+      release = r;
+    }),
+    received = new Promise<void>((r) => {
+      started = r;
+    });
+  await page.route("**/__test_api/**", async (route) => {
+    if (route.request().postDataJSON().operation === "set_seed_inventory") {
+      started();
+      await gate;
+    }
+    await route.continue();
+  });
   const input = page.getByRole("radio", {
     name: "Blattkultur · Beispiel: Kaufen",
     exact: true,
   });
   await expect(input).toBeEnabled();
   await input.check();
+  await received;
   await writers([]);
   await page
     .getByRole("button", { name: "Aktualisieren", exact: true })
     .click();
   await expect(input).toBeDisabled();
-  await expect(
-    page.getByRole("button", { name: "Änderungen speichern", exact: true }),
-  ).toHaveCount(0);
+  release();
   await navigate(page, "Übersicht");
   await expect(
     page.getByRole("heading", { name: "Übersicht", exact: true }),
@@ -2582,4 +2584,322 @@ test("losing garden edit rights discards unsavable seed choices and permits navi
       exact: true,
     }),
   ).toBeChecked();
+});
+
+test("seed radios stay responsive and latest choice wins while saving", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Saatgut & Einkauf");
+  let release!: () => void, started!: () => void;
+  const gate = new Promise<void>((r) => {
+      release = r;
+    }),
+    received = new Promise<void>((r) => {
+      started = r;
+    });
+  const batches: { state: string; revision: number }[][] = [];
+  await page.route("**/__test_api/**", async (route) => {
+    const d = route.request().postDataJSON();
+    if (d.operation === "set_seed_inventory") {
+      batches.push(d.parameters.changes);
+      if (batches.length === 1) {
+        started();
+        await gate;
+      }
+    }
+    await route.continue();
+  });
+  await page
+    .getByRole("radio", {
+      name: "Blattkultur · Beispiel: Vorhanden",
+      exact: true,
+    })
+    .check();
+  await received;
+  const buy = page.getByRole("radio", {
+    name: "Blattkultur · Beispiel: Kaufen",
+    exact: true,
+  });
+  const latest = page.getByRole("radio", {
+    name: "Blattkultur · Beispiel: Nicht benötigt",
+    exact: true,
+  });
+  await expect(buy).toBeEnabled();
+  await buy.check();
+  await latest.check();
+  await expect(latest).toBeChecked();
+  release();
+  await expect(page.locator(".seed-save-status")).toHaveText("");
+  expect(batches).toHaveLength(2);
+  expect(batches[0]![0]!.state).toBe("available");
+  expect(batches[1]![0]!.state).toBe("unneeded");
+  expect(batches[1]![0]!.revision).toBeGreaterThan(batches[0]![0]!.revision);
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Saatgut & Einkauf");
+  await expect(latest).toBeChecked();
+});
+
+test("calendar legend quick filters are exclusive, toggle off and preserve categories", async ({
+  page,
+}) => {
+  await open(page);
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(operation: string, parameters: Record<string, unknown>) {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role: "admin" },
+    });
+    expect(r.ok()).toBe(true);
+    return r.json();
+  }
+  const plant = await api("create", {
+    table: "plants",
+    data: { name: "Quickfilterpflanze", category: "fruit" },
+  });
+  for (const activity of ["prune", "indoors", "care"])
+    await api("create", {
+      table: "growing_windows",
+      data: {
+        plant_id: plant.id,
+        activity,
+        environment: "outdoors",
+        start_month: 11,
+        start_day: 1,
+        end_month: 11,
+        end_day: 30,
+      },
+    });
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Gartenkalender");
+  await calendarFilter(page, "Kategorie", ["Obst"]);
+  const group = page.getByRole("group", {
+    name: "Tätigkeit schnell filtern",
+    exact: true,
+  });
+  for (const [mode, selector] of [
+    ["Jahr", ".year-grid .bar"],
+    ["Monat", ".month-event"],
+    ["Woche", ".week-window"],
+  ]) {
+    await page
+      .locator(".segmented")
+      .getByRole("button", { name: mode!, exact: true })
+      .click();
+    await group
+      .getByRole("button", { name: "Rückschnitt", exact: true })
+      .click();
+    await expect(page.locator(selector!)).toHaveCount(1);
+    await expect(
+      group.getByRole("button", { name: "Rückschnitt", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await group.getByRole("button", { name: "Vorziehen", exact: true }).click();
+    await expect(page.locator(selector!)).toHaveCount(1);
+    await expect(
+      group.getByRole("button", { name: "Rückschnitt", exact: true }),
+    ).toHaveAttribute("aria-pressed", "false");
+    await group.getByRole("button", { name: "Vorziehen", exact: true }).click();
+    await expect(page.locator(selector!)).toHaveCount(3);
+    await expect(
+      page
+        .getByRole("group", { name: "Kategorie", exact: true })
+        .locator("summary"),
+    ).toHaveText("Obst");
+  }
+});
+
+test("overview summary buttons open precisely matching plant, culture and success views", async ({
+  page,
+}) => {
+  await open(page);
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(operation: string, parameters: Record<string, unknown>) {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role: "admin" },
+    });
+    expect(r.ok()).toBe(true);
+    return r.json();
+  }
+  for (const [name, initial, result] of [
+    ["Geplante Pflanze", "planned", "unknown"],
+    ["Wachsende Pflanze", "sown", "unknown"],
+    ["Erfolgreiche Pflanze", "sown", "successful"],
+  ]) {
+    const p = await api("create", { table: "plants", data: { name } });
+    const c = await api("create", {
+      table: "cultivations",
+      data: {
+        plant_id: p.id,
+        date: "2026-11-06",
+        method: "direct",
+        initial_status: initial,
+        result,
+      },
+    });
+    if (result === "successful")
+      await api("create", {
+        table: "cultivation_events",
+        data: { cultivation_id: c.id, date: "2026-11-06", status: "completed" },
+      });
+  }
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await page
+    .locator(".stats")
+    .getByRole("button", { name: /3 Pflanzen im Garten/ })
+    .click();
+  await expect(page.locator("main .grid .plant")).toHaveCount(3);
+  await navigate(page, "Übersicht");
+  await page
+    .locator(".stats")
+    .getByRole("button", { name: /1 Geplant/ })
+    .click();
+  await expect(
+    page.getByLabel("Kulturen anzeigen", { exact: true }),
+  ).toHaveValue("planned");
+  await expect(page.locator("main .grid .plant")).toHaveCount(1);
+  await expect(page.locator("main .grid .plant")).toContainText(
+    "Geplante Pflanze",
+  );
+  await navigate(page, "Übersicht");
+  await page
+    .locator(".stats")
+    .getByRole("button", { name: /1 Laufende Kulturen/i })
+    .click();
+  await expect(
+    page.getByLabel("Kulturen anzeigen", { exact: true }),
+  ).toHaveValue("active");
+  await expect(page.locator("main .grid .plant")).toHaveCount(1);
+  await expect(page.locator("main .grid .plant")).toContainText(
+    "Wachsende Pflanze",
+  );
+  await navigate(page, "Übersicht");
+  await page
+    .locator(".stats")
+    .getByRole("button", { name: /1 Erfolgreich dokumentiert/i })
+    .click();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Nur erfolgreich dokumentiert",
+      exact: true,
+    }),
+  ).toBeChecked();
+  await expect(page.locator("main tbody tr")).toHaveCount(1);
+  await expect(page.locator("main tbody tr")).toContainText(
+    "Erfolgreiche Pflanze",
+  );
+});
+
+test("overview summary stays below navigation and jumps to upcoming work", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  const session = new URL(page.url()).searchParams.get("session");
+  const rows = await page.request.post(`/__test_api/${session}`, {
+    data: { operation: "list", parameters: { table: "plants" }, role: "admin" },
+  });
+  const plant = (await rows.json())[0];
+  for (let i = 0; i < 24; i++) {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: {
+        operation: "create",
+        parameters: {
+          table: "growing_windows",
+          data: {
+            plant_id: plant.id,
+            activity: "care",
+            environment: "outdoors",
+            start_month: 11,
+            start_day: 1,
+            end_month: 11,
+            end_day: 30,
+          },
+        },
+        role: "admin",
+      },
+    });
+    expect(r.ok()).toBe(true);
+  }
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  const stats = page.locator(".stats");
+  await expect(stats.getByRole("button")).toHaveCount(5);
+  const original = await stats.boundingBox();
+  if ((page.viewportSize()?.width ?? 1000) < 760)
+    expect(original!.height).toBeLessThan(105);
+  await page.evaluate(() => window.scrollTo(0, 900));
+  await expect
+    .poll(async () => {
+      const box = await stats.boundingBox();
+      return Math.abs(
+        box!.y -
+          Number.parseFloat(
+            await page
+              .locator("garden-planner-panel")
+              .evaluate((e) =>
+                (e as HTMLElement).style.getPropertyValue("--gp-sticky-top"),
+              ),
+          ),
+      );
+    })
+    .toBeLessThan(2);
+  const before = await stats.boundingBox();
+  await page.evaluate(() => window.scrollBy(0, 300));
+  const after = await stats.boundingBox();
+  expect(Math.abs(before!.y - after!.y)).toBeLessThan(2);
+  await stats.getByRole("button", { name: /Offene Aufgaben/i }).click();
+  const upcoming = page.getByRole("region", {
+    name: "Nächste Gartenarbeiten",
+    exact: true,
+  });
+  await expect(upcoming).toBeFocused();
+  const position = await upcoming.boundingBox(),
+    summary = await stats.boundingBox();
+  expect(position!.y).toBeGreaterThanOrEqual(summary!.y + summary!.height - 1);
+  expect(position!.y).toBeLessThan(page.viewportSize()!.height);
+  await page.screenshot({
+    path: testInfo.outputPath("overview-sticky-v0111.png"),
+    scale: "css",
+  });
+});
+
+test("a transient seed autosave error retries only after explicit recovery", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Saatgut & Einkauf");
+  let count = 0;
+  await page.route("**/__test_api/**", async (route) => {
+    if (
+      route.request().postDataJSON().operation === "set_seed_inventory" &&
+      ++count === 1
+    )
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ code: "storage_error" }),
+      });
+    else await route.continue();
+  });
+  const input = page.getByRole("radio", {
+    name: "Blattkultur · Beispiel: Kaufen",
+    exact: true,
+  });
+  await input.check();
+  await expect(
+    page.getByRole("button", { name: "Erneut speichern", exact: true }),
+  ).toBeVisible();
+  expect(count).toBe(1);
+  await expect(input).toBeChecked();
+  await page
+    .getByRole("button", { name: "Erneut speichern", exact: true })
+    .click();
+  await expect(page.locator(".seed-save-status")).toHaveText("");
+  expect(count).toBe(2);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Saatgut & Einkauf");
+  await expect(input).toBeChecked();
 });

@@ -162,6 +162,11 @@ export class GardenPlannerPanel extends LitElement {
     neighborEditor: { state: true },
     neighborQuery: { state: true },
     seedDraft: { state: true },
+    seedSaving: { state: true },
+    seedFailed: { state: true },
+    seedFlight: { state: true },
+    cultureScope: { state: true },
+    historySuccessOnly: { state: true },
     seedQuery: { state: true },
     seedFilter: { state: true },
     reviewed: { state: true },
@@ -221,6 +226,15 @@ export class GardenPlannerPanel extends LitElement {
     goodNames: string;
     badNames: string;
   } | null = null;
+  private cultureScope = "current";
+  private historySuccessOnly = false;
+  private layoutObserver?: ResizeObserver;
+  private layoutNodes = new Set<Element>();
+  private seedSaving = false;
+  private seedFailed = false;
+  private seedFlight = new Map<string, { state: string; revision: number }>();
+  private seedFlush?: Promise<boolean>;
+  private seedTimer?: ReturnType<typeof setTimeout>;
   private seedDraft = new Map<string, string>();
   private seedRevisions = new Map<string, number>();
   private seedQuery = "";
@@ -356,12 +370,15 @@ export class GardenPlannerPanel extends LitElement {
     event.preventDefault();
   };
   private readonly flushHiddenReminders = (): void => {
-    if (document.visibilityState === "hidden") void this.flushReminderChanges();
+    if (document.visibilityState === "hidden") {
+      void this.flushReminderChanges();
+      void this.saveSeedInventory();
+    }
   };
   private readonly confirmPendingReminders = (
     event: BeforeUnloadEvent,
   ): void => {
-    if (this.reminderSaving || this.seedDraft.size) {
+    if (this.reminderSaving || this.seedDraft.size || this.seedSaving) {
       event.preventDefault();
       event.returnValue = "";
     }
@@ -392,6 +409,10 @@ export class GardenPlannerPanel extends LitElement {
   }
   disconnectedCallback(): void {
     void this.flushReminderChanges();
+    void this.saveSeedInventory();
+    this.layoutObserver?.disconnect();
+    this.layoutObserver = undefined;
+    this.layoutNodes.clear();
     super.disconnectedCallback();
     document.removeEventListener(
       "pointerdown",
@@ -435,6 +456,7 @@ export class GardenPlannerPanel extends LitElement {
       void this.bind();
   }
   protected updated(): void {
+    this.observeOverviewLayout();
     this.setAttribute("lang", this.language);
     if (this.hass?.themes)
       this.toggleAttribute("dark", this.hass.themes.darkMode);
@@ -461,6 +483,7 @@ export class GardenPlannerPanel extends LitElement {
   }
   private async bind(): Promise<void> {
     void this.flushReminderChanges();
+    void this.saveSeedInventory();
     const generation = ++this.connectionGeneration;
     this.loadGeneration++;
     this.boundConnection?.removeEventListener?.("ready", this.reconnect);
@@ -491,10 +514,11 @@ export class GardenPlannerPanel extends LitElement {
     this.neighborEditor = null;
     this.neighborPlant = "";
     this.neighborQuery = "";
-    this.seedDraft = new Map();
-    this.seedRevisions = new Map();
+    this.resetSeeds();
     this.seedQuery = "";
     this.seedFilter = "";
+    this.cultureScope = "current";
+    this.historySuccessOnly = false;
     this.reviewed = null;
     this.backups = [];
     this.lastTrigger = undefined;
@@ -534,8 +558,7 @@ export class GardenPlannerPanel extends LitElement {
       this.capabilities = capabilities;
       if (!capabilities.can_edit) {
         this.neighborEditor = null;
-        this.seedDraft = new Map();
-        this.seedRevisions.clear();
+        this.resetSeeds();
         if (this.completing && !this.completing.data.personal_generated)
           this.completing = null;
       }
@@ -555,8 +578,7 @@ export class GardenPlannerPanel extends LitElement {
           this.personalReminders = null;
           this.completing = null;
           this.neighborEditor = null;
-          this.seedDraft = new Map();
-          this.seedRevisions.clear();
+          this.resetSeeds();
           this.preferencesGeneration++;
           this.capabilities = null;
           this.selected = null;
@@ -600,7 +622,11 @@ export class GardenPlannerPanel extends LitElement {
   private async navigate(page: Page): Promise<void> {
     const navigation = ++this.navigationGeneration;
     const connection = this.connectionGeneration;
-    if (this.page === "seeds" && page !== "seeds" && this.seedDraft.size) {
+    if (
+      this.page === "seeds" &&
+      page !== "seeds" &&
+      (this.seedDraft.size || this.seedSaving)
+    ) {
       if (!(await this.saveSeedInventory())) return;
       if (
         connection !== this.connectionGeneration ||
@@ -632,6 +658,8 @@ export class GardenPlannerPanel extends LitElement {
     )
       return;
     this.page = page;
+    if (page === "cultures") this.cultureScope = "current";
+    if (page === "history") this.historySuccessOnly = false;
     this.error = "";
     if (page === "reminders") {
       this.personalReminders = null;
@@ -1282,6 +1310,75 @@ export class GardenPlannerPanel extends LitElement {
       </div>
     </article>`;
   }
+  private readonly measureOverviewLayout = (): void => {
+    const header = this.renderRoot.querySelector<HTMLElement>(".ha-navigation");
+    const aside = this.renderRoot.querySelector<HTMLElement>("aside");
+    const stats = this.renderRoot.querySelector<HTMLElement>(".stats");
+    const headerHeight = header?.getBoundingClientRect().height ?? 56;
+    const top =
+      headerHeight +
+      (window.matchMedia("(max-width: 760px)").matches
+        ? (aside?.getBoundingClientRect().height ?? 0)
+        : 0);
+    const values = {
+      "--gp-header-height": `${headerHeight}px`,
+      "--gp-sticky-top": `${top}px`,
+      "--gp-summary-height": `${stats?.getBoundingClientRect().height ?? 0}px`,
+    };
+    for (const [key, value] of Object.entries(values))
+      if (this.style.getPropertyValue(key) !== value)
+        this.style.setProperty(key, value);
+  };
+  private observeOverviewLayout(): void {
+    if (!this.isConnected) return;
+    this.layoutObserver ??= new ResizeObserver(this.measureOverviewLayout);
+    const nodes = new Set(
+      this.renderRoot.querySelectorAll(".ha-navigation, aside, .stats"),
+    );
+    for (const node of this.layoutNodes)
+      if (!nodes.has(node)) this.layoutObserver.unobserve(node);
+    for (const node of nodes)
+      if (!this.layoutNodes.has(node)) this.layoutObserver.observe(node);
+    this.layoutNodes = nodes;
+    this.measureOverviewLayout();
+  }
+  private async activateOverviewStat(key: string): Promise<void> {
+    const connection = this.connectionGeneration;
+    if (key === "openTasks") {
+      const target =
+        this.renderRoot.querySelector<HTMLElement>("#upcoming-work");
+      const box = target?.getBoundingClientRect();
+      const stats = this.renderRoot
+        .querySelector<HTMLElement>(".stats")
+        ?.getBoundingClientRect();
+      const alreadyVisible =
+        !window.matchMedia("(max-width: 1100px)").matches &&
+        box &&
+        stats &&
+        box.top >= stats.bottom &&
+        box.top < window.innerHeight - 60;
+      if (!alreadyVisible)
+        target?.scrollIntoView({ block: "start", behavior: "auto" });
+      target?.focus({ preventScroll: true });
+    } else if (key === "managedPlants") {
+      this.query = "";
+      this.category = "";
+      this.method = "";
+      this.showArchived = false;
+      await this.navigate("plants");
+    } else if (key === "successful") {
+      await this.navigate("history");
+      if (connection === this.connectionGeneration && this.page === "history") {
+        this.historyPlant = "";
+        this.historyYear = "";
+        this.historySuccessOnly = true;
+      }
+    } else {
+      await this.navigate("cultures");
+      if (connection === this.connectionGeneration && this.page === "cultures")
+        this.cultureScope = key;
+    }
+  }
   private renderOverview(): TemplateResult {
     const windows = this.tables.growing_windows
       .filter(
@@ -1327,7 +1424,7 @@ export class GardenPlannerPanel extends LitElement {
         </div>
       </section>
       <div class="stats">
-        ${stats.map(([key, count]) => html`<div class="stat"><strong>${count}</strong><span>${this.tr(key)}</span></div>`)}
+        ${stats.map(([key, count]) => html`<button type="button" class="stat" aria-label=${`${count} ${this.tr(key)}`} aria-controls=${key === "openTasks" ? "upcoming-work" : nothing} title=${this.tr(key)} @click=${() => this.activateOverviewStat(key)}><strong>${count}</strong><span class="stat-label-full">${this.tr(key)}</span><span class="stat-label-short" aria-hidden="true">${this.tr("compact_" + key)}</span></button>`)}
       </div>
       ${!this.tables.plants.length ? html`<section class="panel">${this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}</section>` : nothing}
       <div class="columns">
@@ -1370,9 +1467,14 @@ export class GardenPlannerPanel extends LitElement {
               : html`<p class="empty">${this.tr("noWindows")}</p>`
           }
         </section>
-        <section class="panel">
+        <section
+          class="panel upcoming-panel"
+          id="upcoming-work"
+          tabindex="-1"
+          aria-labelledby="upcoming-title"
+        >
           <div class="section-head">
-            <h2>${this.tr("upcoming")}</h2>
+            <h2 id="upcoming-title">${this.tr("upcoming")}</h2>
             ${this.editable ? html`<button class="icon" aria-label=${this.tr("newTask")} @click=${() => this.startEditor("tasks")}>${icon("plus")}</button>` : nothing}
           </div>
           ${this.renderTasks(false)}
@@ -1664,60 +1766,119 @@ export class GardenPlannerPanel extends LitElement {
       </form>
     </dialog>`;
   }
+  private resetSeeds(): void {
+    if (this.seedTimer) clearTimeout(this.seedTimer);
+    this.seedTimer = undefined;
+    this.seedDraft = new Map();
+    this.seedRevisions = new Map();
+    this.seedFlight = new Map();
+    this.seedSaving = false;
+    this.seedFailed = false;
+    this.seedFlush = undefined;
+  }
+  private seedState(plant: Entity): string {
+    return (
+      this.seedDraft.get(plant.id) ??
+      this.seedFlight.get(plant.id)?.state ??
+      (text(plant, "seed_state") || "unplanned")
+    );
+  }
   private changeSeed(plant: Entity, state: string): void {
     if (!this.editable || this.busy) return;
-    const next = new Map(this.seedDraft);
-    if (state === (text(plant, "seed_state") || "unplanned")) {
-      next.delete(plant.id);
+    if (
+      state === (text(plant, "seed_state") || "unplanned") &&
+      !this.seedFlight.has(plant.id)
+    ) {
+      this.seedDraft.delete(plant.id);
       this.seedRevisions.delete(plant.id);
     } else {
-      next.set(plant.id, state);
+      this.seedDraft.set(plant.id, state);
       if (!this.seedRevisions.has(plant.id))
         this.seedRevisions.set(plant.id, plant.revision);
     }
-    this.seedDraft = next;
-  }
-  private async saveSeedInventory(): Promise<boolean> {
-    if (!this.api || this.busy || !this.editable) return false;
-    const api = this.api,
-      generation = this.connectionGeneration;
-    const pending = [...this.seedDraft].map(([id, state]) => ({
-      id,
-      state,
-      revision: this.seedRevisions.get(id)!,
-    }));
-    this.busy = true;
+    this.seedFailed = false;
     this.error = "";
-    try {
-      for (let i = 0; i < pending.length; i += 500) {
-        if (generation !== this.connectionGeneration) return false;
-        const batch = pending.slice(i, i + 500);
-        const plants = await api.command<Entity[]>("set_seed_inventory", {
-          changes: batch,
-        });
-        if (generation !== this.connectionGeneration) return false;
-        this.loadGeneration++;
-        const saved = new Map(plants.map((p) => [p.id, p]));
-        this.tables = {
-          ...this.tables,
-          plants: this.tables.plants.map((p) => saved.get(p.id) ?? p),
-        };
-        const remaining = new Map(this.seedDraft);
-        batch.forEach((p) => {
-          remaining.delete(p.id);
-          this.seedRevisions.delete(p.id);
-        });
-        this.seedDraft = remaining;
+    this.seedSaving = !!(this.seedDraft.size || this.seedFlight.size);
+    this.requestUpdate();
+    if (this.seedTimer) clearTimeout(this.seedTimer);
+    if (!this.seedFlush && this.seedDraft.size)
+      this.seedTimer = setTimeout(() => {
+        void this.saveSeedInventory();
+      }, 80);
+  }
+  private saveSeedInventory(retry = false): Promise<boolean> {
+    if (this.seedTimer) clearTimeout(this.seedTimer);
+    this.seedTimer = undefined;
+    if (this.seedFlush) return this.seedFlush;
+    if (this.seedFailed && !retry) return Promise.resolve(false);
+    if (!this.seedDraft.size) return Promise.resolve(true);
+    if (!this.api || !this.editable || this.busy) return Promise.resolve(false);
+    const api = this.api,
+      generation = this.connectionGeneration,
+      queue = this.seedDraft,
+      revisions = this.seedRevisions;
+    const confirmed = new Map(this.tables.plants.map((p) => [p.id, p]));
+    const current = () =>
+      generation === this.connectionGeneration && queue === this.seedDraft;
+    this.seedSaving = true;
+    this.seedFailed = false;
+    this.error = "";
+    const run = (async (): Promise<boolean> => {
+      try {
+        while (queue.size) {
+          if (!current()) return false;
+          const batch = [...queue].slice(0, 500).map(([id, state]) => ({
+            id,
+            state,
+            revision: revisions.get(id) ?? confirmed.get(id)!.revision,
+          }));
+          for (const p of batch) queue.delete(p.id);
+          this.seedFlight = new Map(
+            batch.map((p) => [p.id, { state: p.state, revision: p.revision }]),
+          );
+          this.requestUpdate();
+          try {
+            const plants = await api.command<Entity[]>("set_seed_inventory", {
+              changes: batch,
+            });
+            if (!current()) return false;
+            this.loadGeneration++;
+            const saved = new Map(plants.map((p) => [p.id, p]));
+            this.tables = {
+              ...this.tables,
+              plants: this.tables.plants.map((p) => saved.get(p.id) ?? p),
+            };
+            for (const p of plants) {
+              confirmed.set(p.id, p);
+              if (queue.has(p.id)) revisions.set(p.id, p.revision);
+              else revisions.delete(p.id);
+            }
+            this.seedFlight = new Map();
+          } catch (error) {
+            if (current()) {
+              for (const p of batch)
+                if (!queue.has(p.id)) queue.set(p.id, p.state);
+              this.seedFlight = new Map();
+              this.seedFailed = true;
+              this.error = errorText(this.language, error);
+            }
+            return false;
+          }
+        }
+        if (current()) this.announce("saved");
+        return true;
+      } finally {
+        if (current()) {
+          this.seedSaving = false;
+          this.requestUpdate();
+        }
       }
-      this.announce("saved");
-      return true;
-    } catch (error) {
-      if (generation === this.connectionGeneration)
-        this.error = errorText(this.language, error);
-      return false;
-    } finally {
-      if (generation === this.connectionGeneration) this.busy = false;
-    }
+    })();
+    this.seedFlush = run;
+    void run.then(() => {
+      if (this.seedFlush === run) this.seedFlush = undefined;
+    });
+    return run;
   }
   private renderSeeds(): TemplateResult {
     const states = ["available", "buy", "unneeded", "unplanned"];
@@ -1728,8 +1889,9 @@ export class GardenPlannerPanel extends LitElement {
             .toLocaleLowerCase(this.language)
             .includes(this.seedQuery.toLocaleLowerCase(this.language)) &&
           (!this.seedFilter ||
-            (this.seedDraft.get(p.id) ??
-              (text(p, "seed_state") || "unplanned")) === this.seedFilter),
+            this.seedDraft.has(p.id) ||
+            this.seedFlight.has(p.id) ||
+            this.seedState(p) === this.seedFilter),
       )
       .sort((a, b) =>
         text(a, "name").localeCompare(text(b, "name"), this.language),
@@ -1760,28 +1922,30 @@ export class GardenPlannerPanel extends LitElement {
       ${
         this.editable
           ? html`<div class="toolbar seed-save">
-              <span role="status"
-                >${this.seedDraft.size ? `${this.tr("seedPending")}: ${this.seedDraft.size}` : ""}</span
-              >
-              <div class="actions">
-                <button
-                  ?disabled=${this.busy || !this.seedDraft.size}
-                  @click=${() => {
-                    this.seedDraft = new Map();
-                    this.seedRevisions.clear();
-                    this.error = "";
-                    void this.refresh();
-                  }}
-                >
-                  ${this.tr("discardSeed")}</button
-                ><button
-                  class="primary"
-                  ?disabled=${this.busy || !this.seedDraft.size}
-                  @click=${() => this.saveSeedInventory()}
-                >
-                  ${this.tr("saveSeed")}
-                </button>
-              </div>
+              <span role="status" class="seed-save-status"
+                >${this.seedSaving ? this.tr("seedSaving") : this.seedFailed ? this.tr("seedSaveFailed") : ""}</span
+              >${
+                this.seedFailed
+                  ? html`<div class="actions">
+                      <button
+                        ?disabled=${this.seedSaving}
+                        @click=${() => {
+                          this.resetSeeds();
+                          this.error = "";
+                          void this.refresh();
+                        }}
+                      >
+                        ${this.tr("discardSeed")}</button
+                      ><button
+                        class="primary"
+                        ?disabled=${this.seedSaving || !this.seedDraft.size}
+                        @click=${() => this.saveSeedInventory(true)}
+                      >
+                        ${this.tr("retrySeed")}
+                      </button>
+                    </div>`
+                  : nothing
+              }
             </div>`
           : nothing
       }
@@ -1811,7 +1975,7 @@ export class GardenPlannerPanel extends LitElement {
                             type="radio"
                             name=${`seed-${plant.id}`}
                             aria-label=${`${text(plant, "name")}: ${this.tr("seed_" + state)}`}
-                            .checked=${live((this.seedDraft.get(plant.id) ?? (text(plant, "seed_state") || "unplanned")) === state)}
+                            .checked=${live(this.seedState(plant) === state)}
                             ?disabled=${!this.editable || this.busy}
                             @change=${() => this.changeSeed(plant, state)}
                         /></label>
@@ -1947,8 +2111,23 @@ export class GardenPlannerPanel extends LitElement {
           </button>
         </div>
       </div>
-      <div class="legend">
-        ${activities.map((activity) => html`<span class=${activity}><span class="dot"></span>${this.lab(activity)}</span>`)}
+      <div class="legend" role="group" aria-label=${this.tr("quickActivities")}>
+        ${activities.map((activity) => {
+          const selected =
+            this.calendarActivities.length === 1 &&
+            this.calendarActivities[0] === activity;
+          return html`<button
+            type="button"
+            class=${activity}
+            aria-pressed=${selected}
+            title=${selected ? this.tr("allActivities") : `${this.tr("showOnly")} ${this.lab(activity)}`}
+            @click=${() => {
+              this.calendarActivities = selected ? [] : [activity];
+            }}
+          >
+            <span class="dot"></span>${this.lab(activity)}
+          </button>`;
+        })}
       </div>
       ${
         this.calendarMode === "year"
@@ -2187,10 +2366,29 @@ export class GardenPlannerPanel extends LitElement {
       </div>`;
   }
   private renderCultures(): TemplateResult {
-    const cultures = this.tables.cultivations.filter(
-      (c) => !["completed", "failed"].includes(this.status(c)),
+    const cultures = this.tables.cultivations.filter((c) =>
+      this.cultureScope === "planned"
+        ? this.status(c) === "planned"
+        : this.cultureScope === "active"
+          ? !["planned", "completed", "failed"].includes(this.status(c))
+          : !["completed", "failed"].includes(this.status(c)),
     );
-    return html`${
+    return html`<div class="filters culture-scope">
+        <label
+          >${this.tr("cultureScope")}<select
+            aria-label=${this.tr("cultureScope")}
+            .value=${this.cultureScope}
+            @change=${(e: Event) => {
+              this.cultureScope = (e.target as HTMLSelectElement).value;
+            }}
+          >
+            <option value="current">${this.tr("currentCultures")}</option>
+            <option value="planned">${this.tr("planned")}</option>
+            <option value="active">${this.tr("active")}</option>
+          </select></label
+        >
+      </div>
+      ${
         cultures.length
           ? html`<div class="grid">
               ${cultures.map(
@@ -2224,7 +2422,11 @@ export class GardenPlannerPanel extends LitElement {
                   </article>`,
               )}
             </div>`
-          : this.empty("emptyCultures")
+          : this.empty(
+              this.cultureScope === "current"
+                ? "emptyCultures"
+                : "noCulturesMatch",
+            )
       }
       <section class="panel" style="margin-top:24px">
         <div class="section-head">
@@ -2253,6 +2455,9 @@ export class GardenPlannerPanel extends LitElement {
       .filter(
         (c) =>
           (compact ||
+            !this.historySuccessOnly ||
+            text(c, "result") === "successful") &&
+          (compact ||
             !this.historyPlant ||
             text(c, "plant_id") === this.historyPlant) &&
           (compact ||
@@ -2271,6 +2476,17 @@ export class GardenPlannerPanel extends LitElement {
     return html`${
       !compact
         ? html`<p class="notice">${this.tr("observationHint")}</p>
+            <label class="check history-success-filter"
+              ><input
+                type="checkbox"
+                .checked=${this.historySuccessOnly}
+                @change=${(e: Event) => {
+                  this.historySuccessOnly = (
+                    e.target as HTMLInputElement
+                  ).checked;
+                }}
+              />${this.tr("historySuccessOnly")}</label
+            >
             <div class="filters">
               <label
                 >${this.tr("plant_id")}<select
@@ -3839,7 +4055,7 @@ export class GardenPlannerPanel extends LitElement {
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
-        <main>
+        <main class=${this.page === "overview" ? "overview-page" : ""}>
           <header class="topbar">
             <div>
               <div class="eyebrow">Garden Planner</div>
@@ -3856,7 +4072,7 @@ export class GardenPlannerPanel extends LitElement {
                 @click=${() => this.refresh()}
               >
                 ${icon("refresh")}</button
-              >${this.editable && !["settings", "reminders", "neighbors", "seeds"].includes(this.page) ? html`<button class="primary" ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}${this.tr(newAction[0])}</button>` : nothing}
+              >${this.editable && !["settings", "reminders", "neighbors", "seeds"].includes(this.page) ? html`<button class="primary" aria-label=${this.tr(newAction[0])} ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}<span class="topbar-action-label">${this.tr(newAction[0])}</span></button>` : nothing}
             </div>
           </header>
           ${this.error ? html`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : nothing}

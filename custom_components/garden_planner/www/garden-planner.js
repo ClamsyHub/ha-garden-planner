@@ -878,6 +878,20 @@ var $e = {
 		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
 	}
 }, vt = {
+	compact_managedPlants: "Pflanzen",
+	compact_planned: "Geplant",
+	compact_active: "Laufend",
+	compact_successful: "Erfolgreich",
+	compact_openTasks: "Aufgaben",
+	cultureScope: "Kulturen anzeigen",
+	currentCultures: "Alle aktuellen Kulturen",
+	noCulturesMatch: "Keine Kulturen für diese Auswahl.",
+	historySuccessOnly: "Nur erfolgreich dokumentiert",
+	quickActivities: "Tätigkeit schnell filtern",
+	showOnly: "Nur anzeigen:",
+	seedSaving: "Saatgutauswahl wird gespeichert …",
+	seedSaveFailed: "Die Auswahl ist noch nicht bestätigt gespeichert. Bitte erneut versuchen oder die Auswahl verwerfen und neu laden.",
+	retrySeed: "Erneut speichern",
 	neighbors: "Nachbarn",
 	seeds: "Saatgut & Einkauf",
 	goodNeighbors: "Gute Nachbarn",
@@ -891,7 +905,7 @@ var $e = {
 	freeNeighbor: "Freie Angabe",
 	noNeighbors: "Noch keine Nachbarn zugeordnet.",
 	neighborConflict: "Bitte ordne jeden Nachbarn nur einer Gruppe zu und wähle nicht die Pflanze selbst. Bei gleichen Pflanzennamen nutze die Katalogauswahl.",
-	seedIntro: "Gemeinsame Saatgutplanung für deinen Pflanzenkatalog. Wähle je Pflanze einen Status; mehrere Änderungen lassen sich gesammelt speichern. Beim Wechsel in einen anderen Bereich werden sie ebenfalls gespeichert.",
+	seedIntro: "Gemeinsame Saatgutplanung für deinen Pflanzenkatalog. Wähle je Pflanze einen Status. Deine Auswahl wird automatisch gespeichert; warte vor dem Schließen auf das Ende des Speichervorgangs.",
 	seed_available: "Vorhanden",
 	seed_buy: "Kaufen",
 	seed_unneeded: "Nicht benötigt",
@@ -976,6 +990,20 @@ var $e = {
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, yt = {
+	compact_managedPlants: "Plants",
+	compact_planned: "Planned",
+	compact_active: "Active",
+	compact_successful: "Successful",
+	compact_openTasks: "Tasks",
+	cultureScope: "Show cultures",
+	currentCultures: "All current cultures",
+	noCulturesMatch: "No cultures match this selection.",
+	historySuccessOnly: "Successful records only",
+	quickActivities: "Quick activity filter",
+	showOnly: "Show only:",
+	seedSaving: "Saving seed choices …",
+	seedSaveFailed: "Your choices have not been confirmed as saved. Retry or discard and reload.",
+	retrySeed: "Retry save",
 	neighbors: "Neighbors",
 	seeds: "Seeds & shopping",
 	goodNeighbors: "Good neighbors",
@@ -989,7 +1017,7 @@ var $e = {
 	freeNeighbor: "Free entry",
 	noNeighbors: "No neighbors assigned yet.",
 	neighborConflict: "Assign each neighbor to only one group and do not select the plant itself. For duplicate plant names, use catalog selection.",
-	seedIntro: "Shared seed planning for your plant catalog. Select one state per plant and save changes together. Leaving this section also saves your choices.",
+	seedIntro: "Shared seed planning for your plant catalog. Select one state per plant. Choices save automatically; wait for saving to finish before closing.",
 	seed_available: "Available",
 	seed_buy: "Buy",
 	seed_unneeded: "Not needed",
@@ -4161,6 +4189,150 @@ var Vn = M`
       width: 100%;
     }
   }
+  .ha-navigation {
+    z-index: 3;
+  }
+  aside {
+    top: var(--gp-header-height, 56px);
+  }
+  .stats {
+    position: sticky;
+    top: var(--gp-sticky-top, 56px);
+    z-index: 1;
+    padding: 10px 0;
+    background: var(--gp-bg);
+  }
+  button.stat {
+    min-width: 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .stat .stat-label-short {
+    display: none;
+  }
+  .upcoming-panel {
+    scroll-margin-top: calc(
+      var(--gp-sticky-top, 56px) + var(--gp-summary-height, 0px) + 12px
+    );
+  }
+  .upcoming-panel:focus-visible {
+    outline: 3px solid var(--gp-green);
+    outline-offset: 3px;
+  }
+  .legend {
+    gap: 6px;
+  }
+  .legend button {
+    min-height: 40px;
+    font-size: 12px;
+    padding: 6px 9px;
+    background: transparent;
+    border-color: transparent;
+  }
+  .legend button[aria-pressed="true"] {
+    background: var(--gp-soft);
+    border-color: var(--bar-color);
+    box-shadow: inset 0 0 0 1px var(--bar-color);
+  }
+  .seed-save-status {
+    min-height: 24px;
+    font-size: 12px;
+    color: var(--gp-muted);
+  }
+  .history-success-filter {
+    margin-bottom: 16px;
+  }
+  @media (max-width: 760px) {
+    aside {
+      z-index: 2;
+    }
+    .overview-page {
+      padding-top: 16px;
+    }
+    .overview-page .topbar {
+      display: flex;
+      flex-wrap: nowrap;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    .overview-page .topbar > div {
+      min-width: 0;
+    }
+    .overview-page .topbar .eyebrow,
+    .overview-page .topbar p,
+    .overview-page .topbar-action-label {
+      display: none;
+    }
+    .overview-page .topbar h1 {
+      font-size: 25px;
+    }
+    .overview-page .topbar .actions {
+      width: auto;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    .overview-page .topbar .actions .primary {
+      width: 44px;
+      padding: 8px;
+      flex: none;
+    }
+    .overview-page .hero {
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .overview-page .hero .eyebrow {
+      display: none;
+    }
+    .overview-page .hero h2 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .overview-page .hero p {
+      font-size: 12px;
+      line-height: 1.4;
+      margin: 4px 0;
+    }
+    .overview-page .stats {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 5px;
+      margin: 12px 0;
+      padding: 8px 0;
+    }
+    .overview-page .stat:last-child {
+      grid-column: auto;
+    }
+    .overview-page button.stat {
+      padding: 6px 4px;
+      border-radius: 9px;
+      align-items: center;
+      text-align: center;
+      min-height: 64px;
+      justify-content: center;
+    }
+    .overview-page .stat strong {
+      font-size: 19px;
+      line-height: 1.2;
+    }
+    .overview-page .stat span {
+      font-size: 10px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+    .overview-page .stat .stat-label-full {
+      display: none;
+    }
+    .overview-page .stat .stat-label-short {
+      display: block;
+    }
+    .legend button {
+      min-height: 44px;
+    }
+  }
 `, Hn = [
 	"overview",
 	"calendar",
@@ -4213,7 +4385,7 @@ function Wn() {
 }
 var Gn = class extends Ze {
 	constructor(...e) {
-		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Wn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Wn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -4237,9 +4409,9 @@ var Gn = class extends Ze {
 				e.open = !1;
 			}), n?.querySelector("summary")?.focus(), e.preventDefault();
 		}, this.flushHiddenReminders = () => {
-			document.visibilityState === "hidden" && this.flushReminderChanges();
+			document.visibilityState === "hidden" && (this.flushReminderChanges(), this.saveSeedInventory());
 		}, this.confirmPendingReminders = (e) => {
-			(this.reminderSaving || this.seedDraft.size) && (e.preventDefault(), e.returnValue = "");
+			(this.reminderSaving || this.seedDraft.size || this.seedSaving) && (e.preventDefault(), e.returnValue = "");
 		}, this.positionSensorOptions = () => {
 			if (!this.sensorOpen) return;
 			let e = this.renderRoot.querySelector("#field-sensor_entity_id");
@@ -4251,6 +4423,13 @@ var Gn = class extends Ze {
 			}
 			let o = Math.max(0, t.top - i - 4), s = Math.max(0, a - t.bottom - 4);
 			this.sensorAbove = s < 240 && o > s, this.sensorMaxHeight = Math.floor(Math.min(240, this.sensorAbove ? o : s));
+		}, this.measureOverviewLayout = () => {
+			let e = this.renderRoot.querySelector(".ha-navigation"), t = this.renderRoot.querySelector("aside"), n = this.renderRoot.querySelector(".stats"), r = e?.getBoundingClientRect().height ?? 56, i = r + (window.matchMedia("(max-width: 760px)").matches ? t?.getBoundingClientRect().height ?? 0 : 0), a = {
+				"--gp-header-height": `${r}px`,
+				"--gp-sticky-top": `${i}px`,
+				"--gp-summary-height": `${n?.getBoundingClientRect().height ?? 0}px`
+			};
+			for (let [e, t] of Object.entries(a)) this.style.getPropertyValue(e) !== t && this.style.setProperty(e, t);
 		};
 	}
 	static {
@@ -4295,6 +4474,11 @@ var Gn = class extends Ze {
 			neighborEditor: { state: !0 },
 			neighborQuery: { state: !0 },
 			seedDraft: { state: !0 },
+			seedSaving: { state: !0 },
+			seedFailed: { state: !0 },
+			seedFlight: { state: !0 },
+			cultureScope: { state: !0 },
+			historySuccessOnly: { state: !0 },
 			seedQuery: { state: !0 },
 			seedFilter: { state: !0 },
 			reviewed: { state: !0 },
@@ -4342,13 +4526,13 @@ var Gn = class extends Ze {
 		super.connectedCallback(), document.addEventListener("pointerdown", this.dismissCalendarFilters, !0), document.addEventListener("keydown", this.closeCalendarFilters, !0), document.addEventListener("visibilitychange", this.flushHiddenReminders), window.addEventListener("beforeunload", this.confirmPendingReminders), this.addEventListener("click", this.rememberTrigger, !0), this.renderRoot.addEventListener("close", this.restoreDialogFocus, !0), this.renderRoot.addEventListener("scroll", this.positionSensorOptions, !0), window.addEventListener("resize", this.positionSensorOptions), window.visualViewport?.addEventListener("resize", this.positionSensorOptions), window.visualViewport?.addEventListener("scroll", this.positionSensorOptions), this.hass && this.bind();
 	}
 	disconnectedCallback() {
-		this.flushReminderChanges(), super.disconnectedCallback(), document.removeEventListener("pointerdown", this.dismissCalendarFilters, !0), document.removeEventListener("keydown", this.closeCalendarFilters, !0), document.removeEventListener("visibilitychange", this.flushHiddenReminders), window.removeEventListener("beforeunload", this.confirmPendingReminders), this.removeEventListener("click", this.rememberTrigger, !0), this.renderRoot.removeEventListener("scroll", this.positionSensorOptions, !0), window.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("scroll", this.positionSensorOptions), this.renderRoot.removeEventListener("close", this.restoreDialogFocus, !0), this.connectionGeneration++, this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = void 0, this.toastTimer && clearTimeout(this.toastTimer);
+		this.flushReminderChanges(), this.saveSeedInventory(), this.layoutObserver?.disconnect(), this.layoutObserver = void 0, this.layoutNodes.clear(), super.disconnectedCallback(), document.removeEventListener("pointerdown", this.dismissCalendarFilters, !0), document.removeEventListener("keydown", this.closeCalendarFilters, !0), document.removeEventListener("visibilitychange", this.flushHiddenReminders), window.removeEventListener("beforeunload", this.confirmPendingReminders), this.removeEventListener("click", this.rememberTrigger, !0), this.renderRoot.removeEventListener("scroll", this.positionSensorOptions, !0), window.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("scroll", this.positionSensorOptions), this.renderRoot.removeEventListener("close", this.restoreDialogFocus, !0), this.connectionGeneration++, this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = void 0, this.toastTimer && clearTimeout(this.toastTimer);
 	}
 	willUpdate(e) {
 		e.has("hass") && this.isConnected && (this.hass?.connection !== this.boundConnection || this.hass?.user?.id !== this.boundUser) && this.bind();
 	}
 	updated() {
-		this.setAttribute("lang", this.language), this.hass?.themes && this.toggleAttribute("dark", this.hass.themes.darkMode), this.syncDialog("detail-dialog", this.selected !== null), this.syncDialog("editor-dialog", this.editor !== null), this.syncDialog("delete-dialog", this.deleting !== null), this.syncDialog("complete-task-dialog", this.completing !== null), this.syncDialog("neighbors-dialog", this.neighborEditor !== null), this.syncDialog("review-dialog", this.reviewed !== null);
+		this.observeOverviewLayout(), this.setAttribute("lang", this.language), this.hass?.themes && this.toggleAttribute("dark", this.hass.themes.darkMode), this.syncDialog("detail-dialog", this.selected !== null), this.syncDialog("editor-dialog", this.editor !== null), this.syncDialog("delete-dialog", this.deleting !== null), this.syncDialog("complete-task-dialog", this.completing !== null), this.syncDialog("neighbors-dialog", this.neighborEditor !== null), this.syncDialog("review-dialog", this.reviewed !== null);
 	}
 	syncDialog(e, t) {
 		let n = this.renderRoot.querySelector(`#${e}`);
@@ -4359,9 +4543,9 @@ var Gn = class extends Ze {
 		!t && n?.open && n.close();
 	}
 	async bind() {
-		this.flushReminderChanges();
+		this.flushReminderChanges(), this.saveSeedInventory();
 		let e = ++this.connectionGeneration;
-		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new _t(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
+		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new _t(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
 			this.anchor ||= this.today, this.boundConnection.addEventListener?.("ready", this.reconnect);
 			try {
 				let t = await this.api.subscribe(() => {
@@ -4384,9 +4568,9 @@ var Gn = class extends Ze {
 		try {
 			let [t, n] = await Promise.all([this.api.load(), this.api.command("capabilities")]);
 			if (e !== this.loadGeneration || !this.isConnected) return;
-			this.tables = t, this.capabilities = n, n.can_edit || (this.neighborEditor = null, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions.clear(), this.completing && !this.completing.data.personal_generated && (this.completing = null)), this.loaded = !0, this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
+			this.tables = t, this.capabilities = n, n.can_edit || (this.neighborEditor = null, this.resetSeeds(), this.completing && !this.completing.data.personal_generated && (this.completing = null)), this.loaded = !0, this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
 		} catch (t) {
-			e === this.loadGeneration && (this.error = U(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.completing = null, this.neighborEditor = null, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions.clear(), this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
+			e === this.loadGeneration && (this.error = U(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.completing = null, this.neighborEditor = null, this.resetSeeds(), this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
 		}
 	}
 	announce(e) {
@@ -4410,12 +4594,12 @@ var Gn = class extends Ze {
 	}
 	async navigate(e) {
 		let t = ++this.navigationGeneration, n = this.connectionGeneration;
-		if (this.page !== "seeds" || e === "seeds" || !this.seedDraft.size || await this.saveSeedInventory() && n === this.connectionGeneration && t === this.navigationGeneration && this.isConnected) {
+		if (this.page !== "seeds" || e === "seeds" || !this.seedDraft.size && !this.seedSaving || await this.saveSeedInventory() && n === this.connectionGeneration && t === this.navigationGeneration && this.isConnected) {
 			if (this.page === "reminders" && e !== "reminders") do
 				if (!await this.flushReminderChanges() || n !== this.connectionGeneration || t !== this.navigationGeneration || !this.isConnected || this.reminderTasksDirty && !await this.refreshReminderTasks()) return;
 			while (this.reminderPending.size || this.reminderSaving || this.reminderTasksDirty);
 			else if (this.page === "reminders" && e === "reminders") return;
-			n === this.connectionGeneration && t === this.navigationGeneration && (this.page = e, this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings()));
+			n === this.connectionGeneration && t === this.navigationGeneration && (this.page = e, e === "cultures" && (this.cultureScope = "current"), e === "history" && (this.historySuccessOnly = !1), this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings()));
 		}
 	}
 	plantName(e) {
@@ -4857,6 +5041,24 @@ var Gn = class extends Ze {
       </div>
     </article>`;
 	}
+	observeOverviewLayout() {
+		if (!this.isConnected) return;
+		this.layoutObserver ??= new ResizeObserver(this.measureOverviewLayout);
+		let e = new Set(this.renderRoot.querySelectorAll(".ha-navigation, aside, .stats"));
+		for (let t of this.layoutNodes) e.has(t) || this.layoutObserver.unobserve(t);
+		for (let t of e) this.layoutNodes.has(t) || this.layoutObserver.observe(t);
+		this.layoutNodes = e, this.measureOverviewLayout();
+	}
+	async activateOverviewStat(e) {
+		let t = this.connectionGeneration;
+		if (e === "openTasks") {
+			let e = this.renderRoot.querySelector("#upcoming-work"), t = e?.getBoundingClientRect(), n = this.renderRoot.querySelector(".stats")?.getBoundingClientRect();
+			!window.matchMedia("(max-width: 1100px)").matches && t && n && t.top >= n.bottom && t.top < window.innerHeight - 60 || e?.scrollIntoView({
+				block: "start",
+				behavior: "auto"
+			}), e?.focus({ preventScroll: !0 });
+		} else e === "managedPlants" ? (this.query = "", this.category = "", this.method = "", this.showArchived = !1, await this.navigate("plants")) : e === "successful" ? (await this.navigate("history"), t === this.connectionGeneration && this.page === "history" && (this.historyPlant = "", this.historyYear = "", this.historySuccessOnly = !0)) : (await this.navigate("cultures"), t === this.connectionGeneration && this.page === "cultures" && (this.cultureScope = e));
+	}
 	renderOverview() {
 		let e = this.tables.growing_windows.filter((e) => this.plantList.some((n) => n.id === t(e, "plant_id")) && f(e, Number(this.today.slice(0, 4)), Number(this.today.slice(5, 7)))).sort((e, t) => this.compareWindows(e, t)), n = this.tables.cultivations, r = [
 			["managedPlants", this.plantList.length],
@@ -4883,7 +5085,7 @@ var Gn = class extends Ze {
         </div>
       </section>
       <div class="stats">
-        ${r.map(([e, t]) => B`<div class="stat"><strong>${t}</strong><span>${this.tr(e)}</span></div>`)}
+        ${r.map(([e, t]) => B`<button type="button" class="stat" aria-label=${`${t} ${this.tr(e)}`} aria-controls=${e === "openTasks" ? "upcoming-work" : H} title=${this.tr(e)} @click=${() => this.activateOverviewStat(e)}><strong>${t}</strong><span class="stat-label-full">${this.tr(e)}</span><span class="stat-label-short" aria-hidden="true">${this.tr("compact_" + e)}</span></button>`)}
       </div>
       ${this.tables.plants.length ? H : B`<section class="panel">${this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}</section>`}
       <div class="columns">
@@ -4919,9 +5121,14 @@ var Gn = class extends Ze {
                       </div>
                     </div>`) : B`<p class="empty">${this.tr("noWindows")}</p>`}
         </section>
-        <section class="panel">
+        <section
+          class="panel upcoming-panel"
+          id="upcoming-work"
+          tabindex="-1"
+          aria-labelledby="upcoming-title"
+        >
           <div class="section-head">
-            <h2>${this.tr("upcoming")}</h2>
+            <h2 id="upcoming-title">${this.tr("upcoming")}</h2>
             ${this.editable ? B`<button class="icon" aria-label=${this.tr("newTask")} @click=${() => this.startEditor("tasks")}>${$("plus")}</button>` : H}
           </div>
           ${this.renderTasks(!1)}
@@ -5132,41 +5339,65 @@ var Gn = class extends Ze {
       </form>
     </dialog>`;
 	}
-	changeSeed(e, n) {
-		if (!this.editable || this.busy) return;
-		let r = new Map(this.seedDraft);
-		n === (t(e, "seed_state") || "unplanned") ? (r.delete(e.id), this.seedRevisions.delete(e.id)) : (r.set(e.id, n), this.seedRevisions.has(e.id) || this.seedRevisions.set(e.id, e.revision)), this.seedDraft = r;
+	resetSeeds() {
+		this.seedTimer && clearTimeout(this.seedTimer), this.seedTimer = void 0, this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedFlight = /* @__PURE__ */ new Map(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlush = void 0;
 	}
-	async saveSeedInventory() {
-		if (!this.api || this.busy || !this.editable) return !1;
-		let e = this.api, t = this.connectionGeneration, n = [...this.seedDraft].map(([e, t]) => ({
-			id: e,
-			state: t,
-			revision: this.seedRevisions.get(e)
-		}));
-		this.busy = !0, this.error = "";
-		try {
-			for (let r = 0; r < n.length; r += 500) {
-				if (t !== this.connectionGeneration) return !1;
-				let i = n.slice(r, r + 500), a = await e.command("set_seed_inventory", { changes: i });
-				if (t !== this.connectionGeneration) return !1;
-				this.loadGeneration++;
-				let o = new Map(a.map((e) => [e.id, e]));
-				this.tables = {
-					...this.tables,
-					plants: this.tables.plants.map((e) => o.get(e.id) ?? e)
-				};
-				let s = new Map(this.seedDraft);
-				i.forEach((e) => {
-					s.delete(e.id), this.seedRevisions.delete(e.id);
-				}), this.seedDraft = s;
+	seedState(e) {
+		return this.seedDraft.get(e.id) ?? this.seedFlight.get(e.id)?.state ?? (t(e, "seed_state") || "unplanned");
+	}
+	changeSeed(e, n) {
+		this.editable && !this.busy && (n === (t(e, "seed_state") || "unplanned") && !this.seedFlight.has(e.id) ? (this.seedDraft.delete(e.id), this.seedRevisions.delete(e.id)) : (this.seedDraft.set(e.id, n), this.seedRevisions.has(e.id) || this.seedRevisions.set(e.id, e.revision)), this.seedFailed = !1, this.error = "", this.seedSaving = !!(this.seedDraft.size || this.seedFlight.size), this.requestUpdate(), this.seedTimer && clearTimeout(this.seedTimer), !this.seedFlush && this.seedDraft.size && (this.seedTimer = setTimeout(() => {
+			this.saveSeedInventory();
+		}, 80)));
+	}
+	saveSeedInventory(e = !1) {
+		if (this.seedTimer && clearTimeout(this.seedTimer), this.seedTimer = void 0, this.seedFlush) return this.seedFlush;
+		if (this.seedFailed && !e) return Promise.resolve(!1);
+		if (!this.seedDraft.size) return Promise.resolve(!0);
+		if (!this.api || !this.editable || this.busy) return Promise.resolve(!1);
+		let t = this.api, n = this.connectionGeneration, r = this.seedDraft, i = this.seedRevisions, a = new Map(this.tables.plants.map((e) => [e.id, e])), o = () => n === this.connectionGeneration && r === this.seedDraft;
+		this.seedSaving = !0, this.seedFailed = !1, this.error = "";
+		let s = (async () => {
+			try {
+				for (; r.size;) {
+					if (!o()) return !1;
+					let e = [...r].slice(0, 500).map(([e, t]) => ({
+						id: e,
+						state: t,
+						revision: i.get(e) ?? a.get(e).revision
+					}));
+					for (let t of e) r.delete(t.id);
+					this.seedFlight = new Map(e.map((e) => [e.id, {
+						state: e.state,
+						revision: e.revision
+					}])), this.requestUpdate();
+					try {
+						let n = await t.command("set_seed_inventory", { changes: e });
+						if (!o()) return !1;
+						this.loadGeneration++;
+						let s = new Map(n.map((e) => [e.id, e]));
+						this.tables = {
+							...this.tables,
+							plants: this.tables.plants.map((e) => s.get(e.id) ?? e)
+						};
+						for (let e of n) a.set(e.id, e), r.has(e.id) ? i.set(e.id, e.revision) : i.delete(e.id);
+						this.seedFlight = /* @__PURE__ */ new Map();
+					} catch (t) {
+						if (o()) {
+							for (let t of e) r.has(t.id) || r.set(t.id, t.state);
+							this.seedFlight = /* @__PURE__ */ new Map(), this.seedFailed = !0, this.error = U(this.language, t);
+						}
+						return !1;
+					}
+				}
+				return o() && this.announce("saved"), !0;
+			} finally {
+				o() && (this.seedSaving = !1, this.requestUpdate());
 			}
-			return this.announce("saved"), !0;
-		} catch (e) {
-			return t === this.connectionGeneration && (this.error = U(this.language, e)), !1;
-		} finally {
-			t === this.connectionGeneration && (this.busy = !1);
-		}
+		})();
+		return this.seedFlush = s, s.then(() => {
+			this.seedFlush === s && (this.seedFlush = void 0);
+		}), s;
 	}
 	renderSeeds() {
 		let e = [
@@ -5174,7 +5405,7 @@ var Gn = class extends Ze {
 			"buy",
 			"unneeded",
 			"unplanned"
-		], n = this.plantList.filter((e) => t(e, "name").toLocaleLowerCase(this.language).includes(this.seedQuery.toLocaleLowerCase(this.language)) && (!this.seedFilter || (this.seedDraft.get(e.id) ?? (t(e, "seed_state") || "unplanned")) === this.seedFilter)).sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language));
+		], n = this.plantList.filter((e) => t(e, "name").toLocaleLowerCase(this.language).includes(this.seedQuery.toLocaleLowerCase(this.language)) && (!this.seedFilter || this.seedDraft.has(e.id) || this.seedFlight.has(e.id) || this.seedState(e) === this.seedFilter)).sort((e, n) => t(e, "name").localeCompare(t(n, "name"), this.language));
 		return B`<p>${this.tr("seedIntro")}</p>
       <div class="filters">
         <label
@@ -5199,25 +5430,24 @@ var Gn = class extends Ze {
       </div>
       <p class="muted">${this.tr("seedHint")}</p>
       ${this.editable ? B`<div class="toolbar seed-save">
-              <span role="status"
-                >${this.seedDraft.size ? `${this.tr("seedPending")}: ${this.seedDraft.size}` : ""}</span
-              >
-              <div class="actions">
-                <button
-                  ?disabled=${this.busy || !this.seedDraft.size}
-                  @click=${() => {
-			this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions.clear(), this.error = "", this.refresh();
+              <span role="status" class="seed-save-status"
+                >${this.seedSaving ? this.tr("seedSaving") : this.seedFailed ? this.tr("seedSaveFailed") : ""}</span
+              >${this.seedFailed ? B`<div class="actions">
+                      <button
+                        ?disabled=${this.seedSaving}
+                        @click=${() => {
+			this.resetSeeds(), this.error = "", this.refresh();
 		}}
-                >
-                  ${this.tr("discardSeed")}</button
-                ><button
-                  class="primary"
-                  ?disabled=${this.busy || !this.seedDraft.size}
-                  @click=${() => this.saveSeedInventory()}
-                >
-                  ${this.tr("saveSeed")}
-                </button>
-              </div>
+                      >
+                        ${this.tr("discardSeed")}</button
+                      ><button
+                        class="primary"
+                        ?disabled=${this.seedSaving || !this.seedDraft.size}
+                        @click=${() => this.saveSeedInventory(!0)}
+                      >
+                        ${this.tr("retrySeed")}
+                      </button>
+                    </div>` : H}
             </div>` : H}
       <div
         class="seed-scroll"
@@ -5241,7 +5471,7 @@ var Gn = class extends Ze {
                             type="radio"
                             name=${`seed-${n.id}`}
                             aria-label=${`${t(n, "name")}: ${this.tr("seed_" + e)}`}
-                            .checked=${mt((this.seedDraft.get(n.id) ?? (t(n, "seed_state") || "unplanned")) === e)}
+                            .checked=${mt(this.seedState(n) === e)}
                             ?disabled=${!this.editable || this.busy}
                             @change=${() => this.changeSeed(n, e)}
                         /></label>
@@ -5346,8 +5576,21 @@ var Gn = class extends Ze {
           </button>
         </div>
       </div>
-      <div class="legend">
-        ${Q.map((e) => B`<span class=${e}><span class="dot"></span>${this.lab(e)}</span>`)}
+      <div class="legend" role="group" aria-label=${this.tr("quickActivities")}>
+        ${Q.map((e) => {
+			let t = this.calendarActivities.length === 1 && this.calendarActivities[0] === e;
+			return B`<button
+            type="button"
+            class=${e}
+            aria-pressed=${t}
+            title=${t ? this.tr("allActivities") : `${this.tr("showOnly")} ${this.lab(e)}`}
+            @click=${() => {
+				this.calendarActivities = t ? [] : [e];
+			}}
+          >
+            <span class="dot"></span>${this.lab(e)}
+          </button>`;
+		})}
       </div>
       ${this.calendarMode === "year" ? B`<p class="muted">${this.tr("yearlyHint")}</p>
               <div
@@ -5524,8 +5767,27 @@ var Gn = class extends Ze {
       </div>`;
 	}
 	renderCultures() {
-		let e = this.tables.cultivations.filter((e) => !["completed", "failed"].includes(this.status(e)));
-		return B`${e.length ? B`<div class="grid">
+		let e = this.tables.cultivations.filter((e) => this.cultureScope === "planned" ? this.status(e) === "planned" : this.cultureScope === "active" ? ![
+			"planned",
+			"completed",
+			"failed"
+		].includes(this.status(e)) : !["completed", "failed"].includes(this.status(e)));
+		return B`<div class="filters culture-scope">
+        <label
+          >${this.tr("cultureScope")}<select
+            aria-label=${this.tr("cultureScope")}
+            .value=${this.cultureScope}
+            @change=${(e) => {
+			this.cultureScope = e.target.value;
+		}}
+          >
+            <option value="current">${this.tr("currentCultures")}</option>
+            <option value="planned">${this.tr("planned")}</option>
+            <option value="active">${this.tr("active")}</option>
+          </select></label
+        >
+      </div>
+      ${e.length ? B`<div class="grid">
               ${e.map((e) => B`<article class="plant">
                     <div class="plant-title">
                       <span class="plant-symbol">${$("cultures")}</span>
@@ -5556,7 +5818,7 @@ var Gn = class extends Ze {
                       >${this.editable ? B`<button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(e)}`} @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: e.id })}>${$("plus")}</button>` : H}
                     </div>
                   </article>`)}
-            </div>` : this.empty("emptyCultures")}
+            </div>` : this.empty(this.cultureScope === "current" ? "emptyCultures" : "noCulturesMatch")}
       <section class="panel" style="margin-top:24px">
         <div class="section-head">
           <h2>${this.tr("allTasks")}</h2>
@@ -5566,8 +5828,17 @@ var Gn = class extends Ze {
       </section>`;
 	}
 	renderHistory(e = this.tables.cultivations, n = !1) {
-		let r = [...new Set(e.map((e) => (x(e, this.tables.cultivation_events) || t(e, "date")).slice(0, 4)))].sort().reverse(), i = e.filter((e) => (n || !this.historyPlant || t(e, "plant_id") === this.historyPlant) && (n || !this.historyYear || (x(e, this.tables.cultivation_events) || t(e, "date")).startsWith(this.historyYear))).sort((e, n) => (x(n, this.tables.cultivation_events) || t(n, "date")).localeCompare(x(e, this.tables.cultivation_events) || t(e, "date")));
+		let r = [...new Set(e.map((e) => (x(e, this.tables.cultivation_events) || t(e, "date")).slice(0, 4)))].sort().reverse(), i = e.filter((e) => (n || !this.historySuccessOnly || t(e, "result") === "successful") && (n || !this.historyPlant || t(e, "plant_id") === this.historyPlant) && (n || !this.historyYear || (x(e, this.tables.cultivation_events) || t(e, "date")).startsWith(this.historyYear))).sort((e, n) => (x(n, this.tables.cultivation_events) || t(n, "date")).localeCompare(x(e, this.tables.cultivation_events) || t(e, "date")));
 		return B`${n ? H : B`<p class="notice">${this.tr("observationHint")}</p>
+            <label class="check history-success-filter"
+              ><input
+                type="checkbox"
+                .checked=${this.historySuccessOnly}
+                @change=${(e) => {
+			this.historySuccessOnly = e.target.checked;
+		}}
+              />${this.tr("historySuccessOnly")}</label
+            >
             <div class="filters">
               <label
                 >${this.tr("plant_id")}<select
@@ -6724,7 +6995,7 @@ var Gn = class extends Ze {
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
-        <main>
+        <main class=${this.page === "overview" ? "overview-page" : ""}>
           <header class="topbar">
             <div>
               <div class="eyebrow">Garden Planner</div>
@@ -6746,7 +7017,7 @@ var Gn = class extends Ze {
 			"reminders",
 			"neighbors",
 			"seeds"
-		].includes(this.page) ? B`<button class="primary" ?disabled=${this.busy || !this.loaded || e[1] === "cultivations" && !this.plantList.length} @click=${() => this.startEditor(e[1])}>${$("plus")}${this.tr(e[0])}</button>` : H}
+		].includes(this.page) ? B`<button class="primary" aria-label=${this.tr(e[0])} ?disabled=${this.busy || !this.loaded || e[1] === "cultivations" && !this.plantList.length} @click=${() => this.startEditor(e[1])}>${$("plus")}<span class="topbar-action-label">${this.tr(e[0])}</span></button>` : H}
             </div>
           </header>
           ${this.error ? B`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : H}
