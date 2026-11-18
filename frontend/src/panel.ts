@@ -786,8 +786,11 @@ export class GardenPlannerPanel extends LitElement {
     return cultureStatus(culture, this.tables.cultivation_events);
   }
   private startEditor(table: Table, record?: Entity, seed: Data = {}): void {
-    if (table === "cultivations" && record?.image_present) {
-      void this.editJournal(record, "cultivations");
+    if (
+      (table === "cultivations" || table === "cultivation_events") &&
+      record?.image_present
+    ) {
+      void this.editJournal(record, table);
       return;
     }
     this.imageGeneration++;
@@ -1166,7 +1169,10 @@ export class GardenPlannerPanel extends LitElement {
   private plantImage(
     record: Entity,
     className = "plant-photo",
-    table: "cultivations" | "cultivation_journal" = "cultivations",
+    table:
+      | "cultivations"
+      | "cultivation_journal"
+      | "cultivation_events" = "cultivations",
   ): TemplateResult {
     if (record.image_present)
       return html`<garden-journal-photo
@@ -1192,9 +1198,13 @@ export class GardenPlannerPanel extends LitElement {
     const editor = this.editor;
     if (
       !editor ||
-      !["plants", "varieties", "cultivation_journal", "cultivations"].includes(
-        editor.table,
-      )
+      ![
+        "plants",
+        "varieties",
+        "cultivation_journal",
+        "cultivations",
+        "cultivation_events",
+      ].includes(editor.table)
     )
       return nothing;
     return html`<section class="image-editor">
@@ -1207,7 +1217,7 @@ export class GardenPlannerPanel extends LitElement {
             ?disabled=${this.busy || this.imageLoading}
             @change=${this.uploadImage}
         /></label>
-        ${editor.table === "cultivation_journal" ? html`<label class="camera-input">${this.tr("takePhoto")}<input class="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ?disabled=${this.busy || this.imageLoading} @change=${this.uploadImage} /></label>` : nothing}
+        ${["cultivation_journal", "cultivation_events"].includes(editor.table) ? html`<label class="camera-input">${this.tr("takePhoto")}<input class="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ?disabled=${this.busy || this.imageLoading} @change=${this.uploadImage} /></label>` : nothing}
         <small class="muted">${this.tr("imageHint")}</small>
         ${this.imageLoading ? html`<p role="status">${this.tr("imageProcessing")}</p>` : nothing}
         ${editor.draft.image_data ? html`<button type="button" ?disabled=${this.busy || this.imageLoading} @click=${() => this.changeField("image_data", null)}>${this.tr("removeImage")}</button>` : nothing}
@@ -2432,7 +2442,10 @@ export class GardenPlannerPanel extends LitElement {
   }
   private async editJournal(
     entry: Entity,
-    table: "cultivations" | "cultivation_journal" = "cultivation_journal",
+    table:
+      | "cultivations"
+      | "cultivation_journal"
+      | "cultivation_events" = "cultivation_journal",
   ): Promise<void> {
     if (!this.api || !this.editable || this.busy) return;
     const api = this.api,
@@ -4432,6 +4445,7 @@ export class GardenPlannerPanel extends LitElement {
                 }
               </div>
               <p>${text(event, "notes") || this.tr("noNotes")}</p>
+              ${event.image_present || text(event, "image_data") ? html`<garden-journal-photo class="journal-photo" .table=${"cultivation_events"} .api=${this.api} .record=${event} .language=${this.language}></garden-journal-photo>` : nothing}
             </article>`,
         )}
       </div>

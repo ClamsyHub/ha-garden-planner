@@ -166,3 +166,5 @@ Use **Postpone** to change an open shared or personal task's due date. Personal 
 Shared tasks support a daily interval and optional end date. Confirming completion creates exactly one successor from the previous due date. Overdue occurrences are not skipped; undoing/repeating completion does not create duplicates. Postponing beyond the series end stops recurrence.
 
 Administrators may select an existing HA weather entity, forecast horizon and frost threshold. Overview/garden-mode hints consider only active cultivations explicitly marked outdoors and frost-sensitive. Planned, completed and failed cultivations are excluded. Forecasts are cached for 15 minutes; missing/stale data means unknown, not frost-free. Weather hints do not send additional automatic messages. The selected HA weather provider may itself use an external service.
+
+Upload or capture an optional photo directly from **Current cultivations → Add event**. Each event retains its own photo in the timeline. Editing preserves it unless replaced or removed; cultivation covers and journal entries remain independent.

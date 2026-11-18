@@ -430,9 +430,13 @@ export function formData(
   if (table === "cultivation_events" && !original)
     result.cultivation_id = draft.cultivation_id;
   if (
-    ["plants", "varieties", "cultivation_journal", "cultivations"].includes(
-      table,
-    ) &&
+    [
+      "plants",
+      "varieties",
+      "cultivation_journal",
+      "cultivations",
+      "cultivation_events",
+    ].includes(table) &&
     draft.image_data !== undefined
   )
     result.image_data = draft.image_data || null;

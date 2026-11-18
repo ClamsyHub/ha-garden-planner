@@ -142,7 +142,9 @@ class WeatherHints:
         cultures = await self.worker.async_call(
             "list_records", "cultivations", include_images=False
         )
-        events = await self.worker.async_call("list_records", "cultivation_events")
+        events = await self.worker.async_call(
+            "list_records", "cultivation_events", include_images=False
+        )
         exposed = exposed_cultures(cultures, events, dt_util.now().date().isoformat())
         return {
             "status": "ready",

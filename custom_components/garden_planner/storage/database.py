@@ -223,7 +223,10 @@ class Database:
                 arguments.append(value)
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         columns = "*"
-        if table in {"cultivation_journal", "cultivations"} and not include_images:
+        if (
+            table in {"cultivation_journal", "cultivations", "cultivation_events"}
+            and not include_images
+        ):
             columns = (
                 "id, revision, created_at, updated_at, "
                 "json_remove(data, '$.image_data') AS data, "
@@ -546,7 +549,7 @@ class Database:
                 table == "cultivation_events"
                 and record["data"].get("origin") == "initial"
             ):
-                if set(patch) - {"notes"}:
+                if set(patch) - {"notes", "image_data"}:
                     raise ValidationError(
                         "Edit initial date/status through its cultivation."
                     )
@@ -663,9 +666,13 @@ class Database:
             self._touch()
         return result
 
-    def _histories(self, cultures: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _histories(
+        self, cultures: list[dict[str, Any]], *, include_images: bool = True
+    ) -> list[dict[str, Any]]:
         grouped: dict[str, list[dict[str, Any]]] = {}
-        for event in self.list_records("cultivation_events"):
+        for event in self.list_records(
+            "cultivation_events", include_images=include_images
+        ):
             grouped.setdefault(event["data"]["cultivation_id"], []).append(event)
         result = []
         for record in cultures:
@@ -700,7 +707,8 @@ class Database:
     def summary(self) -> dict[str, int]:
         """Aggregate explicit state; success is independent of lifecycle completion."""
         cultures = self._histories(
-            self.list_records("cultivations", include_images=False)
+            self.list_records("cultivations", include_images=False),
+            include_images=False,
         )
         return {
             "plants": sum(

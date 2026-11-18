@@ -36,6 +36,86 @@ def png(
 
 
 class ImageTests(unittest.TestCase):
+    def test_event_photos_persist_exchange_and_do_not_mutate_initial_status(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            db = Database(Path(directory))
+            db.open()
+            try:
+                plant = db.create("plants", {"name": "Event photo"})
+                culture = db.create(
+                    "cultivations",
+                    {"plant_id": plant["id"], "date": "2026-04-01", "method": "direct"},
+                )
+                initial = db.list_records("cultivation_events")[0]
+                initial = db.update(
+                    "cultivation_events",
+                    initial["id"],
+                    {"image_data": png()},
+                    initial["revision"],
+                )
+                with self.assertRaises(ValidationError):
+                    db.update(
+                        "cultivation_events",
+                        initial["id"],
+                        {"status": "completed"},
+                        initial["revision"],
+                    )
+                event = db.create(
+                    "cultivation_events",
+                    {
+                        "cultivation_id": culture["id"],
+                        "date": "2026-04-15",
+                        "status": "germinated",
+                        "notes": "Photo event",
+                        "image_data": png(metadata=True),
+                    },
+                )
+                listed = db.list_records("cultivation_events", include_images=False)
+                self.assertTrue(all(r["image_present"] for r in listed))
+                self.assertTrue(all("image_data" not in r["data"] for r in listed))
+                event = db.update(
+                    "cultivation_events",
+                    event["id"],
+                    {"notes": "Edited notes"},
+                    event["revision"],
+                )
+                self.assertEqual(event["data"]["image_data"], png())
+                data = db.export_data()
+                self.assertEqual(import_csv(export_csv(data))["tables"], data["tables"])
+                # A pre-feature CSV omits the optional image column.
+                import csv
+                import io
+
+                files = export_csv(data)
+                rows = list(csv.reader(io.StringIO(files["cultivation_events.csv"])))
+                index = rows[0].index("image_data")
+                output = io.StringIO(newline="")
+                csv.writer(output).writerows(
+                    [row[:index] + row[index + 1 :] for row in rows]
+                )
+                files["cultivation_events.csv"] = output.getvalue()
+                self.assertTrue(import_csv(files)["tables"]["cultivation_events"])
+                db.close()
+                db.open()
+                self.assertEqual(
+                    db.get("cultivation_events", event["id"])["data"]["image_data"],
+                    png(),
+                )
+                event = db.update(
+                    "cultivation_events",
+                    event["id"],
+                    {"image_data": None},
+                    event["revision"],
+                )
+                self.assertIsNone(event["data"]["image_data"])
+                self.assertNotIn(
+                    "image_data", db.get("cultivations", culture["id"])["data"]
+                )
+            finally:
+                db.close()
+
     def test_preview_strips_metadata_and_is_idempotent(self) -> None:
         clean = validate_image(png(metadata=True))
         self.assertEqual(clean, png())

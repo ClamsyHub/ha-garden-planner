@@ -2,6 +2,8 @@
 
 ## 0.1.12 — 2026-11-18
 
+- Support local photos on cultivation events, including camera capture, lazy timeline display and lossless export.
+
 - Upload cultivation cover photos from normal editing and show compact cultivation cards. Expand seed lots directly below the selected plant.
 - Postpone shared and personal tasks; create exactly one follow-up for completed recurring shared tasks within the optional end date.
 - Add optional forecast hints for explicitly frost-sensitive outdoor cultivations using an existing HA weather entity.

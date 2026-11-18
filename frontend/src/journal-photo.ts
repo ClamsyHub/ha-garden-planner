@@ -14,7 +14,7 @@ export class JournalPhoto extends LitElement {
     failed: { state: true },
     loading: { state: true },
   };
-  declare table: "cultivations" | "cultivation_journal";
+  declare table: "cultivations" | "cultivation_journal" | "cultivation_events";
   declare api?: PlannerApi;
   declare record?: Entity;
   declare language: Language;

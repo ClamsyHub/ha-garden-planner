@@ -2397,7 +2397,8 @@ function Pt(e, t, n, r) {
 		"plants",
 		"varieties",
 		"cultivation_journal",
-		"cultivations"
+		"cultivations",
+		"cultivation_events"
 	].includes(e) && t.image_data !== void 0 && (i.image_data = t.image_data || null);
 	let a = {
 		...r?.data,
@@ -5867,7 +5868,7 @@ var Jn = class extends Ze {
 		return b(e, this.tables.cultivation_events);
 	}
 	startEditor(e, t, n = {}) {
-		if (e === "cultivations" && t?.image_present) this.editJournal(t, "cultivations");
+		if ((e === "cultivations" || e === "cultivation_events") && t?.image_present) this.editJournal(t, e);
 		else if (this.imageGeneration++, this.imageLoading = !1, this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
 			table: e,
 			record: t,
@@ -6112,7 +6113,8 @@ var Jn = class extends Ze {
 			"plants",
 			"varieties",
 			"cultivation_journal",
-			"cultivations"
+			"cultivations",
+			"cultivation_events"
 		].includes(e.table) ? H : B`<section class="image-editor">
       ${typeof e.draft.image_data == "string" && e.draft.image_data ? B`<img class="plant-photo" src=${e.draft.image_data} alt=${this.tr("imagePreview")} />` : H}
       <div>
@@ -6123,7 +6125,7 @@ var Jn = class extends Ze {
             ?disabled=${this.busy || this.imageLoading}
             @change=${this.uploadImage}
         /></label>
-        ${e.table === "cultivation_journal" ? B`<label class="camera-input">${this.tr("takePhoto")}<input class="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ?disabled=${this.busy || this.imageLoading} @change=${this.uploadImage} /></label>` : H}
+        ${["cultivation_journal", "cultivation_events"].includes(e.table) ? B`<label class="camera-input">${this.tr("takePhoto")}<input class="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ?disabled=${this.busy || this.imageLoading} @change=${this.uploadImage} /></label>` : H}
         <small class="muted">${this.tr("imageHint")}</small>
         ${this.imageLoading ? B`<p role="status">${this.tr("imageProcessing")}</p>` : H}
         ${e.draft.image_data ? B`<button type="button" ?disabled=${this.busy || this.imageLoading} @click=${() => this.changeField("image_data", null)}>${this.tr("removeImage")}</button>` : H}
@@ -8454,6 +8456,7 @@ var Jn = class extends Ze {
                       </div>` : H}
               </div>
               <p>${t(e, "notes") || this.tr("noNotes")}</p>
+              ${e.image_present || t(e, "image_data") ? B`<garden-journal-photo class="journal-photo" .table=${"cultivation_events"} .api=${this.api} .record=${e} .language=${this.language}></garden-journal-photo>` : H}
             </article>`)}
       </div>
       <details>

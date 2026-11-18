@@ -89,7 +89,7 @@ def import_csv(files: Any) -> dict[str, Any]:
                 if table == "plants"
                 else (
                     {"image_data"}
-                    if table == "varieties"
+                    if table in {"varieties", "cultivation_events"}
                     else {"plant_count", "image_data", "outdoors", "frost_sensitive"}
                     if table == "cultivations"
                     else {"repeat_every_days", "repeat_until", "next_task_id"}

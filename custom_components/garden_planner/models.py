@@ -251,7 +251,14 @@ FIELDS: dict[str, set[str]] = {
         "initial_status",
         "snapshot",
     },
-    "cultivation_events": {"cultivation_id", "date", "status", "notes", "origin"},
+    "cultivation_events": {
+        "cultivation_id",
+        "date",
+        "status",
+        "notes",
+        "origin",
+        "image_data",
+    },
     "tasks": {
         "repeat_every_days",
         "repeat_until",

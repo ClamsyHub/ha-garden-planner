@@ -194,7 +194,12 @@ class PlannerService:
                     raise ValidationError("Filters must be an object.")
                 include_images = params.get(
                     "include_images",
-                    params["table"] not in {"cultivation_journal", "cultivations"},
+                    params["table"]
+                    not in {
+                        "cultivation_journal",
+                        "cultivations",
+                        "cultivation_events",
+                    },
                 )
                 if type(include_images) is not bool:
                     raise ValidationError("Image inclusion must be boolean.")

@@ -3471,3 +3471,70 @@ test("manual tasks can be postponed and recur once after confirmed completion", 
     tasks.some((t: { data: { date: string } }) => t.data.date === "2026-11-13"),
   ).toBe(true);
 });
+
+test("cultivation event photos upload, survive editing and reload, and can be removed", async ({
+  page,
+}) => {
+  await open(page);
+  await journalFixture(page);
+  await navigate(page, "Aktuelle Kulturen");
+  await page
+    .getByRole("button", {
+      name: "Ereignis erfassen: Tomato yield",
+      exact: true,
+    })
+    .click();
+  const editor = page.locator("#editor-dialog");
+  await editor.getByLabel("Kulturereignis *").selectOption("germinated");
+  await editor
+    .getByLabel("Notizen", { exact: true })
+    .fill("Keimung mit Ereignisfoto");
+  const png = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 40;
+    c.getContext("2d")!.fillRect(0, 0, 40, 40);
+    return c.toDataURL("image/png").split(",")[1]!;
+  });
+  await expect(editor.locator(".camera-file")).toHaveAttribute(
+    "capture",
+    "environment",
+  );
+  await editor.getByLabel("Bild hochladen", { exact: true }).setInputFiles({
+    name: "event.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await page.reload();
+  await navigate(page, "Aktuelle Kulturen");
+  await page
+    .locator(".culture-card")
+    .getByRole("button", { name: "Details ansehen", exact: true })
+    .click();
+  let event = page
+    .locator(".timeline article")
+    .filter({ hasText: "Keimung mit Ereignisfoto" });
+  await event.locator("garden-journal-photo").scrollIntoViewIfNeeded();
+  await expect(event.locator("garden-journal-photo img")).toBeVisible();
+  await event.getByRole("button", { name: "Bearbeiten", exact: true }).click();
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor
+    .getByLabel("Notizen", { exact: true })
+    .fill("Bearbeitet mit Ereignisfoto");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  event = page
+    .locator(".timeline article")
+    .filter({ hasText: "Bearbeitet mit Ereignisfoto" });
+  await event.locator("garden-journal-photo").scrollIntoViewIfNeeded();
+  await expect(event.locator("garden-journal-photo img")).toBeVisible();
+  await event.getByRole("button", { name: "Bearbeiten", exact: true }).click();
+  await editor
+    .getByRole("button", { name: "Bild entfernen", exact: true })
+    .click();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(event.locator("garden-journal-photo")).toHaveCount(0);
+});
