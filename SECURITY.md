@@ -26,3 +26,8 @@ cannot patch an installed Home Assistant host. The development test extra is
 pinned to the patched minimum 2026.7.0 and CI covers the patched minimum/current stable. Published
 v0.1.0 artifacts retain their historical metadata; see
 [the remediation record](docs/security/CVE-2026-91130.md).
+
+
+## Known development/build advisory
+
+On 2026-11-18, the v0.1.12 development candidate is blocked by an unpatched picomatch build-tool advisory. See the [verification and required remediation](docs/security/2026-11-18-picomatch.md). The audit threshold and required checks remain unchanged; this candidate has not been published as a release.
