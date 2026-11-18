@@ -16,7 +16,7 @@ Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzei
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.12:** Saatgutlose mit Mengen, Haltbarkeit, Keimtest und Lagerort; Kultur-Tagebuch mit Fotoverlauf; Einzelernten, Gesamtertrag und Auswertung nach Pflanze, Sorte, Beet und Erntejahr. Ein Gartenmodus bietet große Schnellaktionen für unterwegs.
+**Änderungen v0.1.12:** Saatgutlose mit Mengen, Haltbarkeit, Keimtest und Lagerort; Kultur-Tagebuch mit Fotoverlauf; Einzelernten, Gesamtertrag und Auswertung nach Pflanze, Sorte, Beet und Erntejahr. Ein Gartenmodus bietet große Schnellaktionen für unterwegs. Fotos sind auch direkt bei Kulturereignissen möglich. Aufgaben lassen sich verschieben und wiederholen; optionale Wetterhinweise berücksichtigen frostempfindliche Freilandkulturen.
 [Updatehinweise und Datensicherung](docs/releases/v0.1.12.md). Die neue Version migriert die Datenbank auf Schema 4 mit automatischer vorheriger Sicherung.
 
 ## Oberfläche
