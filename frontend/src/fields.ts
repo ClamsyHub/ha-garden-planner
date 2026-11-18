@@ -233,6 +233,9 @@ export function fieldsFor(
             rowStart: ["depth_cm", "spacing_cm"].includes(key),
           }))
         : []),
+      ...(table === "plants"
+        ? [{ key: "frost_sensitive", type: "checkbox" as const }]
+        : []),
     ];
   if (table === "growing_windows")
     return [
@@ -301,6 +304,8 @@ export function fieldsFor(
       bedField,
       scalarField("quantity"),
       { key: "plant_count", type: "number", min: 1, max: 1000000, step: "1" },
+      { key: "outdoors", type: "checkbox", label: "cultureOutdoors" },
+      { key: "frost_sensitive", type: "checkbox" },
       ...temperatureFields,
       select("initial_status", ["sown", "planned"], true),
       scalarField("notes"),
@@ -333,6 +338,8 @@ export function fieldsFor(
   return [
     scalarField("title"),
     { key: "date", type: "date", required: true },
+    { key: "repeat_every_days", type: "number", min: 1, max: 366, step: "1" },
+    { key: "repeat_until", type: "date" },
     select(
       "activity",
       [
@@ -423,7 +430,9 @@ export function formData(
   if (table === "cultivation_events" && !original)
     result.cultivation_id = draft.cultivation_id;
   if (
-    ["plants", "varieties", "cultivation_journal"].includes(table) &&
+    ["plants", "varieties", "cultivation_journal", "cultivations"].includes(
+      table,
+    ) &&
     draft.image_data !== undefined
   )
     result.image_data = draft.image_data || null;

@@ -3344,3 +3344,130 @@ test("journal photos and pest notes persist without advancing cultivation status
     .analyze();
   expect(a11y.violations).toEqual([]);
 });
+
+test("culture cover upload works in normal editing and cards stay compact", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await journalFixture(page);
+  await navigate(page, "Aktuelle Kulturen");
+  const card = page.locator(".culture-card").first();
+  await expect(card).toContainText("Roma");
+  await card
+    .getByRole("button", { name: "Bearbeiten: Tomato yield", exact: true })
+    .click();
+  const editor = page.locator("#editor-dialog");
+  const png = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 40;
+    c.height = 40;
+    c.getContext("2d")!.fillRect(0, 0, 40, 40);
+    return c.toDataURL("image/png").split(",")[1]!;
+  });
+  await editor.getByLabel("Bild hochladen", { exact: true }).setInputFiles({
+    name: "culture.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor
+    .getByRole("checkbox", { name: "Steht tatsächlich im Freien", exact: true })
+    .check();
+  await editor
+    .getByRole("checkbox", { name: "Frostempfindlich", exact: true })
+    .check();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await card.scrollIntoViewIfNeeded();
+  await expect(card.locator("garden-journal-photo img")).toBeVisible();
+  await card
+    .getByRole("button", { name: "Bearbeiten: Tomato yield", exact: true })
+    .click();
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor.getByRole("button", { name: "Abbrechen", exact: true }).click();
+  await page.screenshot({
+    path: testInfo.outputPath("culture-cards.png"),
+    scale: "css",
+  });
+});
+
+test("seed stock expands between its plant row and the following plant", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Saatgut & Einkauf");
+  await page
+    .getByRole("button", {
+      name: "Bestände öffnen: Blattkultur · Beispiel",
+      exact: true,
+    })
+    .click();
+  await expect(page.locator(".stock-expanded #seed-lots")).toBeVisible();
+  expect(
+    await page
+      .locator(".stock-expanded")
+      .evaluate((row) => row.previousElementSibling?.textContent),
+  ).toContain("Blattkultur");
+  expect(
+    await page
+      .locator(".stock-expanded")
+      .evaluate((row) => row.nextElementSibling?.textContent),
+  ).toContain("Blütenkultur");
+});
+
+test("manual tasks can be postponed and recur once after confirmed completion", async ({
+  page,
+}) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Aktuelle Kulturen");
+  const session = new URL(page.url()).searchParams.get("session");
+  const response = await page.request.post(`/__test_api/${session}`, {
+    data: {
+      operation: "create",
+      role: "admin",
+      parameters: {
+        table: "tasks",
+        data: {
+          title: "Water test",
+          date: "2026-11-06",
+          activity: "care",
+          repeat_every_days: 3,
+        },
+      },
+    },
+  });
+  expect(response.ok()).toBe(true);
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Verschieben: Water test", exact: true })
+    .click();
+  const dialog = page.locator("#postpone-dialog");
+  await dialog.getByLabel("Neuer Termin", { exact: true }).fill("2026-11-10");
+  await dialog.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  const task = page
+    .locator("article")
+    .filter({
+      has: page.getByRole("heading", { name: "Water test", exact: true }),
+    })
+    .last();
+  await task
+    .getByRole("button", { name: "Als erledigt markieren", exact: true })
+    .click();
+  await page
+    .locator("#complete-task-dialog")
+    .getByRole("button", { name: "Ja, als erledigt markieren", exact: true })
+    .click();
+  const records = await page.request.post(`/__test_api/${session}`, {
+    data: { operation: "list", parameters: { table: "tasks" }, role: "admin" },
+  });
+  const tasks = (await records.json()).filter(
+    (t: { data: { title: string } }) => t.data.title === "Water test",
+  );
+  expect(tasks).toHaveLength(2);
+  expect(
+    tasks.some((t: { data: { date: string } }) => t.data.date === "2026-11-13"),
+  ).toBe(true);
+});

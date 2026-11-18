@@ -187,3 +187,13 @@ Im Gartenmodus eine Kultur auswählen und Foto, Beobachtung oder Einzelernten er
 Einzelernten werden nach Erntedatum summiert: g und kg gemeinsam als kg, Stück separat. Pflanze, Sorte und Beet werden beim Erfassen festgehalten. Die aktuell eingetragene Pflanzenzahl wird je beitragender Kultur nur einmal pro Einheit/Gruppe gezählt und kann Auswertungen rückwirkend ändern. Filter und Gruppierungen erlauben Jahres-, Sorten- und Beetvergleiche.
 
 Vor dem Update die gesamte HA-Konfiguration sichern. Die Migration auf Schema 4 erstellt außerdem eine automatische SQLite-Sicherung und ergänzt zwei Tabellen. Bestehende Pflanzen, Kulturen, Aufgaben und private Erinnerungen bleiben erhalten. JSON/CSV-Exporte enthalten nun neun Datentabellen einschließlich Fotos und Ernten; alte Exporte bleiben importierbar. Gesamtimportgrenze weiterhin 20 MiB. Bei Rückkehr zu einer älteren Integration eine vollständige kompatible Sicherung wiederherstellen. Danach HA neu starten und das Panel neu laden.
+
+## Fotos, verschobene Aufgaben und Wetterhinweise
+
+Unter **Aktuelle Kulturen → Bearbeiten** kann ein Kulturfoto hochgeladen werden. Die Karte zeigt das Foto; datierte Verlaufsfotos gehören weiterhin ins Tagebuch. Saatgutbestände öffnen direkt unter der ausgewählten Pflanzenzeile.
+
+Offene Aufgaben lassen sich mit **Verschieben** auf einen neuen Termin setzen. Auch persönliche Pflanzen-Erinnerungen behalten diesen Termin nach einer Aktualisierung; die übrigen Jahrespläne ändern sich nicht. Vorhandene Push-/E-Mail-Einstellungen gelten für die neue Fälligkeit. Bereits versandte Nachrichten werden nicht zurückgenommen.
+
+Gemeinsame Aufgaben können ein Tagesintervall und ein optionales Serienende erhalten. Erst beim bestätigten Erledigen entsteht genau eine Folgeaufgabe, gerechnet ab der bisherigen Fälligkeit. Überfällige Termine werden nicht übersprungen. Erledigt/unerledigt-Wechsel erzeugen keine doppelten Folgeaufgaben. Verschieben über das Serienende beendet die Wiederholung.
+
+Administratoren können in den Einstellungen optional eine bestehende **weather.**-Entität, Vorschauzeit und Frost-Warnschwelle wählen. In der Übersicht und im Gartenmodus erscheinen Hinweise für aktive Kulturen, die beim Bearbeiten ausdrücklich als **im Freien** und **frostempfindlich** markiert wurden. Geplante, abgeschlossene und fehlgeschlagene Kulturen sind ausgenommen. Vorhersagen werden höchstens alle 15 Minuten abgefragt. Fehlende oder veraltete Vorhersagen gelten als unbekannt, niemals als Frostfreiheit. Wetterhinweise versenden keine zusätzlichen automatischen Nachrichten; die Wetterintegration kann selbst einen externen Dienst verwenden.

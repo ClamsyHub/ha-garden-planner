@@ -5,7 +5,7 @@ import json
 import sqlite3
 from collections.abc import Iterator
 from contextlib import closing, contextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
@@ -223,7 +223,7 @@ class Database:
                 arguments.append(value)
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
         columns = "*"
-        if table == "cultivation_journal" and not include_images:
+        if table in {"cultivation_journal", "cultivations"} and not include_images:
             columns = (
                 "id, revision, created_at, updated_at, "
                 "json_remove(data, '$.image_data') AS data, "
@@ -502,6 +502,7 @@ class Database:
             "snapshot",
             "origin",
             "harvest_context",
+            "next_task_id",
         } & set(patch):
             raise ValidationError("Cannot edit server-managed data.")
         with self.transaction():
@@ -561,6 +562,33 @@ class Database:
                     raise ConflictError(
                         "Unlink explicit task locations before moving a culture."
                     )
+            if (
+                table == "tasks"
+                and clean.get("completed")
+                and not record["data"].get("completed")
+                and clean.get("repeat_every_days")
+                and not clean.get("next_task_id")
+            ):
+                try:
+                    following = date.fromisoformat(clean["date"]) + timedelta(
+                        days=clean["repeat_every_days"]
+                    )
+                except OverflowError as error:
+                    raise ValidationError(
+                        "Next task would exceed supported dates."
+                    ) from error
+                if (
+                    not clean.get("repeat_until")
+                    or following.isoformat() <= clean["repeat_until"]
+                ):
+                    child_data = {
+                        k: v
+                        for k, v in clean.items()
+                        if k not in {"next_task_id", "completed"}
+                    }
+                    child_data.update(date=following.isoformat(), completed=False)
+                    child = self._new("tasks", validate_data("tasks", child_data))
+                    clean["next_task_id"] = child["id"]
             self._write(table, record, clean)
             if table == "cultivations" and {"date", "initial_status"} & set(patch):
                 for event in self.list_records(
@@ -671,7 +699,9 @@ class Database:
 
     def summary(self) -> dict[str, int]:
         """Aggregate explicit state; success is independent of lifecycle completion."""
-        cultures = self._histories(self.list_records("cultivations"))
+        cultures = self._histories(
+            self.list_records("cultivations", include_images=False)
+        )
         return {
             "plants": sum(
                 not p["data"].get("archived", False)

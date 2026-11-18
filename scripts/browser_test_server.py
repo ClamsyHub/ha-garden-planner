@@ -27,7 +27,12 @@ from custom_components.garden_planner.reminder_preferences import (
 )
 from custom_components.garden_planner.service import Actor, PlannerService
 from custom_components.garden_planner.storage import PlannerWorker
-from custom_components.garden_planner.task_planning import complete, reconcile, visible
+from custom_components.garden_planner.task_planning import (
+    complete,
+    postpone,
+    reconcile,
+    visible,
+)
 
 
 async def seed(service: PlannerService) -> None:
@@ -142,8 +147,15 @@ async def main() -> None:
                     ) -> Any:
                         nonlocal settings_state
                         if operation == "capabilities":
-                            return {"reminders": True, "http_transfer": False}
+                            return {
+                                "reminders": True,
+                                "http_transfer": False,
+                                "weather": True,
+                            }
+                        if operation == "get_weather":
+                            return {"status": "disabled", "alerts": []}
                         if operation in {
+                            "postpone_personal_task",
                             "list_personal_tasks",
                             "get_personal_task",
                             "set_personal_task_completed",
@@ -166,6 +178,14 @@ async def main() -> None:
                                 "de",
                                 datetime.now(UTC).isoformat(),
                             )
+                            if operation == "postpone_personal_task":
+                                records = postpone(
+                                    records,
+                                    parameters["id"],
+                                    parameters["revision"],
+                                    parameters["date"],
+                                    datetime.now(UTC).isoformat(),
+                                )
                             if operation == "set_personal_task_completed":
                                 records = complete(
                                     records,

@@ -156,3 +156,13 @@ Garden mode offers photo, observation, harvest and task actions. Camera availabi
 Grams and kilograms combine as kilograms; pieces remain separate. Context labels and bed assignment are captured when recording a harvest. The current plant count is included once per contributing culture/unit/group and can affect historical per-plant calculations. Filter and compare by plant, variety, bed, harvest year or cultivation.
 
 Back up the full HA configuration before updating. Schema 4 adds two tables with an automatic pre-migration SQLite backup and preserves existing records/preferences. JSON/CSV exports contain nine data tables including journal images and harvests; old exports remain importable. Total JSON/CSV import limit remains 20 MiB. Downgrading requires a compatible full backup. Restart HA and reload the panel after updating.
+
+## Photos, rescheduling and optional weather hints
+
+Upload a cultivation cover photo through normal **Edit**; dated progress photos remain in the journal. Seed lots expand immediately below their plant row.
+
+Use **Postpone** to change an open shared or personal task's due date. Personal deferrals survive reconciliation without changing the seasonal source or other years. Existing notification settings apply to the effective due date; already delivered messages cannot be withdrawn.
+
+Shared tasks support a daily interval and optional end date. Confirming completion creates exactly one successor from the previous due date. Overdue occurrences are not skipped; undoing/repeating completion does not create duplicates. Postponing beyond the series end stops recurrence.
+
+Administrators may select an existing HA weather entity, forecast horizon and frost threshold. Overview/garden-mode hints consider only active cultivations explicitly marked outdoors and frost-sensitive. Planned, completed and failed cultivations are excluded. Forecasts are cached for 15 minutes; missing/stale data means unknown, not frost-free. Weather hints do not send additional automatic messages. The selected HA weather provider may itself use an external service.

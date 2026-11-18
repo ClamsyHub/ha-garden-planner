@@ -845,6 +845,28 @@ var $e = {
 		return this.ot = Array.isArray(t) ? Array.from(t) : t, this.render(t, n);
 	}
 }), _t = {
+	postponeTask: "Verschieben",
+	postponeHint: "Neuen Termin wählen. Die Aufgabe bleibt offen und wird über die vorhandenen Erinnerungsziele zum neuen Termin berücksichtigt. Bei einem Termin nach dem Serienende endet die Wiederholung.",
+	newDueDate: "Neuer Termin",
+	repeat_every_days: "Wiederholen alle (Tage ab Fälligkeit)",
+	repeat_until: "Wiederholen bis (optional)",
+	repeatHint: "Ohne Intervall eine einmalige Aufgabe. Nach Erledigung entsteht genau eine Folgeaufgabe im festen Tagesrhythmus ab dem bisherigen Termin. Überfällige Termine werden nicht automatisch übersprungen. Persönliche Pflanzen-Erinnerungen behalten ihren jährlichen Plan.",
+	frost_sensitive: "Frostempfindlich",
+	cultureOutdoors: "Steht tatsächlich im Freien",
+	cultureWeatherHint: "Wetterhinweise gelten nur für aktive, tatsächlich im Freien stehende und als frostempfindlich markierte Kulturen.",
+	plantCountShort: "Pflanzenanzahl",
+	weatherHints: "Wetterhinweise",
+	weatherUnavailable: "Keine auswertbare aktuelle Vorhersage verfügbar. Daraus wird keine Frostfreiheit abgeleitet.",
+	forecastMinimum: "Vorhergesagtes Minimum",
+	hoursAhead: "Stunden Vorschau",
+	weatherForecastHint: "Vorhersage der gewählten HA-Wetterintegration; keine Messung am Beet. Anzeigehinweis, keine automatische Benachrichtigung.",
+	frostAffected: "Temperatur unter der Warnschwelle: Diese empfindlichen Freilandkulturen prüfen und gegebenenfalls schützen.",
+	noFrostHint: "Aktuell kein Hinweis für die entsprechend markierten Kulturen. Vorhersagen ersetzen die Prüfung vor Ort nicht.",
+	weatherSettingsHint: "Optional eine vorhandene Home-Assistant-Wetterentität wählen. Hinweise erscheinen in Übersicht und Gartenmodus. Die Kultur muss als frostempfindlich und tatsächlich im Freien markiert sein; geplante, abgeschlossene und fehlgeschlagene Kulturen werden nicht gewarnt.",
+	weatherEntity: "Wetterentität",
+	weatherDisabled: "Wetterhinweise deaktiviert",
+	weatherHours: "Vorschau (Stunden)",
+	weatherThreshold: "Warnschwelle (°C)",
 	harvestUnitsHint: "Gewicht und Stück werden getrennt ausgewertet. — bedeutet: Pflanzenanzahl nicht bekannt.",
 	calculationHelp: "Wie wird gerechnet?",
 	moreHarvestFilters: "Nach Pflanze, Sorte und Beet filtern",
@@ -1049,6 +1071,28 @@ var $e = {
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
 }, vt = {
+	postponeTask: "Postpone",
+	postponeHint: "Choose a new due date. The task stays open and existing reminder destinations use its new date. Moving beyond the series end stops repetition.",
+	newDueDate: "New due date",
+	repeat_every_days: "Repeat every (days from due date)",
+	repeat_until: "Repeat until (optional)",
+	repeatHint: "Leave the interval blank for a one-off task. Completing creates exactly one follow-up in a fixed day rhythm from the previous due date. Overdue dates are not skipped automatically. Personal plant reminders keep their annual plan.",
+	frost_sensitive: "Frost sensitive",
+	cultureOutdoors: "Actually standing outdoors",
+	cultureWeatherHint: "Weather hints apply only to active, explicitly outdoor and frost-sensitive cultivations.",
+	plantCountShort: "Plant count",
+	weatherHints: "Weather hints",
+	weatherUnavailable: "No usable current forecast is available. This does not mean frost-free conditions.",
+	forecastMinimum: "Forecast minimum",
+	hoursAhead: "hours ahead",
+	weatherForecastHint: "Forecast from the selected HA weather integration, not a bed measurement. Display only; no automatic notifications.",
+	frostAffected: "Below the warning threshold: check and protect these sensitive outdoor cultivations as appropriate.",
+	noFrostHint: "No current hint for the marked cultivations. Always check conditions on site.",
+	weatherSettingsHint: "Optionally select an existing HA weather entity. Hints appear in overview and garden mode. Mark the cultivation as frost sensitive and actually outdoors; planned, completed and failed cultivations are excluded.",
+	weatherEntity: "Weather entity",
+	weatherDisabled: "Weather hints disabled",
+	weatherHours: "Forecast horizon (hours)",
+	weatherThreshold: "Warning threshold (°C)",
 	harvestUnitsHint: "Weights and pieces are separate. — means the plant count is unknown.",
 	calculationHelp: "How are results calculated?",
 	moreHarvestFilters: "Filter by plant, variety and bed",
@@ -1746,6 +1790,7 @@ function U(e, t) {
 var wt = class extends Ze {
 	static {
 		this.properties = {
+			table: { attribute: !1 },
 			api: { attribute: !1 },
 			record: { attribute: !1 },
 			language: { attribute: !1 },
@@ -1758,8 +1803,8 @@ var wt = class extends Ze {
 		this.styles = M`
     :host {
       display: block;
-      aspect-ratio: 4/3;
-      min-height: 120px;
+      aspect-ratio: var(--gp-photo-ratio, 4/3);
+      min-height: var(--gp-photo-min-height, 120px);
       max-width: 360px;
       background: var(--gp-soft, #edf4ec);
       border-radius: 14px;
@@ -1788,7 +1833,7 @@ var wt = class extends Ze {
   `;
 	}
 	constructor() {
-		super(), this.image = "", this.failed = !1, this.loading = !1, this.visible = !1, this.generation = 0, this.language = "de";
+		super(), this.image = "", this.failed = !1, this.loading = !1, this.visible = !1, this.generation = 0, this.language = "de", this.table = "cultivation_journal";
 	}
 	connectedCallback() {
 		super.connectedCallback(), this.observer = new IntersectionObserver((e) => {
@@ -1800,7 +1845,7 @@ var wt = class extends Ze {
 	}
 	updated(e) {
 		let t = e.get("record");
-		(e.has("api") || e.has("record") && (t?.id !== this.record?.id || t?.revision !== this.record?.revision)) && (this.generation++, this.image = "", this.failed = !1, this.loading = !1, this.visible && this.load());
+		(e.has("api") || e.has("table") || e.has("record") && (t?.id !== this.record?.id || t?.revision !== this.record?.revision)) && (this.generation++, this.image = "", this.failed = !1, this.loading = !1, this.visible && this.load());
 	}
 	async load() {
 		let e = this.api, n = this.record;
@@ -1809,7 +1854,7 @@ var wt = class extends Ze {
 		this.loading = !0, this.failed = !1;
 		try {
 			let i = await e.command("get", {
-				table: "cultivation_journal",
+				table: this.table,
 				id: n.id
 			});
 			if (r !== this.generation || e !== this.api || !this.isConnected) return;
@@ -2130,7 +2175,11 @@ function Mt(e, n, r, i, a) {
 		...e === "plants" ? kt.map((e) => ({
 			...W(e),
 			rowStart: ["depth_cm", "spacing_cm"].includes(e)
-		})) : []
+		})) : [],
+		...e === "plants" ? [{
+			key: "frost_sensitive",
+			type: "checkbox"
+		}] : []
 	] : e === "growing_windows" ? [
 		{
 			...u,
@@ -2217,6 +2266,15 @@ function Mt(e, n, r, i, a) {
 			max: 1e6,
 			step: "1"
 		},
+		{
+			key: "outdoors",
+			type: "checkbox",
+			label: "cultureOutdoors"
+		},
+		{
+			key: "frost_sensitive",
+			type: "checkbox"
+		},
 		...p,
 		o("initial_status", ["sown", "planned"], !0),
 		W("notes"),
@@ -2254,6 +2312,17 @@ function Mt(e, n, r, i, a) {
 			key: "date",
 			type: "date",
 			required: !0
+		},
+		{
+			key: "repeat_every_days",
+			type: "number",
+			min: 1,
+			max: 366,
+			step: "1"
+		},
+		{
+			key: "repeat_until",
+			type: "date"
 		},
 		o("activity", [
 			"indoors",
@@ -2327,7 +2396,8 @@ function Pt(e, t, n, r) {
 	e === "cultivation_journal" && !r && (i.cultivation_id = t.cultivation_id), e === "cultivation_events" && !r && (i.cultivation_id = t.cultivation_id), [
 		"plants",
 		"varieties",
-		"cultivation_journal"
+		"cultivation_journal",
+		"cultivations"
 	].includes(e) && t.image_data !== void 0 && (i.image_data = t.image_data || null);
 	let a = {
 		...r?.data,
@@ -5435,6 +5505,57 @@ var Wn = M`
   .harvest-extra {
     grid-column: 1/-1;
   }
+
+  garden-journal-photo.plant-photo,
+  garden-journal-photo.profile-photo {
+    --gp-photo-min-height: 0px;
+    --gp-photo-ratio: 1;
+  }
+  .culture-card .catalog-facts dt {
+    font-size: 11px;
+    color: var(--gp-muted);
+    margin-bottom: 4px;
+  }
+  .culture-card .catalog-facts dd {
+    font-size: 13px;
+  }
+  .culture-profile-heading {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin: 16px 0;
+  }
+  .culture-profile-heading h3 {
+    font-size: 25px;
+  }
+  .seed-table .stock-expanded > td {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+    padding: 0;
+  }
+  .stock-expanded-body {
+    position: sticky;
+    left: 0;
+    width: 100%;
+    max-width: calc(100vw - 34px);
+    white-space: normal;
+  }
+  .stock-expanded-body .stock-panel {
+    margin: 0;
+    border-radius: 0;
+    border-left: 3px solid var(--gp-green);
+  }
+  .weather-settings {
+    margin: 20px 0;
+  }
+  .weather-warning {
+    border-left: 4px solid #ad8952;
+  }
+  .weather-hints h2 {
+    margin-top: 0;
+  }
 `, Gn = [
 	"overview",
 	"calendar",
@@ -5492,7 +5613,7 @@ function qn() {
 }
 var Jn = class extends Ze {
 	constructor(...e) {
-		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = qn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.stockPlant = "", this.cultureView = "list", this.gardenCulture = "", this.harvestBy = "plant", this.harvestYear = "", this.harvestPlant = "", this.harvestVariety = "", this.harvestLocation = "", this.imageLoading = !1, this.imageGeneration = 0, this.matrixQuery = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = qn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.postponedTask = null, this.postponeDate = "", this.weatherLoading = !1, this.stockPlant = "", this.cultureView = "list", this.gardenCulture = "", this.harvestBy = "plant", this.harvestYear = "", this.harvestPlant = "", this.harvestVariety = "", this.harvestLocation = "", this.imageLoading = !1, this.imageGeneration = 0, this.matrixQuery = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -5583,6 +5704,10 @@ var Jn = class extends Ze {
 			seedDraft: { state: !0 },
 			imageLoading: { state: !0 },
 			matrixQuery: { state: !0 },
+			postponedTask: { state: !0 },
+			postponeDate: { state: !0 },
+			weather: { state: !0 },
+			weatherLoading: { state: !0 },
 			stockPlant: { state: !0 },
 			cultureView: { state: !0 },
 			gardenCulture: { state: !0 },
@@ -5640,16 +5765,18 @@ var Jn = class extends Ze {
 		return [...new Set(this.tables.plants.map((e) => t(e, "category")).filter(Boolean))].sort();
 	}
 	connectedCallback() {
-		super.connectedCallback(), document.addEventListener("pointerdown", this.dismissCalendarFilters, !0), document.addEventListener("keydown", this.closeCalendarFilters, !0), document.addEventListener("visibilitychange", this.flushHiddenReminders), window.addEventListener("beforeunload", this.confirmPendingReminders), this.addEventListener("click", this.rememberTrigger, !0), this.renderRoot.addEventListener("close", this.restoreDialogFocus, !0), this.renderRoot.addEventListener("scroll", this.positionSensorOptions, !0), window.addEventListener("resize", this.positionSensorOptions), window.visualViewport?.addEventListener("resize", this.positionSensorOptions), window.visualViewport?.addEventListener("scroll", this.positionSensorOptions), this.hass && this.bind();
+		super.connectedCallback(), this.weatherTimer = setInterval(() => {
+			this.loadWeather();
+		}, 9e5), document.addEventListener("pointerdown", this.dismissCalendarFilters, !0), document.addEventListener("keydown", this.closeCalendarFilters, !0), document.addEventListener("visibilitychange", this.flushHiddenReminders), window.addEventListener("beforeunload", this.confirmPendingReminders), this.addEventListener("click", this.rememberTrigger, !0), this.renderRoot.addEventListener("close", this.restoreDialogFocus, !0), this.renderRoot.addEventListener("scroll", this.positionSensorOptions, !0), window.addEventListener("resize", this.positionSensorOptions), window.visualViewport?.addEventListener("resize", this.positionSensorOptions), window.visualViewport?.addEventListener("scroll", this.positionSensorOptions), this.hass && this.bind();
 	}
 	disconnectedCallback() {
-		this.flushReminderChanges(), this.saveSeedInventory(), this.layoutObserver?.disconnect(), this.layoutObserver = void 0, this.layoutNodes.clear(), super.disconnectedCallback(), document.removeEventListener("pointerdown", this.dismissCalendarFilters, !0), document.removeEventListener("keydown", this.closeCalendarFilters, !0), document.removeEventListener("visibilitychange", this.flushHiddenReminders), window.removeEventListener("beforeunload", this.confirmPendingReminders), this.removeEventListener("click", this.rememberTrigger, !0), this.renderRoot.removeEventListener("scroll", this.positionSensorOptions, !0), window.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("scroll", this.positionSensorOptions), this.renderRoot.removeEventListener("close", this.restoreDialogFocus, !0), this.connectionGeneration++, this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = void 0, this.toastTimer && clearTimeout(this.toastTimer);
+		this.weatherTimer && clearInterval(this.weatherTimer), this.flushReminderChanges(), this.saveSeedInventory(), this.layoutObserver?.disconnect(), this.layoutObserver = void 0, this.layoutNodes.clear(), super.disconnectedCallback(), document.removeEventListener("pointerdown", this.dismissCalendarFilters, !0), document.removeEventListener("keydown", this.closeCalendarFilters, !0), document.removeEventListener("visibilitychange", this.flushHiddenReminders), window.removeEventListener("beforeunload", this.confirmPendingReminders), this.removeEventListener("click", this.rememberTrigger, !0), this.renderRoot.removeEventListener("scroll", this.positionSensorOptions, !0), window.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("resize", this.positionSensorOptions), window.visualViewport?.removeEventListener("scroll", this.positionSensorOptions), this.renderRoot.removeEventListener("close", this.restoreDialogFocus, !0), this.connectionGeneration++, this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = void 0, this.toastTimer && clearTimeout(this.toastTimer);
 	}
 	willUpdate(e) {
 		e.has("hass") && this.isConnected && (this.hass?.connection !== this.boundConnection || this.hass?.user?.id !== this.boundUser) && this.bind();
 	}
 	updated() {
-		this.observeOverviewLayout(), this.setAttribute("lang", this.language), this.hass?.themes && this.toggleAttribute("dark", this.hass.themes.darkMode), this.syncDialog("detail-dialog", this.selected !== null), this.syncDialog("editor-dialog", this.editor !== null), this.syncDialog("delete-dialog", this.deleting !== null), this.syncDialog("complete-task-dialog", this.completing !== null), this.syncDialog("neighbors-dialog", this.neighborEditor !== null), this.syncDialog("review-dialog", this.reviewed !== null);
+		this.observeOverviewLayout(), this.setAttribute("lang", this.language), this.hass?.themes && this.toggleAttribute("dark", this.hass.themes.darkMode), this.syncDialog("detail-dialog", this.selected !== null), this.syncDialog("editor-dialog", this.editor !== null), this.syncDialog("delete-dialog", this.deleting !== null), this.syncDialog("complete-task-dialog", this.completing !== null), this.syncDialog("postpone-dialog", this.postponedTask !== null), this.syncDialog("neighbors-dialog", this.neighborEditor !== null), this.syncDialog("review-dialog", this.reviewed !== null);
 	}
 	syncDialog(e, t) {
 		let n = this.renderRoot.querySelector(`#${e}`);
@@ -5662,7 +5789,7 @@ var Jn = class extends Ze {
 	async bind() {
 		this.flushReminderChanges(), this.saveSeedInventory();
 		let e = ++this.connectionGeneration;
-		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new Dt(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.stockPlant = "", this.gardenCulture = "", this.cultureView = "list", this.harvestYear = this.harvestPlant = this.harvestVariety = this.harvestLocation = "", this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
+		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new Dt(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.weather = void 0, this.weatherLoading = !1, this.postponedTask = null, this.stockPlant = "", this.gardenCulture = "", this.cultureView = "list", this.harvestYear = this.harvestPlant = this.harvestVariety = this.harvestLocation = "", this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
 			this.anchor ||= this.today, this.boundConnection.addEventListener?.("ready", this.reconnect);
 			try {
 				let t = await this.api.subscribe(() => {
@@ -5685,9 +5812,9 @@ var Jn = class extends Ze {
 		try {
 			let [t, n] = await Promise.all([this.api.load(), this.api.command("capabilities")]);
 			if (e !== this.loadGeneration || !this.isConnected) return;
-			this.tables = t, this.capabilities = n, n.can_edit || (this.neighborEditor = null, this.resetSeeds(), this.completing && !this.completing.data.personal_generated && (this.completing = null)), this.loaded = !0, this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
+			this.tables = t, this.capabilities = n, n.can_edit || (this.neighborEditor = null, this.postponedTask && !this.postponedTask.data.personal_generated && (this.postponedTask = null), this.resetSeeds(), this.completing && !this.completing.data.personal_generated && (this.completing = null)), this.loaded = !0, this.capabilities?.weather && this.loadWeather(), this.error = "", this.page === "reminders" && await this.loadPersonalReminders();
 		} catch (t) {
-			e === this.loadGeneration && (this.error = U(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.completing = null, this.neighborEditor = null, this.resetSeeds(), this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.editor = null, this.loaded = !0));
+			e === this.loadGeneration && (this.error = U(this.language, t), t && typeof t == "object" && "code" in t && t.code === "unauthorized" && (this.tables = r(), this.personalReminders = null, this.completing = null, this.neighborEditor = null, this.resetSeeds(), this.preferencesGeneration++, this.capabilities = null, this.selected = null, this.postponedTask = null, this.weather = void 0, this.editor = null, this.loaded = !0));
 		}
 	}
 	announce(e) {
@@ -5740,11 +5867,15 @@ var Jn = class extends Ze {
 		return b(e, this.tables.cultivation_events);
 	}
 	startEditor(e, t, n = {}) {
-		this.imageGeneration++, this.imageLoading = !1, this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
+		if (e === "cultivations" && t?.image_present) this.editJournal(t, "cultivations");
+		else if (this.imageGeneration++, this.imageLoading = !1, this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
 			table: e,
 			record: t,
 			draft: t ? structuredClone(t.data) : Nt(e, this.timeZone, n)
-		};
+		}, e === "cultivations" && this.editor) {
+			let e = t?.data.snapshot, n = this.tables.plants.find((e) => e.id === this.editor.draft.plant_id);
+			this.editor.draft.frost_sensitive = t?.data.frost_sensitive ?? e?.plant?.frost_sensitive ?? n?.data.frost_sensitive ?? !1;
+		}
 	}
 	fieldList(e) {
 		return Mt(e.table, e.draft, this.tables, this.language, !!e.record);
@@ -5758,6 +5889,9 @@ var Jn = class extends Ze {
 		if (e !== "plant_id" || this.editor.record && this.editor.table !== "seed_lots" || (r = {
 			...r,
 			variety_id: ""
+		}), e === "plant_id" && this.editor.table === "cultivations" && !this.editor.record && (r = {
+			...r,
+			frost_sensitive: this.tables.plants.find((e) => e.id === n)?.data.frost_sensitive === !0
 		}), e === "cultivation_id" && this.editor.table === "tasks") {
 			let e = this.tables.cultivations.find((e) => e.id === n);
 			e && (r = {
@@ -5884,6 +6018,14 @@ var Jn = class extends Ze {
 	}
 	renderField(e) {
 		if (e.key === "sensor_entity_id") return this.renderSensorField(e);
+		if (e.type === "checkbox") return B`<label class="check"
+        ><input
+          type="checkbox"
+          .checked=${this.editor?.draft[e.key] === !0}
+          ?disabled=${this.busy || e.disabled}
+          @change=${(t) => this.changeField(e.key, t.target.checked)}
+        />${this.tr(e.label ?? e.key)}</label
+      >`;
 		let t = this.editor.draft[e.key], n = (t) => this.changeField(e.key, t.target.value), r = `field-${e.key}`;
 		return B`<label
       class=${[e.type === "textarea" || e.wide ? "wide" : "", e.rowStart ? "row-start" : ""].filter(Boolean).join(" ")}
@@ -5946,11 +6088,18 @@ var Jn = class extends Ze {
 			r === this.imageGeneration && (this.imageLoading = !1), t.value = "";
 		}
 	}
-	plantImage(e, n = "plant-photo") {
-		let r = t(e, "image_data");
-		return r.startsWith("data:image/png;base64,") ? B`<img
+	plantImage(e, n = "plant-photo", r = "cultivations") {
+		if (e.image_present) return B`<garden-journal-photo
+        class=${n}
+        .api=${this.api}
+        .record=${e}
+        .table=${r}
+        .language=${this.language}
+      ></garden-journal-photo>`;
+		let i = t(e, "image_data");
+		return i.startsWith("data:image/png;base64,") ? B`<img
           class=${n}
-          src=${r}
+          src=${i}
           alt=${t(e, "name") || t(e, "title") || this.tr("imagePreview")}
           loading="lazy"
         />` : B`<span class=${`${n} photo-placeholder`} aria-hidden="true"
@@ -5962,7 +6111,8 @@ var Jn = class extends Ze {
 		return !e || ![
 			"plants",
 			"varieties",
-			"cultivation_journal"
+			"cultivation_journal",
+			"cultivations"
 		].includes(e.table) ? H : B`<section class="image-editor">
       ${typeof e.draft.image_data == "string" && e.draft.image_data ? B`<img class="plant-photo" src=${e.draft.image_data} alt=${this.tr("imagePreview")} />` : H}
       <div>
@@ -6029,7 +6179,8 @@ var Jn = class extends Ze {
 			"locations"
 		].includes(e.table) ? B`<p class="notice">${this.tr("temperatureHint")}</p>` : H}
                 ${e.draft.origin === "initial" ? B`<p class="notice">${this.tr("initialEventHint")}</p>` : H}
-                ${e.table === "cultivations" ? B`<p class="notice">${this.tr("plantCountHint")}</p>` : H}
+                ${e.table === "cultivations" ? B`<p class="notice">${this.tr("plantCountHint")} ${this.tr("cultureWeatherHint")}</p>` : H}
+                ${e.table === "tasks" ? B`<p class="notice">${this.tr("repeatHint")}</p>` : H}
                 ${e.table === "seed_lots" ? B`<p class="notice">${this.tr("seedLotHint")}</p>` : H}
                 ${e.table === "cultivation_journal" ? B`<p class="notice">${this.tr("journalHint")}</p>` : H}
                 ${this.renderImageEditor()}
@@ -6271,6 +6422,55 @@ var Jn = class extends Ze {
 			}), e?.focus({ preventScroll: !0 });
 		} else e === "managedPlants" ? (this.query = "", this.category = "", this.method = "", this.showArchived = !1, await this.navigate("plants")) : e === "successful" ? (await this.navigate("history"), t === this.connectionGeneration && this.page === "history" && (this.historyPlant = "", this.historyYear = "", this.historySuccessOnly = !0)) : (await this.navigate("cultures"), t === this.connectionGeneration && this.page === "cultures" && (this.cultureScope = e));
 	}
+	async loadWeather() {
+		if (!this.api || !this.capabilities?.weather || this.weatherLoading) return;
+		let e = this.api, t = this.connectionGeneration;
+		this.weatherLoading = !0;
+		try {
+			let n = await e.command("get_weather");
+			t === this.connectionGeneration && (this.weather = n);
+		} catch {
+			t === this.connectionGeneration && (this.weather = {
+				status: "unavailable",
+				alerts: []
+			});
+		} finally {
+			t === this.connectionGeneration && (this.weatherLoading = !1);
+		}
+	}
+	renderWeather() {
+		let e = this.weather;
+		return !e || e.status === "disabled" ? H : B`<section
+      class=${`panel weather-hints ${e.alerts.length ? "weather-warning" : ""}`}
+      role="status"
+    >
+      <h2>${this.tr("weatherHints")}</h2>
+      ${e.status === "unavailable" ? B`<p>${this.tr("weatherUnavailable")}</p>` : B`<p>
+                <strong
+                  >${this.tr("forecastMinimum")}:
+                  ${e.minimum_c?.toLocaleString(this.language, { maximumFractionDigits: 2 })}
+                  °C</strong
+                >
+                · ${e.hours} ${this.tr("hoursAhead")}
+              </p>
+              <small class="muted"
+                >${e.name || e.entity} ·
+                ${this.tr("weatherForecastHint")}</small
+              >${e.alerts.length ? B`<p>${this.tr("frostAffected")}</p>
+                      <div class="actions">
+                        ${e.alerts.map((e) => B`<button
+                              @click=${() => {
+			this.selected = {
+				kind: "culture",
+				id: e.id
+			};
+		}}
+                            >
+                              ${e.name}
+                            </button>`)}
+                      </div>` : B`<p class="muted">${this.tr("noFrostHint")}</p>`}`}
+    </section>`;
+	}
 	renderOverview() {
 		let e = this.tables.growing_windows.filter((e) => this.plantList.some((n) => n.id === t(e, "plant_id")) && f(e, Number(this.today.slice(0, 4)), Number(this.today.slice(5, 7)))).sort((e, t) => this.compareWindows(e, t)), n = this.tables.cultivations, r = [
 			["managedPlants", this.plantList.length],
@@ -6300,6 +6500,7 @@ var Jn = class extends Ze {
         ${r.map(([e, t]) => B`<button type="button" class="stat" aria-label=${`${t} ${this.tr(e)}`} aria-controls=${e === "openTasks" ? "upcoming-work" : H} title=${this.tr(e)} @click=${() => this.activateOverviewStat(e)}><strong>${t}</strong><span class="stat-label-full">${this.tr(e)}</span><span class="stat-label-short" aria-hidden="true">${this.tr("compact_" + e)}</span></button>`)}
       </div>
       ${this.tables.plants.length ? H : B`<section class="panel">${this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}</section>`}
+      ${this.renderWeather()}
       <div class="columns">
         <section class="panel">
           <div class="section-head">
@@ -6346,6 +6547,69 @@ var Jn = class extends Ze {
           ${this.renderTasks(!1)}
         </section>
       </div>`;
+	}
+	openPostpone(e) {
+		this.postponedTask = e, this.postponeDate = t(e, "date"), this.error = "";
+	}
+	async savePostpone(e) {
+		e.preventDefault();
+		let n = this.postponedTask;
+		if (!n || this.busy) return;
+		let r = { date: this.postponeDate };
+		t(n, "repeat_until") && this.postponeDate > t(n, "repeat_until") && (r.repeat_until = null, r.repeat_every_days = null), (n.data.personal_generated ? await this.action("postpone_personal_task", {
+			id: n.id,
+			revision: n.revision,
+			date: this.postponeDate
+		}) : await this.action("update", {
+			table: "tasks",
+			id: n.id,
+			revision: n.revision,
+			data: r
+		})) !== void 0 && (this.postponedTask = null);
+	}
+	renderPostpone() {
+		return B`<dialog
+      id="postpone-dialog"
+      aria-labelledby="postpone-title"
+      @close=${() => {
+			this.postponedTask = null;
+		}}
+      @cancel=${(e) => {
+			this.busy && e.preventDefault();
+		}}
+    >
+      ${this.postponedTask ? B`<form @submit=${this.savePostpone}>
+              <div class="dialog-head">
+                <h2 id="postpone-title">${this.tr("postponeTask")}</h2>
+              </div>
+              <div class="dialog-body">
+                <h3>${t(this.postponedTask, "title")}</h3>
+                <p>${this.tr("postponeHint")}</p>
+                <label
+                  >${this.tr("newDueDate")}<input
+                    type="date"
+                    required
+                    .value=${this.postponeDate}
+                    @input=${(e) => {
+			this.postponeDate = e.target.value;
+		}} /></label
+                >${this.error ? B`<p class="notice error" role="alert">${this.error}</p>` : H}
+              </div>
+              <div class="dialog-foot">
+                <button
+                  type="button"
+                  ?disabled=${this.busy}
+                  @click=${() => {
+			this.postponedTask = null;
+		}}
+                >
+                  ${this.tr("cancel")}</button
+                ><button type="submit" class="primary" ?disabled=${this.busy}>
+                  ${this.tr("save")}
+                </button>
+              </div>
+            </form>` : H}
+    </dialog>`;
 	}
 	toggleTask(e) {
 		this.busy || (e.data.completed ? this.setTaskCompleted(e, !1) : this.completing = e);
@@ -6732,20 +6996,20 @@ var Jn = class extends Ze {
           </article>`)}${n.length ? H : B`<p class="muted">${this.tr("noSeedLots")}</p>`}
     </section>`;
 	}
-	async editJournal(e) {
+	async editJournal(e, t = "cultivation_journal") {
 		if (!this.api || !this.editable || this.busy) return;
-		let t = this.api, n = this.connectionGeneration;
+		let n = this.api, r = this.connectionGeneration;
 		this.busy = !0;
 		try {
-			let r = await t.command("get", {
-				table: "cultivation_journal",
+			let i = await n.command("get", {
+				table: t,
 				id: e.id
 			});
-			n === this.connectionGeneration && this.editable && this.startEditor("cultivation_journal", r);
+			r === this.connectionGeneration && this.editable && this.startEditor(t, i);
 		} catch (e) {
-			n === this.connectionGeneration && (this.error = U(this.language, e));
+			r === this.connectionGeneration && (this.error = U(this.language, e));
 		} finally {
-			n === this.connectionGeneration && (this.busy = !1);
+			r === this.connectionGeneration && (this.busy = !1);
 		}
 	}
 	async newJournal(e, t = "observation", n = !1) {
@@ -6838,41 +7102,42 @@ var Jn = class extends Ze {
 	}
 	renderGardenMode() {
 		let e = [...this.tables.cultivations].sort((e, n) => t(n, "date").localeCompare(t(e, "date"))), n = e.find((e) => e.id === this.gardenCulture) || e.find((e) => !["completed", "failed"].includes(this.status(e))) || e[0];
-		return B`<section class="panel garden-mode">
-      <h2>${this.tr("cultureView_garden")}</h2>
-      ${n ? B`<label
-                >${this.tr("chooseCulture")}<select
-                  aria-label=${this.tr("chooseCulture")}
-                  .value=${n.id}
-                  @change=${(e) => {
+		return B`${this.renderWeather()}
+      <section class="panel garden-mode">
+        <h2>${this.tr("cultureView_garden")}</h2>
+        ${n ? B`<label
+                  >${this.tr("chooseCulture")}<select
+                    aria-label=${this.tr("chooseCulture")}
+                    .value=${n.id}
+                    @change=${(e) => {
 			this.gardenCulture = e.target.value;
 		}}
+                  >
+                    ${e.map((e) => B`<option value=${e.id} .selected=${e.id === n.id}>${this.plantName(e)} · ${t(e, "date")} · ${this.nameFor(t(e, "location_id"), "locations")}</option>`)}
+                  </select></label
                 >
-                  ${e.map((e) => B`<option value=${e.id} .selected=${e.id === n.id}>${this.plantName(e)} · ${t(e, "date")} · ${this.nameFor(t(e, "location_id"), "locations")}</option>`)}
-                </select></label
-              >
-              <h3>${this.plantName(n)}</h3>
-              ${this.editable ? B`<div class="garden-actions">
-                      <button
-                        @click=${() => this.newJournal(n, "observation", !0)}
-                      >
-                        ${$("camera")}${this.tr("takePhoto")}</button
-                      ><button @click=${() => this.newJournal(n)}>
-                        ${$("edit")}${this.tr("addObservation")}</button
-                      ><button
-                        class="primary"
-                        @click=${() => this.newJournal(n, "harvest")}
-                      >
-                        ${$("harvest")}${this.tr("recordHarvest")}</button
-                      ><button
-                        @click=${async () => {
+                <h3>${this.plantName(n)}</h3>
+                ${this.editable ? B`<div class="garden-actions">
+                        <button
+                          @click=${() => this.newJournal(n, "observation", !0)}
+                        >
+                          ${$("camera")}${this.tr("takePhoto")}</button
+                        ><button @click=${() => this.newJournal(n)}>
+                          ${$("edit")}${this.tr("addObservation")}</button
+                        ><button
+                          class="primary"
+                          @click=${() => this.newJournal(n, "harvest")}
+                        >
+                          ${$("harvest")}${this.tr("recordHarvest")}</button
+                        ><button
+                          @click=${async () => {
 			await this.navigate("overview"), await this.updateComplete, this.renderRoot.querySelector("#upcoming-work")?.scrollIntoView({ block: "start" });
 		}}
-                      >
-                        ${$("check")}${this.tr("finishWork")}
-                      </button>
-                    </div>` : H}${this.renderHarvestSummary(n)}${this.renderJournal(n)}` : this.empty("emptyCultures")}
-    </section>`;
+                        >
+                          ${$("check")}${this.tr("finishWork")}
+                        </button>
+                      </div>` : H}${this.renderHarvestSummary(n)}${this.renderJournal(n)}` : this.empty("emptyCultures")}
+      </section>`;
 	}
 	renderHarvestAnalysis() {
 		let e = this.tables.cultivation_journal.filter((e) => e.data.entry_kind === "harvest"), n = [...new Set(e.map((e) => t(e, "date").slice(0, 4)))].sort().reverse(), r = Tt(e, this.tables.cultivations, this.harvestBy, {
@@ -7040,44 +7305,51 @@ var Jn = class extends Ze {
           </thead>
           <tbody>
             ${n.map((n) => B`<tr>
-                  <th scope="row">
-                    <button
-                      class="link stock-open"
-                      aria-label=${`${this.tr("manageStock")}: ${t(n, "name")}`}
-                      @click=${async () => {
-			this.stockPlant = n.id, await this.updateComplete, this.renderRoot.querySelector("#seed-lots")?.scrollIntoView({ block: "start" });
+                    <th scope="row">
+                      <button
+                        class="link stock-open"
+                        aria-label=${`${this.tr("manageStock")}: ${t(n, "name")}`}
+                        @click=${async () => {
+			this.stockPlant = this.stockPlant === n.id ? "" : n.id, await this.updateComplete, this.renderRoot.querySelector("#seed-lots")?.scrollIntoView({ block: "nearest" });
 		}}
-                    >
-                      ${t(n, "name")}
-                    </button>
-                  </th>
-                  ${e.map((e) => B`<td>
-                        <label class="seed-choice"
-                          ><input
-                            type="radio"
-                            name=${`seed-${n.id}`}
-                            aria-label=${`${t(n, "name")}: ${this.tr("seed_" + e)}`}
-                            .checked=${mt(this.seedState(n) === e)}
-                            ?disabled=${!this.editable || this.busy}
-                            @change=${() => this.changeSeed(n, e)}
-                        /></label>
-                      </td>`)}
-                  <td>
-                    <button
-                      aria-label=${`${this.tr("seedLots")}: ${t(n, "name")}`}
-                      @click=${async () => {
-			this.stockPlant = n.id, await this.updateComplete, this.renderRoot.querySelector("#seed-lots")?.scrollIntoView({ block: "start" });
+                      >
+                        ${t(n, "name")}
+                      </button>
+                    </th>
+                    ${e.map((e) => B`<td>
+                          <label class="seed-choice"
+                            ><input
+                              type="radio"
+                              name=${`seed-${n.id}`}
+                              aria-label=${`${t(n, "name")}: ${this.tr("seed_" + e)}`}
+                              .checked=${mt(this.seedState(n) === e)}
+                              ?disabled=${!this.editable || this.busy}
+                              @change=${() => this.changeSeed(n, e)}
+                          /></label>
+                        </td>`)}
+                    <td>
+                      <button
+                        aria-label=${`${this.tr("seedLots")}: ${t(n, "name")}`}
+                        @click=${async () => {
+			this.stockPlant = this.stockPlant === n.id ? "" : n.id, await this.updateComplete, this.renderRoot.querySelector("#seed-lots")?.scrollIntoView({ block: "nearest" });
 		}}
-                    >
-                      ${this.tables.seed_lots.filter((e) => t(e, "plant_id") === n.id).length}
-                      · ${this.tr("manageStock")}
-                    </button>
-                  </td>
-                </tr>`)}
+                      >
+                        ${this.tables.seed_lots.filter((e) => t(e, "plant_id") === n.id).length}
+                        · ${this.tr("manageStock")}
+                      </button>
+                    </td>
+                  </tr>
+                  ${this.stockPlant === n.id ? B`<tr class="stock-expanded">
+                          <td colspan="6">
+                            <div class="stock-expanded-body">
+                              ${this.renderSeedLots()}
+                            </div>
+                          </td>
+                        </tr>` : H}`)}
           </tbody>
         </table>
       </div>
-      ${n.length ? H : this.empty("noResults")}${this.renderSeedLots()}`;
+      ${n.length ? H : this.empty("noResults")}`;
 	}
 	renderTasks(e = !0) {
 		let n = this.tables.tasks.filter((t) => e || !t.data.completed).sort((e, n) => t(e, "date").localeCompare(t(n, "date")));
@@ -7099,6 +7371,7 @@ var Jn = class extends Ze {
                     ${g(e, this.language)}</small
                   >${t(e, "notes") ? B`<p>${t(e, "notes")}</p>` : H}${e.data.completed ? B`<span class="badge">${this.tr("completed")}</span>` : H}
                 </div>
+                ${!e.data.completed && (e.data.personal_generated || this.editable) ? B`<button aria-label=${`${this.tr("postponeTask")}: ${t(e, "title")}`} ?disabled=${this.busy} @click=${() => this.openPostpone(e)}>${this.tr("postponeTask")}</button>` : H}
                 ${e.data.personal_generated ? B`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(e)}>${$("check")}</button>` : this.editable ? B`<button class="icon" aria-label=${this.tr(e.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(e)}>${$("check")}</button><button @click=${() => this.startEditor("tasks", e)}>${this.tr("edit")}</button>` : H}
               </article>`) : B`<p class="empty">${this.tr("noTasks")}</p>`}`;
 	}
@@ -7363,6 +7636,64 @@ var Jn = class extends Ze {
         </div>
       </div>`;
 	}
+	renderCultureCard(e) {
+		let n = e.data.snapshot;
+		return B`<article class="plant catalog-card culture-card">
+      <div class="catalog-card-heading">
+        ${this.plantImage(e, "plant-photo", "cultivations")}
+        <div>
+          <h2>
+            <button
+              class="link"
+              @click=${() => {
+			this.selected = {
+				kind: "culture",
+				id: e.id
+			};
+		}}
+            >
+              ${this.plantName(e)}
+            </button>
+          </h2>
+          <i>${String(n?.plant?.botanical_name || "")}</i
+          ><span class="badge">${this.lab(this.status(e))}</span>
+        </div>
+      </div>
+      <dl class="catalog-facts">
+        <div>
+          <dt>${this.tr("sowingDate")}</dt>
+          <dd>
+            ${h(x(e, this.tables.cultivation_events) || t(e, "date"), this.language)}
+          </dd>
+        </div>
+        <div>
+          <dt>${this.tr("variety")}</dt>
+          <dd>${String(n?.variety?.name || "—")}</dd>
+        </div>
+        <div>
+          <dt>${this.tr("location_id")}</dt>
+          <dd>${this.nameFor(t(e, "location_id"), "locations")}</dd>
+        </div>
+        <div>
+          <dt>${this.tr("plantCountShort")}</dt>
+          <dd>${e.data.plant_count ?? "—"}</dd>
+        </div>
+      </dl>
+      <div class="actions">
+        <button
+          class="catalog-details"
+          @click=${() => {
+			this.selected = {
+				kind: "culture",
+				id: e.id
+			};
+		}}
+        >
+          ${this.tr("details")}${$("arrow")}</button
+        >${this.editable ? B`<button class="icon" aria-label=${`${this.tr("edit")}: ${this.plantName(e)}`} @click=${() => this.startEditor("cultivations", e)}>${$("edit")}</button><button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(e)}`} @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: e.id })}>${$("plus")}</button>` : H}
+      </div>
+    </article>`;
+	}
 	renderCultures() {
 		let e = this.tables.cultivations.filter((e) => this.cultureScope === "planned" ? this.status(e) === "planned" : this.cultureScope === "active" ? ![
 			"planned",
@@ -7386,36 +7717,7 @@ var Jn = class extends Ze {
         >
       </div>
       ${e.length ? B`<div class="grid">
-              ${e.map((e) => B`<article class="plant">
-                    <div class="plant-title">
-                      <span class="plant-symbol">${$("cultures")}</span>
-                      <h3>${this.plantName(e)}</h3>
-                    </div>
-                    <div>
-                      <span class="badge"
-                        >${this.lab(this.status(e))}</span
-                      >
-                    </div>
-                    <p>
-                      ${h(x(e, this.tables.cultivation_events) || t(e, "date"), this.language)}
-                      · ${this.lab(t(e, "method"))}<br /><span
-                        class="muted"
-                        >${this.nameFor(t(e, "location_id"), "locations")}</span
-                      >
-                    </p>
-                    <div class="actions">
-                      <button
-                        @click=${() => {
-			this.selected = {
-				kind: "culture",
-				id: e.id
-			};
-		}}
-                      >
-                        ${this.tr("details")}${$("arrow")}</button
-                      >${this.editable ? B`<button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(e)}`} @click=${() => this.startEditor("cultivation_events", void 0, { cultivation_id: e.id })}>${$("plus")}</button>` : H}
-                    </div>
-                  </article>`)}
+              ${e.map((e) => this.renderCultureCard(e))}
             </div>` : this.empty(this.cultureScope === "current" ? "emptyCultures" : "noCulturesMatch")}
       <section class="panel" style="margin-top:24px">
         <div class="section-head">
@@ -8100,7 +8402,14 @@ var Jn = class extends Ze {
 	}
 	renderCultureDetail(e) {
 		let n = e.data.snapshot, r = n && typeof n == "object" && !Array.isArray(n) ? n : void 0;
-		return B`<p>
+		return B`<div class="culture-profile-heading">
+        ${this.plantImage(e, "profile-photo", "cultivations")}
+        <div>
+          <h3>${this.plantName(e)}</h3>
+          <p>${this.lab(t(e, "method"))}</p>
+        </div>
+      </div>
+      <p>
         <span class="badge">${this.lab(this.status(e))}</span>
       </p>
       <dl>
@@ -8498,6 +8807,43 @@ var Jn = class extends Ze {
 		};
 		return B`<section class="panel">
       <h2>${this.tr("integrationSettings")}</h2>
+      <section class="weather-settings">
+        <h3>${this.tr("weatherHints")}</h3>
+        <p class="muted">${this.tr("weatherSettingsHint")}</p>
+        <div class="form-grid">
+          <label
+            >${this.tr("weatherEntity")}<select
+              aria-label=${this.tr("weatherEntity")}
+              .value=${t.weather_entity ?? ""}
+              @change=${(e) => n("weather_entity", e.target.value)}
+            >
+              <option value="">${this.tr("weatherDisabled")}</option>
+              ${Object.entries(this.hass?.states ?? {}).filter(([e]) => e.startsWith("weather.")).map(([e, n]) => B`<option
+                      value=${e}
+                      .selected=${e === t.weather_entity}
+                    >
+                      ${String(n.attributes.friendly_name || e)}
+                    </option>`)}
+            </select></label
+          ><label
+            >${this.tr("weatherHours")}<input
+              type="number"
+              min="1"
+              max="72"
+              step="1"
+              .value=${String(t.weather_hours ?? 24)}
+              @input=${(e) => n("weather_hours", Number(e.target.value))} /></label
+          ><label
+            >${this.tr("weatherThreshold")}<input
+              type="number"
+              min="-20"
+              max="20"
+              step="any"
+              .value=${String(t.frost_warning_c ?? 0)}
+              @input=${(e) => n("frost_warning_c", Number(e.target.value))}
+          /></label>
+        </div>
+      </section>
       <form
         @submit=${async (e) => {
 			e.preventDefault();
@@ -8755,7 +9101,7 @@ var Jn = class extends Ze {
                           </section>` : this.page === "locations" ? this.renderLocations() : this.page === "reminders" ? this.renderPersonalReminders() : this.page === "neighbors" ? this.renderNeighbors() : this.page === "seeds" ? this.renderSeeds() : this.renderSettings() : B`<p role="status">${this.tr("loading")}</p>`}
         </main>
       </div>
-      ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}${this.renderTaskConfirmation()}${this.renderNeighborEditor()}
+      ${this.renderPostpone()}${this.renderDetail()}${this.renderEditor()}${this.renderReview()}${this.renderTaskConfirmation()}${this.renderNeighborEditor()}
       <dialog
         id="delete-dialog"
         aria-labelledby="delete-title"

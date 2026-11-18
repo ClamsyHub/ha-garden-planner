@@ -105,6 +105,7 @@ export const emptyTables = (): Tables => ({
 });
 
 export interface Capabilities {
+  weather?: boolean;
   can_edit: boolean;
   can_manage: boolean;
   http_transfer?: boolean;
@@ -119,6 +120,9 @@ export interface NotificationRoute {
   target: string;
 }
 export interface HostSettings {
+  weather_entity?: string;
+  weather_hours?: number;
+  frost_warning_c?: number;
   readers: string[] | null;
   notification_routes: NotificationRoute[];
   shared_channel_enabled: boolean;
@@ -142,4 +146,16 @@ export interface PersonalReminders {
   global_enabled: boolean;
   personal_destinations: number;
   shared_channel_enabled: boolean;
+}
+
+export interface WeatherResponse {
+  status: "disabled" | "unavailable" | "ready";
+  entity?: string;
+  name?: string;
+  hours?: number;
+  minimum_c?: number;
+  datetime?: string;
+  forecast_type?: string;
+  checked_at?: string;
+  alerts: { id: string; name: string }[];
 }

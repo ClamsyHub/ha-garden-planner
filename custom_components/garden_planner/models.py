@@ -94,6 +94,7 @@ NUMBER_FIELDS = {
     "row_spacing_cm",
     "duration_days_min",
     "duration_days_max",
+    "repeat_every_days",
     "plant_count",
     "amount",
     "purchase_year",
@@ -139,6 +140,7 @@ PLANT_FIELDS = {
     "notes",
     "light",
     "water",
+    "frost_sensitive",
     "frost",
     "care",
     "site",
@@ -169,7 +171,7 @@ SEED_STATES = ("unplanned", "available", "buy", "unneeded")
 
 FIELDS: dict[str, set[str]] = {
     "plants": PLANT_FIELDS | GARDEN_FIELDS,
-    "varieties": PLANT_FIELDS | {"plant_id"},
+    "varieties": (PLANT_FIELDS - {"frost_sensitive"}) | {"plant_id"},
     "growing_windows": {
         "plant_id",
         "variety_id",
@@ -230,6 +232,9 @@ FIELDS: dict[str, set[str]] = {
         "harvest_context",
     },
     "cultivations": {
+        "image_data",
+        "outdoors",
+        "frost_sensitive",
         "plant_count",
         "plant_id",
         "variety_id",
@@ -248,6 +253,9 @@ FIELDS: dict[str, set[str]] = {
     },
     "cultivation_events": {"cultivation_id", "date", "status", "notes", "origin"},
     "tasks": {
+        "repeat_every_days",
+        "repeat_until",
+        "next_task_id",
         "title",
         "date",
         "activity",
@@ -376,11 +384,25 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
                 raise ValidationError(f"{key} must be an integer.")
         elif key.endswith("_id"):
             identifier(value)
-        elif key in {"archived", "completed"}:
+        elif key in {"archived", "completed", "frost_sensitive", "outdoors"}:
             if type(value) is not bool:
                 raise ValidationError(f"{key} must be boolean.")
-        elif key in {"date", "best_before", "opened_on", "germination_tested_on"}:
+        elif key in {
+            "date",
+            "best_before",
+            "opened_on",
+            "germination_tested_on",
+            "repeat_until",
+        }:
             iso_date(value)
+    if table == "tasks":
+        every = result.get("repeat_every_days")
+        if every is not None and (type(every) is not int or not 1 <= every <= 366):
+            raise ValidationError("Repeat interval must be 1 to 366 whole days.")
+        if result.get("repeat_until") and (
+            not every or result["repeat_until"] < result["date"]
+        ):
+            raise ValidationError("Repeat end must not precede the due date.")
     if result.get("plant_count") is not None and (
         type(result["plant_count"]) is not int
         or not 1 <= result["plant_count"] <= 1000000
@@ -583,7 +605,10 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
         if result.get("measurement_kind") is None:
             raise ValidationError("A sensor requires its measurement kind.")
     if not internal and (
-        "snapshot" in result or "origin" in result or "harvest_context" in result
+        "snapshot" in result
+        or "origin" in result
+        or "harvest_context" in result
+        or "next_task_id" in result
     ):
         raise ValidationError(
             "Historical snapshots and event origin are server-managed."

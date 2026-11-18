@@ -85,13 +85,15 @@ def import_csv(files: Any) -> dict[str, Any]:
             present = header[len(META) :]
             missing = set(fields) - set(present)
             optional = (
-                (GARDEN_FIELDS | {"image_data"})
+                (GARDEN_FIELDS | {"image_data", "frost_sensitive"})
                 if table == "plants"
                 else (
                     {"image_data"}
                     if table == "varieties"
-                    else {"plant_count"}
+                    else {"plant_count", "image_data", "outdoors", "frost_sensitive"}
                     if table == "cultivations"
+                    else {"repeat_every_days", "repeat_until", "next_task_id"}
+                    if table == "tasks"
                     else set()
                 )
             )

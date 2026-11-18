@@ -12,6 +12,7 @@ from .models import (
     NotFoundError,
     StorageError,
     ValidationError,
+    iso_date,
     positive_revision,
 )
 
@@ -108,6 +109,8 @@ def reconcile(
                 )
     for task_id, data in wanted.items():
         record = result.get(task_id)
+        if record and record["data"].get("deferred_until"):
+            data = {**data, "deferred_until": record["data"]["deferred_until"]}
         if record and record["data"].get("completed"):
             continue
         if record is None:
@@ -143,12 +146,37 @@ def reconcile(
 
 
 def visible(records: dict[str, Any]) -> list[dict[str, Any]]:
-    """Private storage metadata is never returned to the frontend."""
-    return [
-        deepcopy({k: v for k, v in record.items() if k != "cancelled"})
-        for record in records.values()
-        if not record.get("cancelled")
-    ]
+    """Expose effective due dates, retaining immutable seasonal identity internally."""
+    result = []
+    for record in records.values():
+        if record.get("cancelled"):
+            continue
+        item = deepcopy({k: v for k, v in record.items() if k != "cancelled"})
+        if item["data"].get("deferred_until"):
+            item["data"]["original_date"] = item["data"]["date"]
+            item["data"]["date"] = item["data"]["deferred_until"]
+            if item["data"].get("end_date", "9999") < item["data"]["date"]:
+                item["data"].pop("end_date", None)
+        result.append(item)
+    return result
+
+
+def postpone(
+    existing: dict[str, Any], task_id: str, revision: int, due: str, stamp: str
+) -> dict[str, Any]:
+    positive_revision(revision)
+    iso_date(due)
+    record = existing.get(task_id)
+    if record is None or record.get("cancelled"):
+        raise NotFoundError("Personal task not found.")
+    if record["revision"] != revision:
+        raise ConflictError("Personal task changed; refresh before editing.")
+    if record["data"].get("completed"):
+        raise ValidationError("Only open tasks can be postponed.")
+    result = deepcopy(existing)
+    result[task_id]["data"]["deferred_until"] = due
+    result[task_id].update(revision=revision + 1, updated_at=stamp)
+    return result
 
 
 def complete(

@@ -606,6 +606,18 @@ class FeatureTests(IntegrationHarness):
                 )
             )["success"]
         )
+        self.assertFalse(
+            (
+                await self.request(
+                    "postpone_personal_task",
+                    {
+                        "id": task["id"],
+                        "revision": task["revision"],
+                        "date": "2026-11-20",
+                    },
+                )
+            )["success"]
+        )
         editor_tasks = (await self.request("list", {"table": "tasks"}))["result"]
         editor_task = next(r for r in editor_tasks if r["data"]["date"] == "2026-11-06")
         completed = await self.request(

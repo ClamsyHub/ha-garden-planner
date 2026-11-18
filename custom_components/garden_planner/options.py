@@ -6,6 +6,9 @@ from typing import Any
 from .models import ValidationError
 
 DEFAULT_OPTIONS: dict[str, Any] = {
+    "weather_entity": "",
+    "weather_hours": 24,
+    "frost_warning_c": 0,
     "writers": [],
     "readers": None,
     "notification_routes": [],
@@ -24,6 +27,21 @@ def validate_options(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict) or set(value) - set(DEFAULT_OPTIONS):
         raise ValidationError("Unknown settings.")
     result = {**DEFAULT_OPTIONS, **value}
+    if not isinstance(result["weather_entity"], str) or (
+        result["weather_entity"]
+        and not re.fullmatch(r"weather\.[a-z0-9_]+", result["weather_entity"])
+    ):
+        raise ValidationError("Choose a weather entity or leave weather disabled.")
+    if (
+        type(result["weather_hours"]) is not int
+        or not 1 <= result["weather_hours"] <= 72
+    ):
+        raise ValidationError("Weather horizon must be 1 to 72 hours.")
+    if (
+        type(result["frost_warning_c"]) not in (int, float)
+        or not -20 <= result["frost_warning_c"] <= 20
+    ):
+        raise ValidationError("Warning temperature must be between -20 and 20 Celsius.")
     if type(result["shared_channel_enabled"]) is not bool:
         raise ValidationError("Shared channel activation must be explicit.")
     if type(result["reminders_enabled"]) is not bool:

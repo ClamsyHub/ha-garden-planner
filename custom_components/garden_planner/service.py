@@ -62,6 +62,8 @@ PARAMETERS: dict[str, tuple[set[str], set[str]]] = {
     "set_personal_task_completed": ({"id", "revision", "completed"}, set()),
     "set_user_reminders": ({"changes"}, set()),
     "set_user_reminder": ({"plant_id", "activity", "enabled"}, set()),
+    "get_weather": (set(), set()),
+    "postpone_personal_task": ({"id", "revision", "date"}, set()),
     "get_settings": (set(), set()),
     "set_settings": ({"settings", "confirm"}, set()),
     "reminder_log": (set(), set()),
@@ -149,6 +151,8 @@ class PlannerService:
         if operation == "reminder_log":
             return await self.worker.async_call("reminder_log")
         if operation in {
+            "get_weather",
+            "postpone_personal_task",
             "get_settings",
             "set_settings",
             "get_user_reminders",
@@ -189,7 +193,8 @@ class PlannerService:
                 if "filters" in params and not isinstance(params["filters"], dict):
                     raise ValidationError("Filters must be an object.")
                 include_images = params.get(
-                    "include_images", params["table"] != "cultivation_journal"
+                    "include_images",
+                    params["table"] not in {"cultivation_journal", "cultivations"},
                 )
                 if type(include_images) is not bool:
                     raise ValidationError("Image inclusion must be boolean.")

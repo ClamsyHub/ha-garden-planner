@@ -9,6 +9,7 @@ import type {
   SettingsResponse,
   NotificationRoute,
   PersonalReminders,
+  WeatherResponse,
 } from "./types";
 import {
   LitElement,
@@ -172,6 +173,10 @@ export class GardenPlannerPanel extends LitElement {
     seedDraft: { state: true },
     imageLoading: { state: true },
     matrixQuery: { state: true },
+    postponedTask: { state: true },
+    postponeDate: { state: true },
+    weather: { state: true },
+    weatherLoading: { state: true },
     stockPlant: { state: true },
     cultureView: { state: true },
     gardenCulture: { state: true },
@@ -244,6 +249,11 @@ export class GardenPlannerPanel extends LitElement {
     goodNames: string;
     badNames: string;
   } | null = null;
+  private postponedTask: Entity | null = null;
+  private postponeDate = "";
+  private weather?: WeatherResponse;
+  private weatherLoading = false;
+  private weatherTimer?: ReturnType<typeof setInterval>;
   private stockPlant = "";
   private cultureView: "list" | "garden" | "harvest" = "list";
   private gardenCulture = "";
@@ -414,6 +424,12 @@ export class GardenPlannerPanel extends LitElement {
   };
   connectedCallback(): void {
     super.connectedCallback();
+    this.weatherTimer = setInterval(
+      () => {
+        void this.loadWeather();
+      },
+      15 * 60 * 1000,
+    );
     document.addEventListener("pointerdown", this.dismissCalendarFilters, true);
     document.addEventListener("keydown", this.closeCalendarFilters, true);
     document.addEventListener("visibilitychange", this.flushHiddenReminders);
@@ -437,6 +453,7 @@ export class GardenPlannerPanel extends LitElement {
     if (this.hass) void this.bind();
   }
   disconnectedCallback(): void {
+    if (this.weatherTimer) clearInterval(this.weatherTimer);
     void this.flushReminderChanges();
     void this.saveSeedInventory();
     this.layoutObserver?.disconnect();
@@ -493,6 +510,7 @@ export class GardenPlannerPanel extends LitElement {
     this.syncDialog("editor-dialog", this.editor !== null);
     this.syncDialog("delete-dialog", this.deleting !== null);
     this.syncDialog("complete-task-dialog", this.completing !== null);
+    this.syncDialog("postpone-dialog", this.postponedTask !== null);
     this.syncDialog("neighbors-dialog", this.neighborEditor !== null);
     this.syncDialog("review-dialog", this.reviewed !== null);
   }
@@ -544,6 +562,9 @@ export class GardenPlannerPanel extends LitElement {
     this.neighborPlant = "";
     this.neighborQuery = "";
     this.resetSeeds();
+    this.weather = undefined;
+    this.weatherLoading = false;
+    this.postponedTask = null;
     this.stockPlant = "";
     this.gardenCulture = "";
     this.cultureView = "list";
@@ -595,11 +616,14 @@ export class GardenPlannerPanel extends LitElement {
       this.capabilities = capabilities;
       if (!capabilities.can_edit) {
         this.neighborEditor = null;
+        if (this.postponedTask && !this.postponedTask.data.personal_generated)
+          this.postponedTask = null;
         this.resetSeeds();
         if (this.completing && !this.completing.data.personal_generated)
           this.completing = null;
       }
       this.loaded = true;
+      if (this.capabilities?.weather) void this.loadWeather();
       this.error = "";
       if (this.page === "reminders") await this.loadPersonalReminders();
     } catch (error) {
@@ -619,6 +643,8 @@ export class GardenPlannerPanel extends LitElement {
           this.preferencesGeneration++;
           this.capabilities = null;
           this.selected = null;
+          this.postponedTask = null;
+          this.weather = undefined;
           this.editor = null;
           this.loaded = true;
         }
@@ -760,6 +786,10 @@ export class GardenPlannerPanel extends LitElement {
     return cultureStatus(culture, this.tables.cultivation_events);
   }
   private startEditor(table: Table, record?: Entity, seed: Data = {}): void {
+    if (table === "cultivations" && record?.image_present) {
+      void this.editJournal(record, "cultivations");
+      return;
+    }
     this.imageGeneration++;
     this.imageLoading = false;
     this.sensorOpen = false;
@@ -772,6 +802,17 @@ export class GardenPlannerPanel extends LitElement {
         ? structuredClone(record.data)
         : initialData(table, this.timeZone, seed),
     };
+    if (table === "cultivations" && this.editor) {
+      const snapshot = record?.data.snapshot as { plant?: Data } | undefined;
+      const plant = this.tables.plants.find(
+        (p) => p.id === this.editor!.draft.plant_id,
+      );
+      this.editor.draft.frost_sensitive =
+        record?.data.frost_sensitive ??
+        snapshot?.plant?.frost_sensitive ??
+        plant?.data.frost_sensitive ??
+        false;
+    }
   }
   private fieldList(editor: Editor): Field[] {
     return fieldsFor(
@@ -790,6 +831,17 @@ export class GardenPlannerPanel extends LitElement {
       (!this.editor.record || this.editor.table === "seed_lots")
     )
       draft = { ...draft, variety_id: "" };
+    if (
+      key === "plant_id" &&
+      this.editor.table === "cultivations" &&
+      !this.editor.record
+    )
+      draft = {
+        ...draft,
+        frost_sensitive:
+          this.tables.plants.find((p) => p.id === value)?.data
+            .frost_sensitive === true,
+      };
     if (key === "cultivation_id" && this.editor.table === "tasks") {
       const culture = this.tables.cultivations.find((c) => c.id === value);
       if (culture)
@@ -1015,6 +1067,15 @@ export class GardenPlannerPanel extends LitElement {
   }
   private renderField(field: Field): TemplateResult {
     if (field.key === "sensor_entity_id") return this.renderSensorField(field);
+    if (field.type === "checkbox")
+      return html`<label class="check"
+        ><input
+          type="checkbox"
+          .checked=${this.editor?.draft[field.key] === true}
+          ?disabled=${this.busy || field.disabled}
+          @change=${(e: Event) => this.changeField(field.key, (e.target as HTMLInputElement).checked)}
+        />${this.tr(field.label ?? field.key)}</label
+      >`;
     const editor = this.editor!;
     const value = editor.draft[field.key];
     const input = (event: Event) =>
@@ -1105,7 +1166,16 @@ export class GardenPlannerPanel extends LitElement {
   private plantImage(
     record: Entity,
     className = "plant-photo",
+    table: "cultivations" | "cultivation_journal" = "cultivations",
   ): TemplateResult {
+    if (record.image_present)
+      return html`<garden-journal-photo
+        class=${className}
+        .api=${this.api}
+        .record=${record}
+        .table=${table}
+        .language=${this.language}
+      ></garden-journal-photo>`;
     const image = text(record, "image_data");
     return image.startsWith("data:image/png;base64,")
       ? html`<img
@@ -1122,7 +1192,9 @@ export class GardenPlannerPanel extends LitElement {
     const editor = this.editor;
     if (
       !editor ||
-      !["plants", "varieties", "cultivation_journal"].includes(editor.table)
+      !["plants", "varieties", "cultivation_journal", "cultivations"].includes(
+        editor.table,
+      )
     )
       return nothing;
     return html`<section class="image-editor">
@@ -1188,7 +1260,8 @@ export class GardenPlannerPanel extends LitElement {
                 ${this.error ? html`<p class="notice error" role="alert">${this.error}</p>` : nothing}
                 ${["plants", "varieties", "growing_windows", "cultivations", "locations"].includes(editor.table) ? html`<p class="notice">${this.tr("temperatureHint")}</p>` : nothing}
                 ${editor.draft.origin === "initial" ? html`<p class="notice">${this.tr("initialEventHint")}</p>` : nothing}
-                ${editor.table === "cultivations" ? html`<p class="notice">${this.tr("plantCountHint")}</p>` : nothing}
+                ${editor.table === "cultivations" ? html`<p class="notice">${this.tr("plantCountHint")} ${this.tr("cultureWeatherHint")}</p>` : nothing}
+                ${editor.table === "tasks" ? html`<p class="notice">${this.tr("repeatHint")}</p>` : nothing}
                 ${editor.table === "seed_lots" ? html`<p class="notice">${this.tr("seedLotHint")}</p>` : nothing}
                 ${editor.table === "cultivation_journal" ? html`<p class="notice">${this.tr("journalHint")}</p>` : nothing}
                 ${this.renderImageEditor()}
@@ -1563,6 +1636,63 @@ export class GardenPlannerPanel extends LitElement {
         this.cultureScope = key;
     }
   }
+  private async loadWeather(): Promise<void> {
+    if (!this.api || !this.capabilities?.weather || this.weatherLoading) return;
+    const api = this.api,
+      generation = this.connectionGeneration;
+    this.weatherLoading = true;
+    try {
+      const value = await api.command<WeatherResponse>("get_weather");
+      if (generation === this.connectionGeneration) this.weather = value;
+    } catch {
+      if (generation === this.connectionGeneration)
+        this.weather = { status: "unavailable", alerts: [] };
+    } finally {
+      if (generation === this.connectionGeneration) this.weatherLoading = false;
+    }
+  }
+  private renderWeather(): TemplateResult | typeof nothing {
+    const weather = this.weather;
+    if (!weather || weather.status === "disabled") return nothing;
+    return html`<section
+      class=${`panel weather-hints ${weather.alerts.length ? "weather-warning" : ""}`}
+      role="status"
+    >
+      <h2>${this.tr("weatherHints")}</h2>
+      ${
+        weather.status === "unavailable"
+          ? html`<p>${this.tr("weatherUnavailable")}</p>`
+          : html`<p>
+                <strong
+                  >${this.tr("forecastMinimum")}:
+                  ${weather.minimum_c?.toLocaleString(this.language, { maximumFractionDigits: 2 })}
+                  °C</strong
+                >
+                · ${weather.hours} ${this.tr("hoursAhead")}
+              </p>
+              <small class="muted"
+                >${weather.name || weather.entity} ·
+                ${this.tr("weatherForecastHint")}</small
+              >${
+                weather.alerts.length
+                  ? html`<p>${this.tr("frostAffected")}</p>
+                      <div class="actions">
+                        ${weather.alerts.map(
+                          (c) =>
+                            html`<button
+                              @click=${() => {
+                                this.selected = { kind: "culture", id: c.id };
+                              }}
+                            >
+                              ${c.name}
+                            </button>`,
+                        )}
+                      </div>`
+                  : html`<p class="muted">${this.tr("noFrostHint")}</p>`
+              }`
+      }
+    </section>`;
+  }
   private renderOverview(): TemplateResult {
     const windows = this.tables.growing_windows
       .filter(
@@ -1611,6 +1741,7 @@ export class GardenPlannerPanel extends LitElement {
         ${stats.map(([key, count]) => html`<button type="button" class="stat" aria-label=${`${count} ${this.tr(key)}`} aria-controls=${key === "openTasks" ? "upcoming-work" : nothing} title=${this.tr(key)} @click=${() => this.activateOverviewStat(key)}><strong>${count}</strong><span class="stat-label-full">${this.tr(key)}</span><span class="stat-label-short" aria-hidden="true">${this.tr("compact_" + key)}</span></button>`)}
       </div>
       ${!this.tables.plants.length ? html`<section class="panel">${this.empty("emptyPlants", "emptyPlantsBody", "newPlant", () => this.startEditor("plants"))}</section>` : nothing}
+      ${this.renderWeather()}
       <div class="columns">
         <section class="panel">
           <div class="section-head">
@@ -1664,6 +1795,85 @@ export class GardenPlannerPanel extends LitElement {
           ${this.renderTasks(false)}
         </section>
       </div>`;
+  }
+  private openPostpone(task: Entity): void {
+    this.postponedTask = task;
+    this.postponeDate = text(task, "date");
+    this.error = "";
+  }
+  private async savePostpone(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    const task = this.postponedTask;
+    if (!task || this.busy) return;
+    const data: Data = { date: this.postponeDate };
+    if (
+      text(task, "repeat_until") &&
+      this.postponeDate > text(task, "repeat_until")
+    ) {
+      data.repeat_until = null;
+      data.repeat_every_days = null;
+    }
+    const result = task.data.personal_generated
+      ? await this.action("postpone_personal_task", {
+          id: task.id,
+          revision: task.revision,
+          date: this.postponeDate,
+        })
+      : await this.action("update", {
+          table: "tasks",
+          id: task.id,
+          revision: task.revision,
+          data,
+        });
+    if (result !== undefined) this.postponedTask = null;
+  }
+  private renderPostpone(): TemplateResult {
+    return html`<dialog
+      id="postpone-dialog"
+      aria-labelledby="postpone-title"
+      @close=${() => {
+        this.postponedTask = null;
+      }}
+      @cancel=${(e: Event) => {
+        if (this.busy) e.preventDefault();
+      }}
+    >
+      ${
+        this.postponedTask
+          ? html`<form @submit=${this.savePostpone}>
+              <div class="dialog-head">
+                <h2 id="postpone-title">${this.tr("postponeTask")}</h2>
+              </div>
+              <div class="dialog-body">
+                <h3>${text(this.postponedTask, "title")}</h3>
+                <p>${this.tr("postponeHint")}</p>
+                <label
+                  >${this.tr("newDueDate")}<input
+                    type="date"
+                    required
+                    .value=${this.postponeDate}
+                    @input=${(e: Event) => {
+                      this.postponeDate = (e.target as HTMLInputElement).value;
+                    }} /></label
+                >${this.error ? html`<p class="notice error" role="alert">${this.error}</p>` : nothing}
+              </div>
+              <div class="dialog-foot">
+                <button
+                  type="button"
+                  ?disabled=${this.busy}
+                  @click=${() => {
+                    this.postponedTask = null;
+                  }}
+                >
+                  ${this.tr("cancel")}</button
+                ><button type="submit" class="primary" ?disabled=${this.busy}>
+                  ${this.tr("save")}
+                </button>
+              </div>
+            </form>`
+          : nothing
+      }
+    </dialog>`;
   }
   private toggleTask(task: Entity): void {
     if (this.busy) return;
@@ -2220,18 +2430,21 @@ export class GardenPlannerPanel extends LitElement {
       )}${!lots.length ? html`<p class="muted">${this.tr("noSeedLots")}</p>` : nothing}
     </section>`;
   }
-  private async editJournal(entry: Entity): Promise<void> {
+  private async editJournal(
+    entry: Entity,
+    table: "cultivations" | "cultivation_journal" = "cultivation_journal",
+  ): Promise<void> {
     if (!this.api || !this.editable || this.busy) return;
     const api = this.api,
       generation = this.connectionGeneration;
     this.busy = true;
     try {
       const full = await api.command<Entity>("get", {
-        table: "cultivation_journal",
+        table,
         id: entry.id,
       });
       if (generation === this.connectionGeneration && this.editable)
-        this.startEditor("cultivation_journal", full);
+        this.startEditor(table, full);
     } catch (error) {
       if (generation === this.connectionGeneration)
         this.error = errorText(this.language, error);
@@ -2369,53 +2582,56 @@ export class GardenPlannerPanel extends LitElement {
       cultures.find((c) => c.id === this.gardenCulture) ||
       cultures.find((c) => !["completed", "failed"].includes(this.status(c))) ||
       cultures[0];
-    return html`<section class="panel garden-mode">
-      <h2>${this.tr("cultureView_garden")}</h2>
-      ${
-        culture
-          ? html`<label
-                >${this.tr("chooseCulture")}<select
-                  aria-label=${this.tr("chooseCulture")}
-                  .value=${culture.id}
-                  @change=${(e: Event) => {
-                    this.gardenCulture = (e.target as HTMLSelectElement).value;
-                  }}
+    return html`${this.renderWeather()}
+      <section class="panel garden-mode">
+        <h2>${this.tr("cultureView_garden")}</h2>
+        ${
+          culture
+            ? html`<label
+                  >${this.tr("chooseCulture")}<select
+                    aria-label=${this.tr("chooseCulture")}
+                    .value=${culture.id}
+                    @change=${(e: Event) => {
+                      this.gardenCulture = (
+                        e.target as HTMLSelectElement
+                      ).value;
+                    }}
+                  >
+                    ${cultures.map((c) => html`<option value=${c.id} .selected=${c.id === culture.id}>${this.plantName(c)} · ${text(c, "date")} · ${this.nameFor(text(c, "location_id"), "locations")}</option>`)}
+                  </select></label
                 >
-                  ${cultures.map((c) => html`<option value=${c.id} .selected=${c.id === culture.id}>${this.plantName(c)} · ${text(c, "date")} · ${this.nameFor(text(c, "location_id"), "locations")}</option>`)}
-                </select></label
-              >
-              <h3>${this.plantName(culture)}</h3>
-              ${
-                this.editable
-                  ? html`<div class="garden-actions">
-                      <button
-                        @click=${() => this.newJournal(culture, "observation", true)}
-                      >
-                        ${icon("camera")}${this.tr("takePhoto")}</button
-                      ><button @click=${() => this.newJournal(culture)}>
-                        ${icon("edit")}${this.tr("addObservation")}</button
-                      ><button
-                        class="primary"
-                        @click=${() => this.newJournal(culture, "harvest")}
-                      >
-                        ${icon("harvest")}${this.tr("recordHarvest")}</button
-                      ><button
-                        @click=${async () => {
-                          await this.navigate("overview");
-                          await this.updateComplete;
-                          this.renderRoot
-                            .querySelector<HTMLElement>("#upcoming-work")
-                            ?.scrollIntoView({ block: "start" });
-                        }}
-                      >
-                        ${icon("check")}${this.tr("finishWork")}
-                      </button>
-                    </div>`
-                  : nothing
-              }${this.renderHarvestSummary(culture)}${this.renderJournal(culture)}`
-          : this.empty("emptyCultures")
-      }
-    </section>`;
+                <h3>${this.plantName(culture)}</h3>
+                ${
+                  this.editable
+                    ? html`<div class="garden-actions">
+                        <button
+                          @click=${() => this.newJournal(culture, "observation", true)}
+                        >
+                          ${icon("camera")}${this.tr("takePhoto")}</button
+                        ><button @click=${() => this.newJournal(culture)}>
+                          ${icon("edit")}${this.tr("addObservation")}</button
+                        ><button
+                          class="primary"
+                          @click=${() => this.newJournal(culture, "harvest")}
+                        >
+                          ${icon("harvest")}${this.tr("recordHarvest")}</button
+                        ><button
+                          @click=${async () => {
+                            await this.navigate("overview");
+                            await this.updateComplete;
+                            this.renderRoot
+                              .querySelector<HTMLElement>("#upcoming-work")
+                              ?.scrollIntoView({ block: "start" });
+                          }}
+                        >
+                          ${icon("check")}${this.tr("finishWork")}
+                        </button>
+                      </div>`
+                    : nothing
+                }${this.renderHarvestSummary(culture)}${this.renderJournal(culture)}`
+            : this.empty("emptyCultures")
+        }
+      </section>`;
   }
   private renderHarvestAnalysis(): TemplateResult {
     const entries = this.tables.cultivation_journal.filter(
@@ -2618,56 +2834,69 @@ export class GardenPlannerPanel extends LitElement {
             ${rows.map(
               (plant) =>
                 html`<tr>
-                  <th scope="row">
-                    <button
-                      class="link stock-open"
-                      aria-label=${`${this.tr("manageStock")}: ${text(plant, "name")}`}
-                      @click=${async () => {
-                        this.stockPlant = plant.id;
-                        await this.updateComplete;
-                        this.renderRoot
-                          .querySelector("#seed-lots")
-                          ?.scrollIntoView({ block: "start" });
-                      }}
-                    >
-                      ${text(plant, "name")}
-                    </button>
-                  </th>
-                  ${states.map(
-                    (state) =>
-                      html`<td>
-                        <label class="seed-choice"
-                          ><input
-                            type="radio"
-                            name=${`seed-${plant.id}`}
-                            aria-label=${`${text(plant, "name")}: ${this.tr("seed_" + state)}`}
-                            .checked=${live(this.seedState(plant) === state)}
-                            ?disabled=${!this.editable || this.busy}
-                            @change=${() => this.changeSeed(plant, state)}
-                        /></label>
-                      </td>`,
-                  )}
-                  <td>
-                    <button
-                      aria-label=${`${this.tr("seedLots")}: ${text(plant, "name")}`}
-                      @click=${async () => {
-                        this.stockPlant = plant.id;
-                        await this.updateComplete;
-                        this.renderRoot
-                          .querySelector("#seed-lots")
-                          ?.scrollIntoView({ block: "start" });
-                      }}
-                    >
-                      ${this.tables.seed_lots.filter((l) => text(l, "plant_id") === plant.id).length}
-                      · ${this.tr("manageStock")}
-                    </button>
-                  </td>
-                </tr>`,
+                    <th scope="row">
+                      <button
+                        class="link stock-open"
+                        aria-label=${`${this.tr("manageStock")}: ${text(plant, "name")}`}
+                        @click=${async () => {
+                          this.stockPlant =
+                            this.stockPlant === plant.id ? "" : plant.id;
+                          await this.updateComplete;
+                          this.renderRoot
+                            .querySelector("#seed-lots")
+                            ?.scrollIntoView({ block: "nearest" });
+                        }}
+                      >
+                        ${text(plant, "name")}
+                      </button>
+                    </th>
+                    ${states.map(
+                      (state) =>
+                        html`<td>
+                          <label class="seed-choice"
+                            ><input
+                              type="radio"
+                              name=${`seed-${plant.id}`}
+                              aria-label=${`${text(plant, "name")}: ${this.tr("seed_" + state)}`}
+                              .checked=${live(this.seedState(plant) === state)}
+                              ?disabled=${!this.editable || this.busy}
+                              @change=${() => this.changeSeed(plant, state)}
+                          /></label>
+                        </td>`,
+                    )}
+                    <td>
+                      <button
+                        aria-label=${`${this.tr("seedLots")}: ${text(plant, "name")}`}
+                        @click=${async () => {
+                          this.stockPlant =
+                            this.stockPlant === plant.id ? "" : plant.id;
+                          await this.updateComplete;
+                          this.renderRoot
+                            .querySelector("#seed-lots")
+                            ?.scrollIntoView({ block: "nearest" });
+                        }}
+                      >
+                        ${this.tables.seed_lots.filter((l) => text(l, "plant_id") === plant.id).length}
+                        · ${this.tr("manageStock")}
+                      </button>
+                    </td>
+                  </tr>
+                  ${
+                    this.stockPlant === plant.id
+                      ? html`<tr class="stock-expanded">
+                          <td colspan="6">
+                            <div class="stock-expanded-body">
+                              ${this.renderSeedLots()}
+                            </div>
+                          </td>
+                        </tr>`
+                      : nothing
+                  }`,
             )}
           </tbody>
         </table>
       </div>
-      ${!rows.length ? this.empty("noResults") : nothing}${this.renderSeedLots()}`;
+      ${!rows.length ? this.empty("noResults") : nothing}`;
   }
   private renderTasks(all = true): TemplateResult {
     const tasks = this.tables.tasks
@@ -2695,6 +2924,7 @@ export class GardenPlannerPanel extends LitElement {
                     ${taskDateLabel(task, this.language)}</small
                   >${text(task, "notes") ? html`<p>${text(task, "notes")}</p>` : nothing}${task.data.completed ? html`<span class="badge">${this.tr("completed")}</span>` : nothing}
                 </div>
+                ${!task.data.completed && (task.data.personal_generated || this.editable) ? html`<button aria-label=${`${this.tr("postponeTask")}: ${text(task, "title")}`} ?disabled=${this.busy} @click=${() => this.openPostpone(task)}>${this.tr("postponeTask")}</button>` : nothing}
                 ${task.data.personal_generated ? html`<span class="badge">${this.tr("personalTask")}</span><button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(task)}>${icon("check")}</button>` : this.editable ? html`<button class="icon" aria-label=${this.tr(task.data.completed ? "undoTask" : "taskDone")} ?disabled=${this.busy} @click=${() => this.toggleTask(task)}>${icon("check")}</button><button @click=${() => this.startEditor("tasks", task)}>${this.tr("edit")}</button>` : nothing}
               </article>`,
           )
@@ -3046,6 +3276,59 @@ export class GardenPlannerPanel extends LitElement {
         </div>
       </div>`;
   }
+  private renderCultureCard(culture: Entity): TemplateResult {
+    const snapshot = culture.data.snapshot as
+      { plant?: Data; variety?: Data } | undefined;
+    return html`<article class="plant catalog-card culture-card">
+      <div class="catalog-card-heading">
+        ${this.plantImage(culture, "plant-photo", "cultivations")}
+        <div>
+          <h2>
+            <button
+              class="link"
+              @click=${() => {
+                this.selected = { kind: "culture", id: culture.id };
+              }}
+            >
+              ${this.plantName(culture)}
+            </button>
+          </h2>
+          <i>${String(snapshot?.plant?.botanical_name || "")}</i
+          ><span class="badge">${this.lab(this.status(culture))}</span>
+        </div>
+      </div>
+      <dl class="catalog-facts">
+        <div>
+          <dt>${this.tr("sowingDate")}</dt>
+          <dd>
+            ${formatDate(sowingDate(culture, this.tables.cultivation_events) || text(culture, "date"), this.language)}
+          </dd>
+        </div>
+        <div>
+          <dt>${this.tr("variety")}</dt>
+          <dd>${String(snapshot?.variety?.name || "—")}</dd>
+        </div>
+        <div>
+          <dt>${this.tr("location_id")}</dt>
+          <dd>${this.nameFor(text(culture, "location_id"), "locations")}</dd>
+        </div>
+        <div>
+          <dt>${this.tr("plantCountShort")}</dt>
+          <dd>${culture.data.plant_count ?? "—"}</dd>
+        </div>
+      </dl>
+      <div class="actions">
+        <button
+          class="catalog-details"
+          @click=${() => {
+            this.selected = { kind: "culture", id: culture.id };
+          }}
+        >
+          ${this.tr("details")}${icon("arrow")}</button
+        >${this.editable ? html`<button class="icon" aria-label=${`${this.tr("edit")}: ${this.plantName(culture)}`} @click=${() => this.startEditor("cultivations", culture)}>${icon("edit")}</button><button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(culture)}`} @click=${() => this.startEditor("cultivation_events", undefined, { cultivation_id: culture.id })}>${icon("plus")}</button>` : nothing}
+      </div>
+    </article>`;
+  }
   private renderCultures(): TemplateResult {
     const cultures = this.tables.cultivations.filter((c) =>
       this.cultureScope === "planned"
@@ -3077,36 +3360,7 @@ export class GardenPlannerPanel extends LitElement {
       ${
         cultures.length
           ? html`<div class="grid">
-              ${cultures.map(
-                (culture) =>
-                  html`<article class="plant">
-                    <div class="plant-title">
-                      <span class="plant-symbol">${icon("cultures")}</span>
-                      <h3>${this.plantName(culture)}</h3>
-                    </div>
-                    <div>
-                      <span class="badge"
-                        >${this.lab(this.status(culture))}</span
-                      >
-                    </div>
-                    <p>
-                      ${formatDate(sowingDate(culture, this.tables.cultivation_events) || text(culture, "date"), this.language)}
-                      · ${this.lab(text(culture, "method"))}<br /><span
-                        class="muted"
-                        >${this.nameFor(text(culture, "location_id"), "locations")}</span
-                      >
-                    </p>
-                    <div class="actions">
-                      <button
-                        @click=${() => {
-                          this.selected = { kind: "culture", id: culture.id };
-                        }}
-                      >
-                        ${this.tr("details")}${icon("arrow")}</button
-                      >${this.editable ? html`<button class="icon" aria-label=${`${this.tr("newEvent")}: ${this.plantName(culture)}`} @click=${() => this.startEditor("cultivation_events", undefined, { cultivation_id: culture.id })}>${icon("plus")}</button>` : nothing}
-                    </div>
-                  </article>`,
-              )}
+              ${cultures.map((culture) => this.renderCultureCard(culture))}
             </div>`
           : this.empty(
               this.cultureScope === "current"
@@ -4107,7 +4361,14 @@ export class GardenPlannerPanel extends LitElement {
       snapshot && typeof snapshot === "object" && !Array.isArray(snapshot)
         ? snapshot
         : undefined;
-    return html`<p>
+    return html`<div class="culture-profile-heading">
+        ${this.plantImage(culture, "profile-photo", "cultivations")}
+        <div>
+          <h3>${this.plantName(culture)}</h3>
+          <p>${this.lab(text(culture, "method"))}</p>
+        </div>
+      </div>
+      <p>
         <span class="badge">${this.lab(this.status(culture))}</span>
       </p>
       <dl>
@@ -4655,6 +4916,48 @@ export class GardenPlannerPanel extends LitElement {
     };
     return html`<section class="panel">
       <h2>${this.tr("integrationSettings")}</h2>
+      <section class="weather-settings">
+        <h3>${this.tr("weatherHints")}</h3>
+        <p class="muted">${this.tr("weatherSettingsHint")}</p>
+        <div class="form-grid">
+          <label
+            >${this.tr("weatherEntity")}<select
+              aria-label=${this.tr("weatherEntity")}
+              .value=${draft.weather_entity ?? ""}
+              @change=${(e: Event) => set("weather_entity", (e.target as HTMLSelectElement).value)}
+            >
+              <option value="">${this.tr("weatherDisabled")}</option>
+              ${Object.entries(this.hass?.states ?? {})
+                .filter(([id]) => id.startsWith("weather."))
+                .map(
+                  ([id, state]) =>
+                    html`<option
+                      value=${id}
+                      .selected=${id === draft.weather_entity}
+                    >
+                      ${String(state.attributes.friendly_name || id)}
+                    </option>`,
+                )}
+            </select></label
+          ><label
+            >${this.tr("weatherHours")}<input
+              type="number"
+              min="1"
+              max="72"
+              step="1"
+              .value=${String(draft.weather_hours ?? 24)}
+              @input=${(e: Event) => set("weather_hours", Number((e.target as HTMLInputElement).value))} /></label
+          ><label
+            >${this.tr("weatherThreshold")}<input
+              type="number"
+              min="-20"
+              max="20"
+              step="any"
+              .value=${String(draft.frost_warning_c ?? 0)}
+              @input=${(e: Event) => set("frost_warning_c", Number((e.target as HTMLInputElement).value))}
+          /></label>
+        </div>
+      </section>
       <form
         @submit=${async (event: SubmitEvent) => {
           event.preventDefault();
@@ -4963,7 +5266,7 @@ export class GardenPlannerPanel extends LitElement {
           }
         </main>
       </div>
-      ${this.renderDetail()}${this.renderEditor()}${this.renderReview()}${this.renderTaskConfirmation()}${this.renderNeighborEditor()}
+      ${this.renderPostpone()}${this.renderDetail()}${this.renderEditor()}${this.renderReview()}${this.renderTaskConfirmation()}${this.renderNeighborEditor()}
       <dialog
         id="delete-dialog"
         aria-labelledby="delete-title"

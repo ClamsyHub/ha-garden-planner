@@ -38,7 +38,7 @@ class GardenCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "locations",
             ):
                 data[table] = await self.service.worker.async_call(
-                    "list_records", table
+                    "list_records", table, include_images=False
                 )
             return data
         except PlannerError as err:

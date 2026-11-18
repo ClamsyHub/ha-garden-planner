@@ -6,6 +6,7 @@ import { t } from "./i18n";
 /** Authenticated lazy photos: never load a multi-year photo archive in list calls. */
 export class JournalPhoto extends LitElement {
   static properties = {
+    table: { attribute: false },
     api: { attribute: false },
     record: { attribute: false },
     language: { attribute: false },
@@ -13,6 +14,7 @@ export class JournalPhoto extends LitElement {
     failed: { state: true },
     loading: { state: true },
   };
+  declare table: "cultivations" | "cultivation_journal";
   declare api?: PlannerApi;
   declare record?: Entity;
   declare language: Language;
@@ -25,8 +27,8 @@ export class JournalPhoto extends LitElement {
   static styles = css`
     :host {
       display: block;
-      aspect-ratio: 4/3;
-      min-height: 120px;
+      aspect-ratio: var(--gp-photo-ratio, 4/3);
+      min-height: var(--gp-photo-min-height, 120px);
       max-width: 360px;
       background: var(--gp-soft, #edf4ec);
       border-radius: 14px;
@@ -56,6 +58,7 @@ export class JournalPhoto extends LitElement {
   constructor() {
     super();
     this.language = "de";
+    this.table = "cultivation_journal";
   }
   connectedCallback(): void {
     super.connectedCallback();
@@ -81,6 +84,7 @@ export class JournalPhoto extends LitElement {
     const previous = changed.get("record") as Entity | undefined;
     if (
       changed.has("api") ||
+      changed.has("table") ||
       (changed.has("record") &&
         (previous?.id !== this.record?.id ||
           previous?.revision !== this.record?.revision))
@@ -102,7 +106,7 @@ export class JournalPhoto extends LitElement {
     this.failed = false;
     try {
       const full = await api.command<Entity>("get", {
-        table: "cultivation_journal",
+        table: this.table,
         id: record.id,
       });
       if (token !== this.generation || api !== this.api || !this.isConnected)

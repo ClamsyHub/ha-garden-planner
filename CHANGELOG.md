@@ -2,6 +2,10 @@
 
 ## 0.1.12 — 2026-11-18
 
+- Upload cultivation cover photos from normal editing and show compact cultivation cards. Expand seed lots directly below the selected plant.
+- Postpone shared and personal tasks; create exactly one follow-up for completed recurring shared tasks within the optional end date.
+- Add optional forecast hints for explicitly frost-sensitive outdoor cultivations using an existing HA weather entity.
+
 - Add seed lots with quantity/unit, purchase year, best-before/opening dates, tested germination and storage location. Keep shopping status independent.
 - Add culture journal entries with local photo previews, observations and individual harvests.
 - Sum grams/kilograms separately from pieces and calculate per-plant yield from explicit plant counts once per contributing culture/unit. Compare by plant, variety, bed, harvest year or cultivation. Freeze harvest context when entries are created.

@@ -20,7 +20,7 @@ from .models import (
 )
 from .reminder_preferences import STORE_KEY, availability, selections
 from .storage import PlannerWorker
-from .task_planning import LABELS, PREFIX, complete, reconcile, visible
+from .task_planning import LABELS, PREFIX, complete, postpone, reconcile, visible
 
 
 class PersonalTasks:
@@ -73,6 +73,8 @@ class PersonalTasks:
                     timestamp(record.get("updated_at"))
                     item = record["data"]
                     iso_date(item.get("date"))
+                    if "deferred_until" in item:
+                        iso_date(item["deferred_until"])
                     if "end_date" in item:
                         iso_date(item["end_date"])
                         if item["end_date"] < item["date"]:
@@ -154,6 +156,18 @@ class PersonalTasks:
             existing = await self._load(user_id)
             records = complete(
                 existing, task_id, revision, completed, datetime.now(UTC).isoformat()
+            )
+            await self._save(user_id, records)
+            self.records[user_id] = records
+            return next(r for r in visible(records) if r["id"] == task_id)
+
+    async def async_postpone(
+        self, user_id: str, task_id: str, revision: int, due: str
+    ) -> dict[str, Any]:
+        async with self.lock:
+            existing = await self._load(user_id)
+            records = postpone(
+                existing, task_id, revision, due, datetime.now(UTC).isoformat()
             )
             await self._save(user_id, records)
             self.records[user_id] = records

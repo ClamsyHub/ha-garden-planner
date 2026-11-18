@@ -53,7 +53,10 @@ async def command(
         connection.send_error(msg["id"], err.code, str(err))
         return
     connection.send_result(msg["id"], result)
-    if msg["operation"] in WRITE_OPERATIONS:
+    if (
+        msg["operation"] in WRITE_OPERATIONS
+        or msg["operation"] == "postpone_personal_task"
+    ):
         async_dispatcher_send(hass, SIGNAL_CHANGED)
 
 

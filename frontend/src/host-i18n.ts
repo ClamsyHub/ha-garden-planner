@@ -1,5 +1,36 @@
 import type { Language } from "./types";
 const de = {
+  postponeTask: "Verschieben",
+  postponeHint:
+    "Neuen Termin wählen. Die Aufgabe bleibt offen und wird über die vorhandenen Erinnerungsziele zum neuen Termin berücksichtigt. Bei einem Termin nach dem Serienende endet die Wiederholung.",
+  newDueDate: "Neuer Termin",
+  repeat_every_days: "Wiederholen alle (Tage ab Fälligkeit)",
+  repeat_until: "Wiederholen bis (optional)",
+  repeatHint:
+    "Ohne Intervall eine einmalige Aufgabe. Nach Erledigung entsteht genau eine Folgeaufgabe im festen Tagesrhythmus ab dem bisherigen Termin. Überfällige Termine werden nicht automatisch übersprungen. Persönliche Pflanzen-Erinnerungen behalten ihren jährlichen Plan.",
+  frost_sensitive: "Frostempfindlich",
+  cultureOutdoors: "Steht tatsächlich im Freien",
+  cultureWeatherHint:
+    "Wetterhinweise gelten nur für aktive, tatsächlich im Freien stehende und als frostempfindlich markierte Kulturen.",
+  plantCountShort: "Pflanzenanzahl",
+  weatherHints: "Wetterhinweise",
+  weatherUnavailable:
+    "Keine auswertbare aktuelle Vorhersage verfügbar. Daraus wird keine Frostfreiheit abgeleitet.",
+  forecastMinimum: "Vorhergesagtes Minimum",
+  hoursAhead: "Stunden Vorschau",
+  weatherForecastHint:
+    "Vorhersage der gewählten HA-Wetterintegration; keine Messung am Beet. Anzeigehinweis, keine automatische Benachrichtigung.",
+  frostAffected:
+    "Temperatur unter der Warnschwelle: Diese empfindlichen Freilandkulturen prüfen und gegebenenfalls schützen.",
+  noFrostHint:
+    "Aktuell kein Hinweis für die entsprechend markierten Kulturen. Vorhersagen ersetzen die Prüfung vor Ort nicht.",
+  weatherSettingsHint:
+    "Optional eine vorhandene Home-Assistant-Wetterentität wählen. Hinweise erscheinen in Übersicht und Gartenmodus. Die Kultur muss als frostempfindlich und tatsächlich im Freien markiert sein; geplante, abgeschlossene und fehlgeschlagene Kulturen werden nicht gewarnt.",
+  weatherEntity: "Wetterentität",
+  weatherDisabled: "Wetterhinweise deaktiviert",
+  weatherHours: "Vorschau (Stunden)",
+  weatherThreshold: "Warnschwelle (°C)",
+
   harvestUnitsHint:
     "Gewicht und Stück werden getrennt ausgewertet. — bedeutet: Pflanzenanzahl nicht bekannt.",
   calculationHelp: "Wie wird gerechnet?",
@@ -244,6 +275,37 @@ const de = {
     "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger.",
 };
 const en: Record<keyof typeof de, string> = {
+  postponeTask: "Postpone",
+  postponeHint:
+    "Choose a new due date. The task stays open and existing reminder destinations use its new date. Moving beyond the series end stops repetition.",
+  newDueDate: "New due date",
+  repeat_every_days: "Repeat every (days from due date)",
+  repeat_until: "Repeat until (optional)",
+  repeatHint:
+    "Leave the interval blank for a one-off task. Completing creates exactly one follow-up in a fixed day rhythm from the previous due date. Overdue dates are not skipped automatically. Personal plant reminders keep their annual plan.",
+  frost_sensitive: "Frost sensitive",
+  cultureOutdoors: "Actually standing outdoors",
+  cultureWeatherHint:
+    "Weather hints apply only to active, explicitly outdoor and frost-sensitive cultivations.",
+  plantCountShort: "Plant count",
+  weatherHints: "Weather hints",
+  weatherUnavailable:
+    "No usable current forecast is available. This does not mean frost-free conditions.",
+  forecastMinimum: "Forecast minimum",
+  hoursAhead: "hours ahead",
+  weatherForecastHint:
+    "Forecast from the selected HA weather integration, not a bed measurement. Display only; no automatic notifications.",
+  frostAffected:
+    "Below the warning threshold: check and protect these sensitive outdoor cultivations as appropriate.",
+  noFrostHint:
+    "No current hint for the marked cultivations. Always check conditions on site.",
+  weatherSettingsHint:
+    "Optionally select an existing HA weather entity. Hints appear in overview and garden mode. Mark the cultivation as frost sensitive and actually outdoors; planned, completed and failed cultivations are excluded.",
+  weatherEntity: "Weather entity",
+  weatherDisabled: "Weather hints disabled",
+  weatherHours: "Forecast horizon (hours)",
+  weatherThreshold: "Warning threshold (°C)",
+
   harvestUnitsHint:
     "Weights and pieces are separate. — means the plant count is unknown.",
   calculationHelp: "How are results calculated?",

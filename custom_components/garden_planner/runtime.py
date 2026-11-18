@@ -19,6 +19,7 @@ from .reminder_preferences import STORE_KEY, availability, selections, updated_m
 from .reminders import Reminders
 from .service import Actor, PlannerService
 from .sidebar import async_sync_sidebar
+from .weather_hints import WeatherHints
 from .websocket_api import SIGNAL_CHANGED
 
 
@@ -33,6 +34,7 @@ class Runtime:
     reminders: Reminders
     cancel: list[Callable[[], None]] = field(default_factory=list)
     closing: bool = False
+    weather: WeatherHints | None = None
     preference_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     async def host_command(
@@ -41,11 +43,18 @@ class Runtime:
         if self.closing:
             raise StorageError("Garden Planner is unloading; retry after reload.")
         if operation == "capabilities":
-            return {"http_transfer": True, "reminders": True}
+            return {"http_transfer": True, "reminders": True, "weather": True}
+        if operation == "get_weather":
+            if self.weather is None:
+                self.weather = WeatherHints(self.hass, self.service.worker)
+            return await self.weather.async_read(
+                validate_options(dict(self.entry.options))
+            )
         if operation in {
             "list_personal_tasks",
             "get_personal_task",
             "set_personal_task_completed",
+            "postpone_personal_task",
         }:
             async with self.preference_lock:
                 if self.closing:
@@ -56,6 +65,10 @@ class Runtime:
                 )
                 if operation == "list_personal_tasks":
                     return records
+                if operation == "postpone_personal_task":
+                    return await self.reminders.planner.async_postpone(
+                        actor.user_id, params["id"], params["revision"], params["date"]
+                    )
                 if operation == "set_personal_task_completed":
                     return await self.reminders.planner.async_complete(
                         actor.user_id,
@@ -194,6 +207,11 @@ async def validate_host_options(hass: HomeAssistant, settings: dict[str, Any]) -
             raise ValidationError(
                 "Notification recipients need garden viewing permission."
             )
+    if (
+        settings["weather_entity"]
+        and hass.states.get(settings["weather_entity"]) is None
+    ):
+        raise ValidationError("The selected weather entity is unavailable.")
     if settings["reminders_enabled"]:
         for destination in notification_destinations(settings):
             domain, action = destination["service"].split(".", 1)

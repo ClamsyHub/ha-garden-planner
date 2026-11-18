@@ -2380,4 +2380,55 @@ export const styles = css`
   .harvest-extra {
     grid-column: 1/-1;
   }
+
+  garden-journal-photo.plant-photo,
+  garden-journal-photo.profile-photo {
+    --gp-photo-min-height: 0px;
+    --gp-photo-ratio: 1;
+  }
+  .culture-card .catalog-facts dt {
+    font-size: 11px;
+    color: var(--gp-muted);
+    margin-bottom: 4px;
+  }
+  .culture-card .catalog-facts dd {
+    font-size: 13px;
+  }
+  .culture-profile-heading {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin: 16px 0;
+  }
+  .culture-profile-heading h3 {
+    font-size: 25px;
+  }
+  .seed-table .stock-expanded > td {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+    padding: 0;
+  }
+  .stock-expanded-body {
+    position: sticky;
+    left: 0;
+    width: 100%;
+    max-width: calc(100vw - 34px);
+    white-space: normal;
+  }
+  .stock-expanded-body .stock-panel {
+    margin: 0;
+    border-radius: 0;
+    border-left: 3px solid var(--gp-green);
+  }
+  .weather-settings {
+    margin: 20px 0;
+  }
+  .weather-warning {
+    border-left: 4px solid #ad8952;
+  }
+  .weather-hints h2 {
+    margin-top: 0;
+  }
 `;
