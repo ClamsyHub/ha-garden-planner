@@ -3114,3 +3114,233 @@ test("plant and variety photos persist independently and profile has real year b
     .click();
   await expect(detail.locator("img.variety-photo")).toBeAttached();
 });
+
+async function journalFixture(page: Page): Promise<string> {
+  const session = new URL(page.url()).searchParams.get("session");
+  const create = async (table: string, data: Record<string, unknown>) => {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: { operation: "create", parameters: { table, data }, role: "admin" },
+    });
+    expect(r.ok()).toBe(true);
+    return r.json();
+  };
+  const plant = await create("plants", { name: "Tomato yield" });
+  const variety = await create("varieties", {
+    plant_id: plant.id,
+    name: "Roma",
+  });
+  const bed = await create("locations", { name: "Harvest bed" });
+  const culture = await create("cultivations", {
+    plant_id: plant.id,
+    variety_id: variety.id,
+    location_id: bed.id,
+    date: "2026-04-01",
+    method: "direct",
+    quantity: 100,
+    plant_count: 20,
+  });
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  return culture.id;
+}
+
+test("seed lots retain quantities, dates, germination and storage independently from shopping", async ({
+  page,
+}, testInfo) => {
+  await open(page, { demo: "1" });
+  await navigate(page, "Saatgut & Einkauf");
+  await page
+    .getByRole("button", {
+      name: "Bestände öffnen: Blattkultur · Beispiel",
+      exact: true,
+    })
+    .click();
+  const stock = page.locator("#seed-lots"),
+    editor = page.locator("#editor-dialog");
+  await stock
+    .getByRole("button", { name: "Saatgutlos hinzufügen", exact: true })
+    .click();
+  await editor
+    .getByLabel("Packung / Los *", { exact: true })
+    .fill("Packet 2024");
+  await editor.getByLabel("Bestandsmenge *", { exact: true }).fill("25");
+  await editor.getByLabel("Kaufjahr", { exact: true }).fill("2024");
+  await editor
+    .getByLabel("Haltbar / keimfähig bis", { exact: true })
+    .fill("2025-12-31");
+  await editor.getByLabel("Angebrochen am", { exact: true }).fill("2026-10-01");
+  await editor
+    .getByLabel("Getestete Keimfähigkeit (%)", { exact: true })
+    .fill("90");
+  await editor.getByLabel("Lagerort", { exact: true }).fill("Box A");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(stock).toContainText("Box A");
+  await expect(stock).toContainText("angegebene Datum ist überschritten");
+  await expect(stock.locator(".stock-total")).toContainText("25 Samen");
+  await stock
+    .getByRole("button", { name: "Saatgutlos hinzufügen", exact: true })
+    .click();
+  await editor
+    .getByLabel("Packung / Los *", { exact: true })
+    .fill("New packet");
+  await editor.getByLabel("Einheit *", { exact: true }).selectOption("g");
+  await editor.getByLabel("Bestandsmenge *", { exact: true }).fill("2.5");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(stock.locator(".stock-total")).toContainText("25 Samen · 2,5 g");
+  await expect(
+    page.getByRole("radio", {
+      name: "Blattkultur · Beispiel: Offen",
+      exact: true,
+    }),
+  ).toBeChecked();
+  await stock
+    .locator(".stock-lot")
+    .first()
+    .getByRole("button", { name: "Bearbeiten", exact: true })
+    .click();
+  await editor.getByLabel("Bestandsmenge *", { exact: true }).fill("20");
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(stock.locator(".stock-total")).toContainText("20 Samen");
+  await page.screenshot({
+    path: testInfo.outputPath("seed-stock-v012.png"),
+    scale: "css",
+  });
+});
+
+test("garden mode records repeated harvests and reports totals per plant with separate piece counts", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await journalFixture(page);
+  await navigate(page, "Aktuelle Kulturen");
+  await page.getByRole("button", { name: "Gartenmodus", exact: true }).click();
+  const garden = page.locator(".garden-mode"),
+    editor = page.locator("#editor-dialog");
+  for (const [amount, unit] of [
+    [10, "kg"],
+    [10000, "g"],
+    [4, "pieces"],
+  ] as const) {
+    await garden
+      .locator(".garden-actions")
+      .getByRole("button", { name: "Ernte erfassen", exact: true })
+      .click();
+    await editor
+      .getByLabel("Erntemenge *", { exact: true })
+      .fill(String(amount));
+    await editor.getByLabel("Einheit *", { exact: true }).selectOption(unit);
+    await editor
+      .getByRole("button", { name: "Speichern", exact: true })
+      .click();
+    await expect(editor).not.toBeVisible();
+  }
+  const total = garden.locator(".harvest-total");
+  await expect(total).toContainText("20 kg");
+  await expect(total).toContainText("4 Stück");
+  await expect(total).toContainText("1 kg · 0,2 Stück");
+  await expect(garden.locator(".journal-entry")).toHaveCount(3);
+  await page
+    .getByRole("button", { name: "Ernte & Auswertung", exact: true })
+    .click();
+  const analysis = page.locator(".harvest-analysis");
+  await expect(analysis.locator("tbody")).toContainText("20 kg");
+  await expect(analysis.locator("tbody")).toContainText("Tomato yield");
+  await analysis
+    .getByLabel("Vergleichen nach", { exact: true })
+    .selectOption("variety");
+  await expect(analysis.locator("tbody")).toContainText("Roma");
+  await analysis
+    .getByLabel("Vergleichen nach", { exact: true })
+    .selectOption("location");
+  await expect(analysis.locator("tbody")).toContainText("Harvest bed");
+  await analysis
+    .getByLabel("Vergleichen nach", { exact: true })
+    .selectOption("year");
+  await expect(analysis.locator("tbody")).toContainText("2026");
+  await page.screenshot({
+    path: testInfo.outputPath("harvest-analysis-v012.png"),
+    scale: "css",
+  });
+});
+
+test("journal photos and pest notes persist without advancing cultivation status", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await journalFixture(page);
+  await navigate(page, "Aktuelle Kulturen");
+  await page.getByRole("button", { name: "Gartenmodus", exact: true }).click();
+  const garden = page.locator(".garden-mode"),
+    editor = page.locator("#editor-dialog");
+  await garden
+    .locator(".garden-actions")
+    .getByRole("button", { name: "Beobachtung notieren", exact: true })
+    .click();
+  await editor
+    .getByLabel("Eintragsart *", { exact: true })
+    .selectOption("pest");
+  await editor
+    .getByLabel("Notizen", { exact: true })
+    .fill("Aphids observed; leaves inspected.");
+  const png = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 40;
+    c.height = 30;
+    c.getContext("2d")!.fillRect(0, 0, 40, 30);
+    return c.toDataURL("image/png").split(",")[1]!;
+  });
+  await editor.getByLabel("Bild hochladen", { exact: true }).setInputFiles({
+    name: "observation.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await expect(editor.locator(".camera-file")).toHaveAttribute(
+    "capture",
+    "environment",
+  );
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await garden.locator(".journal-photo").scrollIntoViewIfNeeded();
+  await expect(garden.locator(".journal-photo")).toBeVisible();
+  await expect
+    .poll(() =>
+      garden
+        .locator(".journal-photo img")
+        .evaluate((img) => (img as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await expect(garden).toContainText("Aphids observed");
+  const chooserPromise = page.waitForEvent("filechooser");
+  await garden
+    .locator(".garden-actions")
+    .getByRole("button", { name: "Foto aufnehmen", exact: true })
+    .click();
+  const chooser = await chooserPromise;
+  await chooser.setFiles({
+    name: "second-photo.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(png, "base64"),
+  });
+  await expect(editor.locator(".image-editor img")).toBeVisible();
+  await editor.getByRole("button", { name: "Speichern", exact: true }).click();
+  await expect(editor).not.toBeVisible();
+  await expect(garden.locator(".journal-photo")).toHaveCount(2);
+  await page.reload();
+  await expect(page.getByText("Dein Garten wird geladen …")).toHaveCount(0);
+  await navigate(page, "Aktuelle Kulturen");
+  await page.getByRole("button", { name: "Gartenmodus", exact: true }).click();
+  await expect(garden.locator(".journal-photo")).toHaveCount(2);
+  await expect(garden).toContainText("Aphids observed");
+  await page.screenshot({
+    path: testInfo.outputPath("garden-journal-v012.png"),
+    scale: "css",
+  });
+  const a11y = await new AxeBuilder({ page })
+    .include("garden-planner-panel")
+    .analyze();
+  expect(a11y.violations).toEqual([]);
+});

@@ -3,6 +3,7 @@
 import math
 import re
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from .images import validate_image
@@ -10,7 +11,7 @@ from .images import validate_image
 MAX_TEXT = 20000
 MAX_RECORDS = 50000
 MAX_IMPORT_BYTES = 20 * 1024 * 1024
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 FORMAT_VERSION = 1
 STATUSES = (
     "planned",
@@ -76,6 +77,8 @@ TEXT_FIELDS = {
     "source",
     "source_url",
     "regional_notes",
+    "storage_location",
+    "lot_label",
     "title",
     "sensor_entity_id",
 }
@@ -91,6 +94,10 @@ NUMBER_FIELDS = {
     "row_spacing_cm",
     "duration_days_min",
     "duration_days_max",
+    "plant_count",
+    "amount",
+    "purchase_year",
+    "germination_percent",
     "quantity",
     "temperature_c",
 }
@@ -197,7 +204,33 @@ FIELDS: dict[str, set[str]] = {
         "measurement_kind",
         "archived",
     },
+    "seed_lots": {
+        "plant_id",
+        "variety_id",
+        "lot_label",
+        "quantity",
+        "unit",
+        "purchase_year",
+        "best_before",
+        "opened_on",
+        "germination_percent",
+        "germination_tested_on",
+        "storage_location",
+        "notes",
+    },
+    "cultivation_journal": {
+        "cultivation_id",
+        "date",
+        "entry_kind",
+        "title",
+        "notes",
+        "image_data",
+        "amount",
+        "unit",
+        "harvest_context",
+    },
     "cultivations": {
+        "plant_count",
         "plant_id",
         "variety_id",
         "location_id",
@@ -225,8 +258,12 @@ FIELDS: dict[str, set[str]] = {
         "completed",
     },
 }
-TABLES = tuple(FIELDS)
+NEW_TABLES = ("seed_lots", "cultivation_journal")
+LEGACY_TABLES = tuple(t for t in FIELDS if t not in NEW_TABLES)
+TABLES = (*LEGACY_TABLES, *NEW_TABLES)
 PARENTS: dict[str, dict[str, str]] = {
+    "seed_lots": {"plant_id": "plants", "variety_id": "varieties"},
+    "cultivation_journal": {"cultivation_id": "cultivations"},
     "plants": {},
     "varieties": {"plant_id": "plants"},
     "growing_windows": {"plant_id": "plants", "variety_id": "varieties"},
@@ -244,6 +281,8 @@ PARENTS: dict[str, dict[str, str]] = {
     },
 }
 REQUIRED = {
+    "seed_lots": {"plant_id", "lot_label", "quantity", "unit"},
+    "cultivation_journal": {"cultivation_id", "date", "entry_kind"},
     "plants": {"name"},
     "varieties": {"plant_id", "name"},
     "growing_windows": {
@@ -340,8 +379,95 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
         elif key in {"archived", "completed"}:
             if type(value) is not bool:
                 raise ValidationError(f"{key} must be boolean.")
-        elif key == "date":
+        elif key in {"date", "best_before", "opened_on", "germination_tested_on"}:
             iso_date(value)
+    if result.get("plant_count") is not None and (
+        type(result["plant_count"]) is not int
+        or not 1 <= result["plant_count"] <= 1000000
+    ):
+        raise ValidationError("Plant count must be a positive integer.")
+    if table == "seed_lots":
+        if (
+            not result["lot_label"].strip()
+            or not isinstance(result["unit"], str)
+            or result["unit"]
+            not in {
+                "seeds",
+                "g",
+                "packets",
+            }
+        ):
+            raise ValidationError("Choose a seed lot label and supported unit.")
+        if result["quantity"] > 1000000 or (
+            result["unit"] == "seeds" and type(result["quantity"]) is not int
+        ):
+            raise ValidationError(
+                "Seed count must be a whole number; quantity is bounded."
+            )
+        year = result.get("purchase_year")
+        if year is not None and (type(year) is not int or not 1900 <= year <= 9999):
+            raise ValidationError("Purchase year must be a valid year.")
+        percent = result.get("germination_percent")
+        if percent is not None and not 0 <= percent <= 100:
+            raise ValidationError(
+                "Germination percentage must be between zero and 100."
+            )
+    if table == "cultivation_journal":
+        if not isinstance(result["entry_kind"], str) or result["entry_kind"] not in {
+            "observation",
+            "germination",
+            "growth",
+            "pest",
+            "harvest",
+        }:
+            raise ValidationError("Unsupported journal entry kind.")
+        if result["entry_kind"] == "harvest":
+            amount, unit = result.get("amount"), result.get("unit")
+            if (
+                amount is None
+                or type(amount) not in (int, float)
+                or not 0 < amount <= 100000
+                or not isinstance(unit, str)
+                or unit not in {"g", "kg", "pieces"}
+            ):
+                raise ValidationError(
+                    "Harvest requires a positive amount and supported unit."
+                )
+            scaled = Decimal(str(amount)) * (
+                1000000 if unit == "kg" else 1000 if unit == "g" else 1
+            )
+            if scaled != scaled.to_integral_value():
+                raise ValidationError(
+                    "Use whole pieces or weights precise to a milligram."
+                )
+        elif any(
+            result.get(k) is not None for k in ("amount", "unit", "harvest_context")
+        ):
+            raise ValidationError(
+                "Only harvest entries may contain harvest quantities."
+            )
+        elif not any(result.get(k) for k in ("title", "notes", "image_data")):
+            raise ValidationError("Journal entry requires text or a photo.")
+        context = result.get("harvest_context")
+        if context is not None:
+            keys = {
+                "plant_id",
+                "variety_id",
+                "location_id",
+                "plant_name",
+                "variety_name",
+                "location_name",
+            }
+            if not isinstance(context, dict) or set(context) != keys:
+                raise ValidationError("Invalid harvest context.")
+            for key, value in context.items():
+                if key.endswith("_id"):
+                    if value is not None:
+                        identifier(value)
+                elif not isinstance(value, str) or len(value) > MAX_TEXT:
+                    raise ValidationError("Invalid harvest label.")
+            if not context["plant_id"]:
+                raise ValidationError("Harvest context needs a plant.")
     if table == "plants":
         if "seed_state" in result and result["seed_state"] not in SEED_STATES:
             raise ValidationError("Unsupported seed inventory state.")
@@ -456,7 +582,9 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
             raise ValidationError("Expected a sensor entity ID.")
         if result.get("measurement_kind") is None:
             raise ValidationError("A sensor requires its measurement kind.")
-    if not internal and ("snapshot" in result or "origin" in result):
+    if not internal and (
+        "snapshot" in result or "origin" in result or "harvest_context" in result
+    ):
         raise ValidationError(
             "Historical snapshots and event origin are server-managed."
         )

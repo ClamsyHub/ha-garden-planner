@@ -17,6 +17,7 @@ from unittest.mock import patch
 from custom_components.garden_planner.calendar_math import contains_day, next_window_day
 from custom_components.garden_planner.exchange import export_csv, import_csv
 from custom_components.garden_planner.models import (
+    LEGACY_TABLES,
     PLANT_MEASURE_FIELDS,
     SCHEMA_VERSION,
     ConflictError,
@@ -493,8 +494,14 @@ class MigrationTests(unittest.TestCase):
 
     def legacy_two(self) -> dict[str, Any]:
         db = Database(self.directory)
-        with patch(
-            "custom_components.garden_planner.storage.database.SCHEMA_VERSION", 2
+        with (
+            patch(
+                "custom_components.garden_planner.storage.database.SCHEMA_VERSION", 2
+            ),
+            patch(
+                "custom_components.garden_planner.storage.database.TABLES",
+                LEGACY_TABLES,
+            ),
         ):
             db.open()
             try:

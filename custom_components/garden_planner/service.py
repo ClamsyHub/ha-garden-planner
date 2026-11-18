@@ -66,7 +66,7 @@ PARAMETERS: dict[str, tuple[set[str], set[str]]] = {
     "set_settings": ({"settings", "confirm"}, set()),
     "reminder_log": (set(), set()),
     "get": ({"table", "id"}, set()),
-    "list": ({"table"}, {"filters"}),
+    "list": ({"table"}, {"filters", "include_images"}),
     "create": ({"table", "data"}, set()),
     "update": ({"table", "id", "data", "revision"}, set()),
     "delete": ({"table", "id", "revision", "confirm"}, set()),
@@ -188,8 +188,16 @@ class PlannerService:
             case "list":
                 if "filters" in params and not isinstance(params["filters"], dict):
                     raise ValidationError("Filters must be an object.")
+                include_images = params.get(
+                    "include_images", params["table"] != "cultivation_journal"
+                )
+                if type(include_images) is not bool:
+                    raise ValidationError("Image inclusion must be boolean.")
                 records = await call(
-                    "list_records", params["table"], params.get("filters")
+                    "list_records",
+                    params["table"],
+                    params.get("filters"),
+                    include_images=include_images,
                 )
                 if params["table"] == "tasks" and self.host_handler:
                     personal = await self.host_handler("list_personal_tasks", {}, actor)

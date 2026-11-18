@@ -2,6 +2,7 @@ export type Json =
   string | number | boolean | null | Json[] | { [key: string]: Json };
 export type Data = Record<string, Json | undefined>;
 export interface Entity {
+  image_present?: boolean;
   id: string;
   revision: number;
   created_at: string;
@@ -16,6 +17,8 @@ export const TABLES = [
   "cultivations",
   "cultivation_events",
   "tasks",
+  "seed_lots",
+  "cultivation_journal",
 ] as const;
 export type Table = (typeof TABLES)[number];
 export type Tables = Record<Table, Entity[]>;
@@ -64,6 +67,7 @@ export interface ImportPlan {
   counts: Record<Table, number>;
 }
 export interface Field {
+  label?: string;
   wide?: boolean;
   rowStart?: boolean;
   key: string;
@@ -96,6 +100,8 @@ export const emptyTables = (): Tables => ({
   cultivations: [],
   cultivation_events: [],
   tasks: [],
+  seed_lots: [],
+  cultivation_journal: [],
 });
 
 export interface Capabilities {

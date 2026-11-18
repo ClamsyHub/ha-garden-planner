@@ -63,6 +63,40 @@ class ImageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_image(PREFIX + base64.b64encode(raw).decode())
 
+    def test_journal_lists_can_omit_images_without_mutating_get_or_exports(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            db = Database(Path(directory))
+            db.open()
+            try:
+                plant = db.create("plants", {"name": "Photo diary"})
+                culture = db.create(
+                    "cultivations",
+                    {"plant_id": plant["id"], "date": "2026-04-01", "method": "direct"},
+                )
+                entry = db.create(
+                    "cultivation_journal",
+                    {
+                        "cultivation_id": culture["id"],
+                        "date": "2026-08-01",
+                        "entry_kind": "observation",
+                        "image_data": png(),
+                    },
+                )
+                listed = db.list_records("cultivation_journal", include_images=False)
+                self.assertTrue(listed[0]["image_present"])
+                self.assertNotIn("image_data", listed[0]["data"])
+                self.assertEqual(
+                    db.get("cultivation_journal", entry["id"])["data"]["image_data"],
+                    png(),
+                )
+                exported = db.export_data()["tables"]["cultivation_journal"][0]
+                self.assertEqual(exported["data"]["image_data"], png())
+                self.assertNotIn("image_present", exported)
+            finally:
+                db.close()
+
     def test_plant_and_variety_images_survive_restart_exchange_and_removal(
         self,
     ) -> None:

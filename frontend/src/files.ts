@@ -68,7 +68,21 @@ export function readCsvZip(input: Uint8Array): Record<string, string> {
   });
   unzip.register(UnzipInflate);
   unzip.push(input, true);
-  if (failed || Object.keys(result).length !== expected.size)
+  if (failed) throw new Error("invalid_file");
+  if (Object.keys(result).length === expected.size) return result;
+  const metadata = JSON.parse(result["metadata.json"] ?? "null") as {
+    schema_version?: number;
+  } | null;
+  const optional = new Set(["seed_lots.csv", "cultivation_journal.csv"]);
+  if (
+    !metadata ||
+    typeof metadata.schema_version !== "number" ||
+    [...expected].some(
+      (name) =>
+        !(name in result) &&
+        !(metadata.schema_version! < 4 && optional.has(name)),
+    )
+  )
     throw new Error("invalid_file");
   return result;
 }

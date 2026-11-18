@@ -10,6 +10,7 @@ from .models import (
     GARDEN_FIELDS,
     MAX_IMPORT_BYTES,
     MAX_RECORDS,
+    NEW_TABLES,
     TABLES,
     ValidationError,
 )
@@ -47,7 +48,8 @@ def import_csv(files: Any) -> dict[str, Any]:
     required = {"metadata.json", *(f"{t}.csv" for t in TABLES)}
     if (
         not isinstance(files, dict)
-        or set(files) != required
+        or set(files) - required
+        or (required - set(files)) - {f"{t}.csv" for t in NEW_TABLES}
         or not all(isinstance(v, str) for v in files.values())
     ):
         raise ValidationError(
@@ -66,6 +68,15 @@ def import_csv(files: Any) -> dict[str, Any]:
         tables: dict[str, list[dict[str, Any]]] = {}
         count = 0
         for table in TABLES:
+            if f"{table}.csv" not in files:
+                if (
+                    table not in NEW_TABLES
+                    or type(metadata["schema_version"]) is not int
+                    or metadata["schema_version"] >= 4
+                ):
+                    raise ValueError
+                tables[table] = []
+                continue
             fields = sorted(FIELDS[table])
             reader = csv.reader(
                 StringIO(files[f"{table}.csv"], newline=""), strict=True
@@ -76,7 +87,13 @@ def import_csv(files: Any) -> dict[str, Any]:
             optional = (
                 (GARDEN_FIELDS | {"image_data"})
                 if table == "plants"
-                else ({"image_data"} if table == "varieties" else set())
+                else (
+                    {"image_data"}
+                    if table == "varieties"
+                    else {"plant_count"}
+                    if table == "cultivations"
+                    else set()
+                )
             )
             if (
                 header[: len(META)] != list(META)

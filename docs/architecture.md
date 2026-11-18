@@ -20,8 +20,8 @@ serialized writes and optimistic record revisions. Store dates as ISO calendar
 dates; event instants as UTC with explicit display timezone. Activity periods
 use month/day boundaries and handle year wrap and leap years explicitly.
 
-Implemented schema v3: plants, varieties, growing_windows, locations, cultivations,
-cultivation_events, tasks, settings and schema_migrations. Operational delivery
+Implemented schema v4: plants, varieties, growing_windows, locations, cultivations,
+cultivation_events, tasks, seed_lots, cultivation_journal, settings and schema_migrations. Operational delivery
 reservations use namespaced settings rows; notification options live in the HA
 config entry. No speculative reminder_rules table is required. Stable IDs preserve relationships. Cultivation snapshots
 protect historical context from later master-data edits. Lifecycle, germination
@@ -87,3 +87,13 @@ Plants may contain optional `seed_state`, `neighbor_good_ids`, `neighbor_bad_ids
 The panel's seed autosave queue coalesces rapid choices, serializes bounded writes and rebases only its own queued revisions on acknowledged writes. Other-user revision conflicts remain explicit. Newer local choices take precedence over in-flight responses. Failed batches stay queued for explicit retry/discard, without background retries. Internal navigation awaits the shared flush promise; authentication/permission changes invalidate the old queue's UI state.
 
 Overview counters use visible destination filters. CSS sticky positioning retains normal page scrolling, with header/summary offsets measured via ResizeObserver to support native host scroll containers and mobile navigation. Calendar quick-filter buttons share the activity selection used by the multi-select dropdown.
+
+
+## Stock, journal and harvest (v0.1.12)
+
+Schema 4 adds `seed_lots` (plant/optional-variety foreign keys) and `cultivation_journal` (cultivation foreign key), with indexes and an automatic pre-migration backup. Migration 1/2 definitions remain limited to legacy tables so actual schema-3 upgrades do not create duplicate tables. Legacy exchange format 1 imports may omit only the two new tables and optional plant_count column; schema-4 imports must include all nine tables. New records use the existing serialized worker, optimistic revisions, strict validation and shared garden authorization.
+
+Journal kind and parent are immutable. Harvest context is server-managed and captures plant/variety IDs and frozen names plus the currently assigned bed when the entry is created; imports validate parent consistency. Amounts are positive weights precise to one milligram or integer piece counts. In the UI, weights normalize to integer milligrams and never mix with pieces. A plant count is separate from sowing quantity. Each contributing cultivation is counted once per unit/group; an unknown count leaves that per-plant metric unknown. Journal photos use the same validated, bounded local previews as catalog images. Entries do not modify lifecycle status or notification scheduling.
+
+
+Journal lists in the authorized service omit image payloads by default and return only an `image_present` flag. SQLite removes the image JSON field in the projection before decoding rows. Full `get` and explicit `include_images=true` remain authenticated reads; export/backup use full records without transient flags. A viewport-observed photo component fetches only needed previews and discards stale responses on identity/revision/disconnect changes. Editing retrieves the full current entry. This keeps multiyear photo archives out of routine list refreshes and statistics.

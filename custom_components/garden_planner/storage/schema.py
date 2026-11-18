@@ -1,6 +1,6 @@
 """Versioned schema statements; migration execution belongs to the worker."""
 
-from ..models import PARENTS, PLANT_MEASURE_FIELDS, TABLES
+from ..models import LEGACY_TABLES, NEW_TABLES, PARENTS, PLANT_MEASURE_FIELDS
 
 APPLICATION_ID = 0x47504C4E
 
@@ -14,7 +14,7 @@ def initial_schema() -> list[str]:
         "value TEXT NOT NULL CHECK(json_valid(value)))",
         "INSERT INTO settings VALUES ('notifications_enabled', 'false')",
     ]
-    for table in TABLES:
+    for table in LEGACY_TABLES:
         parents = [
             f"{field} TEXT REFERENCES {target}(id) ON DELETE RESTRICT"
             for field, target in PARENTS[table].items()
@@ -35,7 +35,7 @@ def performance_indexes() -> list[str]:
     """Migration 2 adds indexes without changing records or their IDs."""
     result = [
         f"CREATE INDEX idx_{table}_{field} ON {table}({field})"
-        for table in TABLES
+        for table in LEGACY_TABLES
         for field in PARENTS[table]
     ]
     result.extend(
@@ -65,4 +65,35 @@ def plant_level_traits() -> list[str]:
     ]
 
 
-MIGRATIONS = {1: initial_schema(), 2: performance_indexes(), 3: plant_level_traits()}
+def stock_and_journal() -> list[str]:
+    """Add seed lots and journal without modifying any existing records."""
+    result = []
+    for table in NEW_TABLES:
+        parents = [
+            f"{field} TEXT REFERENCES {target}(id) ON DELETE RESTRICT"
+            for field, target in PARENTS[table].items()
+        ]
+        result.append(
+            f"CREATE TABLE {table} (id TEXT PRIMARY KEY, "
+            "revision INTEGER NOT NULL CHECK(revision > 0), "
+            "created_at TEXT NOT NULL, updated_at TEXT NOT NULL, "
+            "data TEXT NOT NULL CHECK(json_valid(data)), "
+            f"{', '.join(parents)})"
+        )
+        result.extend(
+            f"CREATE INDEX idx_{table}_{field} ON {table}({field})"
+            for field in PARENTS[table]
+        )
+    result.append(
+        "CREATE INDEX idx_cultivation_journal_date "
+        "ON cultivation_journal(json_extract(data, '$.date'))"
+    )
+    return result
+
+
+MIGRATIONS = {
+    1: initial_schema(),
+    2: performance_indexes(),
+    3: plant_level_traits(),
+    4: stock_and_journal(),
+}

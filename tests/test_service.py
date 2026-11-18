@@ -83,6 +83,67 @@ class ServiceTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(saved["data"]["neighbor_bad_names"], ["Fenchel"])
 
+    async def test_stock_and_journal_follow_shared_garden_permissions(self) -> None:
+        plant = await self.call(
+            "create", {"table": "plants", "data": {"name": "Shared stock"}}
+        )
+        culture = await self.call(
+            "create",
+            {
+                "table": "cultivations",
+                "data": {
+                    "plant_id": plant["id"],
+                    "date": "2026-04-01",
+                    "method": "direct",
+                },
+            },
+        )
+        for table, data in (
+            (
+                "seed_lots",
+                {
+                    "plant_id": plant["id"],
+                    "lot_label": "Packet",
+                    "quantity": 5,
+                    "unit": "seeds",
+                },
+            ),
+            (
+                "cultivation_journal",
+                {
+                    "cultivation_id": culture["id"],
+                    "date": "2026-08-01",
+                    "entry_kind": "harvest",
+                    "amount": 2,
+                    "unit": "kg",
+                },
+            ),
+        ):
+            with self.assertRaises(AuthorizationError):
+                await self.call("create", {"table": table, "data": data}, self.reader)
+            record = await self.call(
+                "create", {"table": table, "data": data}, self.editor
+            )
+            self.assertEqual(
+                (
+                    await self.call(
+                        "get", {"table": table, "id": record["id"]}, self.reader
+                    )
+                )["data"],
+                record["data"],
+            )
+            with self.assertRaises(AuthorizationError):
+                await self.call(
+                    "delete",
+                    {
+                        "table": table,
+                        "id": record["id"],
+                        "revision": record["revision"],
+                        "confirm": True,
+                    },
+                    self.reader,
+                )
+
     async def test_inactive_and_unauthenticated_users_denied(self) -> None:
         for actor in (Actor(""), Actor("inactive", is_admin=True, is_active=False)):
             with self.assertRaises(AuthorizationError):

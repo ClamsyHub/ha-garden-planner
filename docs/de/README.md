@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.11
+## Stand dieser Dokumentation: v0.1.12
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
@@ -156,7 +156,7 @@ Unter **Nachbarn** eine Pflanze auswählen und gute/schlechte Nachbarn aus dem b
 
 **Saatgut & Einkauf** gehört zum gemeinsamen Garten, nicht zum persönlichen Benutzerprofil. Pro aktiver Pflanze genau einen Zustand wählen: **Vorhanden**, **Kaufen**, **Nicht benötigt** oder **Offen**. Ohne vorherige Angabe ist der Zustand offen. „Nicht benötigt“ passt z. B. zu Bäumen oder einer Saisonpause. Änderungen reagieren sofort und werden automatisch gebündelt gespeichert. Weitere Änderungen bleiben während laufender Anfragen möglich. Beim Wechsel in einen anderen Panel-Bereich wird die Speicherung abgewartet. Vor dem Schließen der App warten, bis der Speicherstatus verschwindet. Bei Fehlern wird kein Erfolg gemeldet; die Auswahl bleibt zur Prüfung erhalten. **Erneut speichern** oder **Auswahl verwerfen** erscheinen nur zur Fehlerbehandlung. Der Statusfilter **Kaufen** zeigt die Einkaufsauswahl. Bei einem konkurrierenden Schreibzugriff bleiben nicht gespeicherte Auswahlen erhalten; mit **Auswahl verwerfen** neu laden und erneut auswählen.
 
-Nachbarn und Saatgut bearbeiten nur Nutzer mit Garten-Bearbeitungsrecht sowie Administratoren. Leser können beide Bereiche ansehen. Die Daten liegen an den Pflanzen in der Garten-SQLite-Datenbank und sind in Garten-JSON/CSV-Exporten und Datenbanksicherungen enthalten. Bestehende CSV-Dateien ohne die zusätzlichen Spalten bleiben importierbar. Datenbankschema 3 und Austauschformat 1 bleiben unverändert.
+Nachbarn und Saatgut bearbeiten nur Nutzer mit Garten-Bearbeitungsrecht sowie Administratoren. Leser können beide Bereiche ansehen. Die Daten liegen an den Pflanzen in der Garten-SQLite-Datenbank und sind in Garten-JSON/CSV-Exporten und Datenbanksicherungen enthalten. Bestehende CSV-Dateien ohne die zusätzlichen Spalten bleiben importierbar. Seit v0.1.12 wird Datenbankschema 4 verwendet; Austauschformat 1 bleibt bestehen.
 
 Das Erledigen einer gemeinsamen oder persönlichen Aufgabe erfordert nun eine Bestätigung mit Titel und Datum/Zeitraum. **Abbrechen** oder **Escape** ändern nichts. Wiederöffnen erfolgt weiterhin über die Aufgabenliste.
 
@@ -174,3 +174,16 @@ In der Kalenderlegende eine Tätigkeit anklicken, um ausschließlich diese Täti
 Alle Hauptbereiche bieten „Zurück zur Übersicht“. Nachbarn werden zusätzlich als filterbare Matrix mit fixierten Zeilen-/Spaltennamen dargestellt; Zellen wechseln gegenseitig zwischen nicht zugeordnet, gut und ungünstig. Freie Nachbarn bleiben über „Nachbarn bearbeiten“ pflegbar.
 
 Im Pflanzen- oder Sortenformular ein JPEG-, PNG- oder WebP-Bild bis 12 MiB wählen. Gespeichert wird nur eine lokale PNG-Vorschau (maximal 512 px und 80 KiB; weitere Verkleinerung je Motiv). Originale und Metadaten werden nicht aufbewahrt; HEIC vorher in JPEG umwandeln. Bilder lassen sich im Formular wieder entfernen und sind in Gartensicherungen und JSON/CSV enthalten. Der gesamte JSON-/CSV-Import ist weiterhin auf 20 MiB begrenzt. Die Detailansicht zeigt vorhandene Kennzahlen, Keimtemperaturen und Tätigkeitszeiträume; fehlende Werte werden nicht ergänzt oder geschätzt.
+
+
+## Saatgutbestände, Tagebuch und Ernte (v0.1.12)
+
+Unter **Saatgut & Einkauf** auf den Pflanzennamen oder **Bestände öffnen** klicken. Je Packung/Los Menge, Einheit, Kaufjahr, Haltbarkeit, Anbruchdatum, getestete Keimfähigkeit und Lagerort pflegen. Lose mit bekanntem Haltbarkeitsdatum werden zuerst nach Datum sortiert, anschließend nach Kaufjahr. Mengen verschiedener Einheiten werden nicht vermischt. Den verbliebenen Bestand nach einer Entnahme selbst anpassen. Einkaufsstatus und Bestandsmengen sind voneinander unabhängig.
+
+Unter **Aktuelle Kulturen** zwischen **Kulturen & Aufgaben**, **Gartenmodus** und **Ernte & Auswertung** wechseln. In der Kultur die **Pflanzenanzahl für die Ertragsberechnung** eintragen. Beispiel: 20 Pflanzen und insgesamt 20 kg aus mehreren Ernten ergeben 1 kg pro Pflanze. Die frühere Aussaatmenge wird nicht als tatsächliche Pflanzenzahl interpretiert. Fehlt diese Zahl in einer beteiligten Kultur, bleibt der betreffende Durchschnitt offen. Auswertungen berücksichtigen nur Kulturen mit eingetragenen Ernten; keine Ernteaufzeichnung wird nicht als Nullertrag gewertet.
+
+Im Gartenmodus eine Kultur auswählen und Foto, Beobachtung oder Einzelernten erfassen. **Aufgabe erledigen** führt zu den Gartenarbeiten mit der vorhandenen Sicherheitsfrage. Tagebucheinträge sind auch in den Kulturdetails verfügbar. Pro Eintrag ein Bild, mehrere Einträge ergeben den Fotoverlauf. Die Kamera ist geräte-/browserabhängig; alternativ JPEG/PNG/WebP auswählen. Gespeichert werden kleine lokale PNG-Vorschauen, keine Originalfotos. Einträge ändern den Kulturstatus nicht automatisch.
+
+Einzelernten werden nach Erntedatum summiert: g und kg gemeinsam als kg, Stück separat. Pflanze, Sorte und Beet werden beim Erfassen festgehalten. Die aktuell eingetragene Pflanzenzahl wird je beitragender Kultur nur einmal pro Einheit/Gruppe gezählt und kann Auswertungen rückwirkend ändern. Filter und Gruppierungen erlauben Jahres-, Sorten- und Beetvergleiche.
+
+Vor dem Update die gesamte HA-Konfiguration sichern. Die Migration auf Schema 4 erstellt außerdem eine automatische SQLite-Sicherung und ergänzt zwei Tabellen. Bestehende Pflanzen, Kulturen, Aufgaben und private Erinnerungen bleiben erhalten. JSON/CSV-Exporte enthalten nun neun Datentabellen einschließlich Fotos und Ernten; alte Exporte bleiben importierbar. Gesamtimportgrenze weiterhin 20 MiB. Bei Rückkehr zu einer älteren Integration eine vollständige kompatible Sicherung wiederherstellen. Danach HA neu starten und das Panel neu laden.

@@ -21,6 +21,8 @@ import {
 import { repeat } from "lit/directives/repeat.js";
 import { live } from "lit/directives/live.js";
 import { guard } from "lit/directives/guard.js";
+import "./journal-photo";
+import { harvestRows, type HarvestBy } from "./harvest";
 import { imagePreview } from "./image";
 import { PlannerApi } from "./api";
 import {
@@ -94,6 +96,8 @@ const paths: Record<string, string> = {
   temperature: "M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0M12 8v10",
   clock: "M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
   ruler: "M3 7l4-4 14 14-4 4zM7 7l2-2M10 10l2-2M13 13l2-2",
+  camera: "M3 7h4l2-3h6l2 3h4v13H3zM16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+  harvest: "M6 10h12l2 11H4zM9 10V7a3 3 0 0 1 6 0v3",
   menu: "M3 6h18M3 12h18M3 18h18",
   overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
   calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
@@ -168,6 +172,14 @@ export class GardenPlannerPanel extends LitElement {
     seedDraft: { state: true },
     imageLoading: { state: true },
     matrixQuery: { state: true },
+    stockPlant: { state: true },
+    cultureView: { state: true },
+    gardenCulture: { state: true },
+    harvestBy: { state: true },
+    harvestYear: { state: true },
+    harvestPlant: { state: true },
+    harvestVariety: { state: true },
+    harvestLocation: { state: true },
     seedSaving: { state: true },
     seedFailed: { state: true },
     seedFlight: { state: true },
@@ -232,6 +244,14 @@ export class GardenPlannerPanel extends LitElement {
     goodNames: string;
     badNames: string;
   } | null = null;
+  private stockPlant = "";
+  private cultureView: "list" | "garden" | "harvest" = "list";
+  private gardenCulture = "";
+  private harvestBy: HarvestBy = "plant";
+  private harvestYear = "";
+  private harvestPlant = "";
+  private harvestVariety = "";
+  private harvestLocation = "";
   private imageLoading = false;
   private imageGeneration = 0;
   private matrixQuery = "";
@@ -524,6 +544,14 @@ export class GardenPlannerPanel extends LitElement {
     this.neighborPlant = "";
     this.neighborQuery = "";
     this.resetSeeds();
+    this.stockPlant = "";
+    this.gardenCulture = "";
+    this.cultureView = "list";
+    this.harvestYear =
+      this.harvestPlant =
+      this.harvestVariety =
+      this.harvestLocation =
+        "";
     this.seedQuery = "";
     this.seedFilter = "";
     this.cultureScope = "current";
@@ -667,7 +695,10 @@ export class GardenPlannerPanel extends LitElement {
     )
       return;
     this.page = page;
-    if (page === "cultures") this.cultureScope = "current";
+    if (page === "cultures") {
+      this.cultureScope = "current";
+      this.cultureView = "list";
+    }
     if (page === "history") this.historySuccessOnly = false;
     this.error = "";
     if (page === "reminders") {
@@ -754,7 +785,10 @@ export class GardenPlannerPanel extends LitElement {
   private changeField(key: string, value: Json): void {
     if (!this.editor) return;
     let draft = { ...this.editor.draft, [key]: value };
-    if (key === "plant_id" && !this.editor.record)
+    if (
+      key === "plant_id" &&
+      (!this.editor.record || this.editor.table === "seed_lots")
+    )
       draft = { ...draft, variety_id: "" };
     if (key === "cultivation_id" && this.editor.table === "tasks") {
       const culture = this.tables.cultivations.find((c) => c.id === value);
@@ -991,7 +1025,7 @@ export class GardenPlannerPanel extends LitElement {
       for=${id}
     >
       <span id=${`${id}-label`}
-        >${this.tr(field.key)}${field.required ? " *" : ""}</span
+        >${this.tr(field.label ?? field.key)}${field.required ? " *" : ""}</span
       >
       ${
         field.type === "select"
@@ -1077,7 +1111,7 @@ export class GardenPlannerPanel extends LitElement {
       ? html`<img
           class=${className}
           src=${image}
-          alt=${text(record, "name")}
+          alt=${text(record, "name") || text(record, "title") || this.tr("imagePreview")}
           loading="lazy"
         />`
       : html`<span class=${`${className} photo-placeholder`} aria-hidden="true"
@@ -1086,7 +1120,10 @@ export class GardenPlannerPanel extends LitElement {
   }
   private renderImageEditor(): TemplateResult | typeof nothing {
     const editor = this.editor;
-    if (!editor || !["plants", "varieties"].includes(editor.table))
+    if (
+      !editor ||
+      !["plants", "varieties", "cultivation_journal"].includes(editor.table)
+    )
       return nothing;
     return html`<section class="image-editor">
       ${typeof editor.draft.image_data === "string" && editor.draft.image_data ? html`<img class="plant-photo" src=${editor.draft.image_data} alt=${this.tr("imagePreview")} />` : nothing}
@@ -1098,6 +1135,7 @@ export class GardenPlannerPanel extends LitElement {
             ?disabled=${this.busy || this.imageLoading}
             @change=${this.uploadImage}
         /></label>
+        ${editor.table === "cultivation_journal" ? html`<label class="camera-input">${this.tr("takePhoto")}<input class="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ?disabled=${this.busy || this.imageLoading} @change=${this.uploadImage} /></label>` : nothing}
         <small class="muted">${this.tr("imageHint")}</small>
         ${this.imageLoading ? html`<p role="status">${this.tr("imageProcessing")}</p>` : nothing}
         ${editor.draft.image_data ? html`<button type="button" ?disabled=${this.busy || this.imageLoading} @click=${() => this.changeField("image_data", null)}>${this.tr("removeImage")}</button>` : nothing}
@@ -1107,6 +1145,8 @@ export class GardenPlannerPanel extends LitElement {
   private renderEditor(): TemplateResult {
     const editor = this.editor;
     const titles: Partial<Record<Table, string>> = {
+      seed_lots: "newSeedLot",
+      cultivation_journal: "newJournal",
       plants: "newPlant",
       cultivations: "newSowing",
       locations: "newLocation",
@@ -1148,6 +1188,9 @@ export class GardenPlannerPanel extends LitElement {
                 ${this.error ? html`<p class="notice error" role="alert">${this.error}</p>` : nothing}
                 ${["plants", "varieties", "growing_windows", "cultivations", "locations"].includes(editor.table) ? html`<p class="notice">${this.tr("temperatureHint")}</p>` : nothing}
                 ${editor.draft.origin === "initial" ? html`<p class="notice">${this.tr("initialEventHint")}</p>` : nothing}
+                ${editor.table === "cultivations" ? html`<p class="notice">${this.tr("plantCountHint")}</p>` : nothing}
+                ${editor.table === "seed_lots" ? html`<p class="notice">${this.tr("seedLotHint")}</p>` : nothing}
+                ${editor.table === "cultivation_journal" ? html`<p class="notice">${this.tr("journalHint")}</p>` : nothing}
                 ${this.renderImageEditor()}
                 <div class="form-grid">
                   ${this.fieldList(editor).map((field) => this.renderField(field))}
@@ -2106,6 +2149,388 @@ export class GardenPlannerPanel extends LitElement {
     });
     return run;
   }
+  private renderSeedLots(): TemplateResult {
+    const plant = this.plantList.find((p) => p.id === this.stockPlant);
+    if (!plant) return html``;
+    const lots = this.tables.seed_lots
+      .filter((l) => text(l, "plant_id") === plant.id)
+      .sort(
+        (a, b) =>
+          (text(a, "best_before") || "9999").localeCompare(
+            text(b, "best_before") || "9999",
+          ) ||
+          Number(a.data.purchase_year || 9999) -
+            Number(b.data.purchase_year || 9999) ||
+          text(a, "lot_label").localeCompare(text(b, "lot_label")),
+      );
+    const sums = new Map<string, number>();
+    for (const lot of lots)
+      sums.set(
+        text(lot, "unit"),
+        (sums.get(text(lot, "unit")) || 0) + Number(lot.data.quantity),
+      );
+    return html`<section id="seed-lots" class="panel stock-panel">
+      <div class="section-head">
+        <div>
+          <h2>${this.tr("seedLots")} · ${text(plant, "name")}</h2>
+          <p class="muted">${this.tr("useOlderStock")}</p>
+        </div>
+        ${this.editable ? html`<button class="primary" @click=${() => this.startEditor("seed_lots", undefined, { plant_id: plant.id })}>${icon("plus")}${this.tr("newSeedLot")}</button>` : nothing}
+      </div>
+      <p class="stock-total">
+        ${this.tr("stockTotal")}:
+        ${[...sums].map(([unit, quantity]) => `${quantity.toLocaleString(this.language, { maximumFractionDigits: 3 })} ${this.tr("unit_" + unit)}`).join(" · ") || "—"}
+      </p>
+      ${lots.map(
+        (lot) =>
+          html`<article class="stock-lot">
+            <div class="section-head">
+              <div>
+                <h3>
+                  ${text(lot, "lot_label")}${text(lot, "variety_id") ? ` · ${this.nameFor(text(lot, "variety_id"), "varieties")}` : ""}
+                </h3>
+                <strong
+                  >${Number(lot.data.quantity).toLocaleString(this.language)}
+                  ${this.tr("unit_" + text(lot, "unit"))}</strong
+                >
+              </div>
+              ${
+                this.editable
+                  ? html`<div class="actions">
+                      <button
+                        @click=${() => this.startEditor("seed_lots", lot)}
+                      >
+                        ${this.tr("edit")}</button
+                      ><button
+                        class="danger"
+                        @click=${() => {
+                          this.deleting = { table: "seed_lots", record: lot };
+                        }}
+                      >
+                        ${this.tr("delete")}
+                      </button>
+                    </div>`
+                  : nothing
+              }
+            </div>
+            ${text(lot, "opened_on") ? html`<span class="badge">${this.tr("opened_on")}: ${formatDate(text(lot, "opened_on"), this.language)}</span>` : nothing}
+            ${text(lot, "best_before") && text(lot, "best_before") < this.today ? html`<p class="notice">${this.tr("seedPastDate")}</p>` : nothing}
+            ${this.renderData(lot.data, ["plant_id", "variety_id", "lot_label", "quantity", "unit"])}
+          </article>`,
+      )}${!lots.length ? html`<p class="muted">${this.tr("noSeedLots")}</p>` : nothing}
+    </section>`;
+  }
+  private async editJournal(entry: Entity): Promise<void> {
+    if (!this.api || !this.editable || this.busy) return;
+    const api = this.api,
+      generation = this.connectionGeneration;
+    this.busy = true;
+    try {
+      const full = await api.command<Entity>("get", {
+        table: "cultivation_journal",
+        id: entry.id,
+      });
+      if (generation === this.connectionGeneration && this.editable)
+        this.startEditor("cultivation_journal", full);
+    } catch (error) {
+      if (generation === this.connectionGeneration)
+        this.error = errorText(this.language, error);
+    } finally {
+      if (generation === this.connectionGeneration) this.busy = false;
+    }
+  }
+  private async newJournal(
+    culture: Entity,
+    kind = "observation",
+    photo = false,
+  ): Promise<void> {
+    if (!this.editable || this.busy) return;
+    this.startEditor("cultivation_journal", undefined, {
+      cultivation_id: culture.id,
+      entry_kind: kind,
+    });
+    if (photo) {
+      await this.updateComplete;
+      this.renderRoot
+        .querySelector<HTMLInputElement>("#editor-dialog .camera-file")
+        ?.click();
+    }
+  }
+  private renderHarvestSummary(culture: Entity): TemplateResult {
+    const total = harvestRows(
+      this.tables.cultivation_journal,
+      this.tables.cultivations,
+      "culture",
+    ).find((row) => row.key === culture.id);
+    return html`<section class="harvest-total">
+      <h3>${this.tr("totalHarvest")}</h3>
+      ${
+        total
+          ? html`<div class="harvest-total-values">
+                <strong
+                  >${total.kg.toLocaleString(this.language, { maximumFractionDigits: 6 })}
+                  kg</strong
+                ><strong
+                  >${total.pieces.toLocaleString(this.language)}
+                  ${this.tr("pieces")}</strong
+                ><small>${total.harvests} ${this.tr("singleHarvests")}</small>
+              </div>
+              <p>
+                ${this.tr("perPlant")}:
+                ${total.kgPerPlant === null ? "—" : `${total.kgPerPlant.toLocaleString(this.language, { maximumFractionDigits: 6 })} kg`}
+                ·
+                ${total.piecesPerPlant === null ? "—" : `${total.piecesPerPlant.toLocaleString(this.language, { maximumFractionDigits: 3 })} ${this.tr("pieces")}`}
+              </p>`
+          : html`<p>${this.tr("noHarvests")}</p>`
+      }<small class="muted">${this.tr("plantCountHint")}</small>
+    </section>`;
+  }
+  private renderJournal(culture: Entity): TemplateResult {
+    const entries = this.tables.cultivation_journal
+      .filter((e) => text(e, "cultivation_id") === culture.id)
+      .sort(
+        (a, b) =>
+          text(b, "date").localeCompare(text(a, "date")) ||
+          b.created_at.localeCompare(a.created_at) ||
+          b.id.localeCompare(a.id),
+      );
+    return html`<section class="culture-journal">
+      <div class="section-head">
+        <h3>${this.tr("cultureJournal")}</h3>
+        ${this.editable ? html`<div class="actions"><button @click=${() => this.newJournal(culture)}>${this.tr("addObservation")}</button><button class="primary" @click=${() => this.newJournal(culture, "harvest")}>${this.tr("recordHarvest")}</button></div>` : nothing}
+      </div>
+      ${repeat(
+        entries,
+        (entry) => entry.id,
+        (entry) =>
+          html`<article class="journal-entry">
+            <div class="section-head">
+              <div>
+                <span class="badge"
+                  >${this.tr("kind_" + text(entry, "entry_kind"))}</span
+                ><time datetime=${text(entry, "date")}
+                  >${formatDate(text(entry, "date"), this.language)}</time
+                >
+                ${text(entry, "title") ? html`<h4>${text(entry, "title")}</h4>` : nothing}
+              </div>
+              ${
+                this.editable
+                  ? html`<div class="actions">
+                      <button @click=${() => this.editJournal(entry)}>
+                        ${this.tr("edit")}</button
+                      ><button
+                        class="danger"
+                        @click=${() => {
+                          this.deleting = {
+                            table: "cultivation_journal",
+                            record: entry,
+                          };
+                        }}
+                      >
+                        ${this.tr("delete")}
+                      </button>
+                    </div>`
+                  : nothing
+              }
+            </div>
+            ${entry.data.entry_kind === "harvest" ? html`<strong class="single-harvest">${Number(entry.data.amount).toLocaleString(this.language, { maximumFractionDigits: 6 })} ${this.tr("unit_" + text(entry, "unit"))}</strong>` : nothing}
+            ${entry.image_present || text(entry, "image_data") ? html`<garden-journal-photo class="journal-photo" .api=${this.api} .record=${entry} .language=${this.language}></garden-journal-photo>` : nothing}
+            <p class="profile-text">${text(entry, "notes")}</p>
+          </article>`,
+      )}
+      ${!entries.length ? html`<p class="muted">${this.tr("emptyJournal")}</p>` : nothing}
+    </section>`;
+  }
+  private cultureTools(): TemplateResult {
+    return html`<div
+      class="culture-tools"
+      role="group"
+      aria-label=${this.tr("cultureTools")}
+    >
+      ${(["list", "garden", "harvest"] as const).map(
+        (view) =>
+          html`<button
+            class=${this.cultureView === view ? "primary" : ""}
+            aria-pressed=${this.cultureView === view}
+            @click=${() => {
+              this.cultureView = view;
+            }}
+          >
+            ${this.tr("cultureView_" + view)}
+          </button>`,
+      )}
+    </div>`;
+  }
+  private renderGardenMode(): TemplateResult {
+    const cultures = [...this.tables.cultivations].sort((a, b) =>
+      text(b, "date").localeCompare(text(a, "date")),
+    );
+    const culture =
+      cultures.find((c) => c.id === this.gardenCulture) ||
+      cultures.find((c) => !["completed", "failed"].includes(this.status(c))) ||
+      cultures[0];
+    return html`<section class="panel garden-mode">
+      <h2>${this.tr("cultureView_garden")}</h2>
+      ${
+        culture
+          ? html`<label
+                >${this.tr("chooseCulture")}<select
+                  aria-label=${this.tr("chooseCulture")}
+                  .value=${culture.id}
+                  @change=${(e: Event) => {
+                    this.gardenCulture = (e.target as HTMLSelectElement).value;
+                  }}
+                >
+                  ${cultures.map((c) => html`<option value=${c.id} .selected=${c.id === culture.id}>${this.plantName(c)} · ${text(c, "date")} · ${this.nameFor(text(c, "location_id"), "locations")}</option>`)}
+                </select></label
+              >
+              <h3>${this.plantName(culture)}</h3>
+              ${
+                this.editable
+                  ? html`<div class="garden-actions">
+                      <button
+                        @click=${() => this.newJournal(culture, "observation", true)}
+                      >
+                        ${icon("camera")}${this.tr("takePhoto")}</button
+                      ><button @click=${() => this.newJournal(culture)}>
+                        ${icon("edit")}${this.tr("addObservation")}</button
+                      ><button
+                        class="primary"
+                        @click=${() => this.newJournal(culture, "harvest")}
+                      >
+                        ${icon("harvest")}${this.tr("recordHarvest")}</button
+                      ><button
+                        @click=${async () => {
+                          await this.navigate("overview");
+                          await this.updateComplete;
+                          this.renderRoot
+                            .querySelector<HTMLElement>("#upcoming-work")
+                            ?.scrollIntoView({ block: "start" });
+                        }}
+                      >
+                        ${icon("check")}${this.tr("finishWork")}
+                      </button>
+                    </div>`
+                  : nothing
+              }${this.renderHarvestSummary(culture)}${this.renderJournal(culture)}`
+          : this.empty("emptyCultures")
+      }
+    </section>`;
+  }
+  private renderHarvestAnalysis(): TemplateResult {
+    const entries = this.tables.cultivation_journal.filter(
+      (e) => e.data.entry_kind === "harvest",
+    );
+    const years = [...new Set(entries.map((e) => text(e, "date").slice(0, 4)))]
+      .sort()
+      .reverse();
+    const rows = harvestRows(
+      entries,
+      this.tables.cultivations,
+      this.harvestBy,
+      {
+        year: this.harvestYear,
+        plant: this.harvestPlant,
+        variety: this.harvestVariety,
+        location: this.harvestLocation,
+      },
+    );
+    const choice = (
+      key:
+        "harvestYear" | "harvestPlant" | "harvestVariety" | "harvestLocation",
+      title: string,
+      items: { id: string; name: string }[],
+    ) =>
+      html`<label
+        >${this.tr(title)}<select
+          aria-label=${this.tr(title)}
+          .value=${this[key]}
+          @change=${(e: Event) => {
+            this[key] = (e.target as HTMLSelectElement).value;
+          }}
+        >
+          <option value="">${this.tr("allValues")}</option>
+          ${items.map((i) => html`<option value=${i.id} .selected=${i.id === this[key]}>${i.name}</option>`)}
+        </select></label
+      >`;
+    const contextOptions = (key: string, name: string) => {
+      const map = new Map<string, string>();
+      for (const e of entries) {
+        const context = e.data.harvest_context as Data;
+        map.set(String(context[key] || "_"), String(context[name] || "—"));
+      }
+      return [...map]
+        .map(([id, name]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name, this.language));
+    };
+    const fmt = (v: number | null, digits = 6) =>
+      v === null
+        ? "—"
+        : v.toLocaleString(this.language, { maximumFractionDigits: digits });
+    return html`<section class="panel harvest-analysis">
+      <h2>${this.tr("cultureView_harvest")}</h2>
+      <p class="muted">${this.tr("harvestUnitsHint")}</p>
+      <details class="harvest-help">
+        <summary>${this.tr("calculationHelp")}</summary>
+        <p class="notice">${this.tr("harvestAnalysisHint")}</p>
+      </details>
+      <div class="filters">
+        <label
+          >${this.tr("groupHarvest")}<select
+            aria-label=${this.tr("groupHarvest")}
+            .value=${this.harvestBy}
+            @change=${(e: Event) => {
+              this.harvestBy = (e.target as HTMLSelectElement)
+                .value as HarvestBy;
+            }}
+          >
+            ${(["plant", "variety", "location", "year", "culture"] as HarvestBy[]).map((by) => html`<option value=${by} .selected=${this.harvestBy === by}>${this.tr("group_" + by)}</option>`)}
+          </select></label
+        >
+        ${choice(
+          "harvestYear",
+          "harvestYear",
+          years.map((y) => ({ id: y, name: y })),
+        )}
+        <details class="harvest-extra">
+          <summary>${this.tr("moreHarvestFilters")}</summary>
+          <div class="filters">
+            ${choice("harvestPlant", "harvestPlant", contextOptions("plant_id", "plant_name"))}${choice("harvestVariety", "harvestVariety", contextOptions("variety_id", "variety_name"))}${choice("harvestLocation", "harvestLocation", contextOptions("location_id", "location_name"))}
+          </div>
+        </details>
+      </div>
+      <div
+        class="harvest-table-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("cultureView_harvest")}
+      >
+        <table class="harvest-table">
+          <thead>
+            <tr>
+              ${["groupHarvest", "singleHarvests", "totalWeight", "totalPieces", "weightPerPlant", "piecesPerPlant"].map((key) => html`<th scope="col">${this.tr(key)}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(
+              (row) =>
+                html`<tr>
+                  <th scope="row">${row.label}</th>
+                  <td>${row.harvests}</td>
+                  <td>${fmt(row.kg)} kg</td>
+                  <td>${fmt(row.pieces, 0)}</td>
+                  <td>
+                    ${fmt(row.kgPerPlant)}${row.kgPerPlant === null ? "" : " kg"}
+                  </td>
+                  <td>${fmt(row.piecesPerPlant, 3)}</td>
+                </tr>`,
+            )}
+          </tbody>
+        </table>
+      </div>
+      ${!rows.length ? html`<p>${this.tr("noHarvests")}</p>` : nothing}
+    </section>`;
+  }
   private renderSeeds(): TemplateResult {
     const states = ["available", "buy", "unneeded", "unplanned"];
     const rows = this.plantList
@@ -2186,13 +2611,28 @@ export class GardenPlannerPanel extends LitElement {
             <tr>
               <th scope="col">${this.tr("plants")}</th>
               ${states.map((state) => html`<th scope="col">${this.tr("seed_" + state)}</th>`)}
+              <th scope="col">${this.tr("seedLots")}</th>
             </tr>
           </thead>
           <tbody>
             ${rows.map(
               (plant) =>
                 html`<tr>
-                  <th scope="row">${text(plant, "name")}</th>
+                  <th scope="row">
+                    <button
+                      class="link stock-open"
+                      aria-label=${`${this.tr("manageStock")}: ${text(plant, "name")}`}
+                      @click=${async () => {
+                        this.stockPlant = plant.id;
+                        await this.updateComplete;
+                        this.renderRoot
+                          .querySelector("#seed-lots")
+                          ?.scrollIntoView({ block: "start" });
+                      }}
+                    >
+                      ${text(plant, "name")}
+                    </button>
+                  </th>
                   ${states.map(
                     (state) =>
                       html`<td>
@@ -2207,12 +2647,27 @@ export class GardenPlannerPanel extends LitElement {
                         /></label>
                       </td>`,
                   )}
+                  <td>
+                    <button
+                      aria-label=${`${this.tr("seedLots")}: ${text(plant, "name")}`}
+                      @click=${async () => {
+                        this.stockPlant = plant.id;
+                        await this.updateComplete;
+                        this.renderRoot
+                          .querySelector("#seed-lots")
+                          ?.scrollIntoView({ block: "start" });
+                      }}
+                    >
+                      ${this.tables.seed_lots.filter((l) => text(l, "plant_id") === plant.id).length}
+                      · ${this.tr("manageStock")}
+                    </button>
+                  </td>
                 </tr>`,
             )}
           </tbody>
         </table>
       </div>
-      ${!rows.length ? this.empty("noResults") : nothing}`;
+      ${!rows.length ? this.empty("noResults") : nothing}${this.renderSeedLots()}`;
   }
   private renderTasks(all = true): TemplateResult {
     const tasks = this.tables.tasks
@@ -2599,7 +3054,12 @@ export class GardenPlannerPanel extends LitElement {
           ? !["planned", "completed", "failed"].includes(this.status(c))
           : !["completed", "failed"].includes(this.status(c)),
     );
-    return html`<div class="filters culture-scope">
+    if (this.cultureView === "garden")
+      return html`${this.cultureTools()}${this.renderGardenMode()}`;
+    if (this.cultureView === "harvest")
+      return html`${this.cultureTools()}${this.renderHarvestAnalysis()}`;
+    return html`${this.cultureTools()}
+      <div class="filters culture-scope">
         <label
           >${this.tr("cultureScope")}<select
             aria-label=${this.tr("cultureScope")}
@@ -3093,7 +3553,7 @@ export class GardenPlannerPanel extends LitElement {
           ([key, value]) =>
             html`<dt>${this.tr(key)}</dt>
               <dd>
-                ${["category", "method", "environment", "initial_status", "result", "germination_result", "harvest_result", "measurement_kind"].includes(key) ? this.lab(String(value)) : typeof value === "boolean" ? (value ? "✓" : "—") : String(value)}
+                ${["category", "method", "environment", "initial_status", "result", "germination_result", "harvest_result", "measurement_kind"].includes(key) ? this.lab(String(value)) : typeof value === "boolean" ? (value ? "✓" : "—") : ["best_before", "opened_on", "germination_tested_on"].includes(key) ? formatDate(String(value), this.language) : String(value)}
               </dd>`,
         )}
     </dl>`;
@@ -3671,6 +4131,7 @@ export class GardenPlannerPanel extends LitElement {
             )
           : nothing
       }
+      ${this.renderHarvestSummary(culture)}${this.renderJournal(culture)}
       <h3>${this.tr("timeline")}</h3>
       <div class="timeline">
         ${cultureEvents(culture, this.tables.cultivation_events).map(
@@ -4433,7 +4894,9 @@ export class GardenPlannerPanel extends LitElement {
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
-        <main class=${this.page === "overview" ? "overview-page" : ""}>
+        <main
+          class=${this.page === "overview" ? "overview-page" : this.page === "cultures" && this.cultureView === "garden" ? "garden-page" : ""}
+        >
           ${this.page !== "overview" ? html`<div class="back-overview-bar"><button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button></div>` : nothing}
           <header class="topbar">
             <div>

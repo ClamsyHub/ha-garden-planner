@@ -48,13 +48,27 @@ const entityOptions = (values: Entity[], language: Language) =>
 function scalarField(key: string): Field {
   if (
     measures.includes(key) ||
-    ["quantity", "temperature_c", "start_day", "end_day"].includes(key)
+    [
+      "quantity",
+      "temperature_c",
+      "start_day",
+      "end_day",
+      "plant_count",
+      "amount",
+      "purchase_year",
+      "germination_percent",
+    ].includes(key)
   )
     return {
       key,
       type: "number",
       min: key.endsWith("_c") ? undefined : 0,
-      step: key.includes("days") || key.endsWith("_day") ? "1" : "any",
+      step:
+        key.includes("days") ||
+        key.endsWith("_day") ||
+        ["plant_count", "purchase_year"].includes(key)
+          ? "1"
+          : "any",
     };
   return {
     key,
@@ -74,7 +88,13 @@ export function fieldsFor(
   const select = (key: string, values: string[], required = false): Field => ({
     key,
     type: "select",
-    options: options(values, language),
+    options:
+      key === "unit" || key === "entry_kind"
+        ? values.map((value) => ({
+            value,
+            label: t(language, (key === "unit" ? "unit_" : "kind_") + value),
+          }))
+        : options(values, language),
     required,
   });
   const relation = (
@@ -115,6 +135,72 @@ export function fieldsFor(
     scalarField("temperature_c"),
     select("measurement_kind", ["substrate", "soil", "air"]),
   ];
+  if (table === "seed_lots")
+    return [
+      plantField,
+      varietyField,
+      { key: "lot_label", required: true },
+      {
+        key: "quantity",
+        label: "stockQuantity",
+        type: "number",
+        min: 0,
+        max: 1000000,
+        step: data.unit === "seeds" ? "1" : "any",
+        required: true,
+      },
+      select("unit", ["seeds", "g", "packets"], true),
+      { key: "purchase_year", type: "number", min: 1900, max: 9999, step: "1" },
+      { key: "best_before", type: "date" },
+      { key: "opened_on", type: "date" },
+      {
+        key: "germination_percent",
+        type: "number",
+        min: 0,
+        max: 100,
+        step: "any",
+      },
+      { key: "germination_tested_on", type: "date" },
+      scalarField("storage_location"),
+      scalarField("notes"),
+    ];
+  if (table === "cultivation_journal")
+    return [
+      { key: "date", type: "date", required: true },
+      {
+        ...select(
+          "entry_kind",
+          ["observation", "germination", "growth", "pest", "harvest"],
+          true,
+        ),
+        disabled: editing,
+      },
+      { ...scalarField("title"), required: false },
+      ...(data.entry_kind === "harvest"
+        ? [
+            {
+              key: "amount",
+              type: "number" as const,
+              min:
+                data.unit === "pieces"
+                  ? 1
+                  : data.unit === "g"
+                    ? 0.001
+                    : 0.000001,
+              max: 100000,
+              step:
+                data.unit === "pieces"
+                  ? "1"
+                  : data.unit === "g"
+                    ? ".001"
+                    : ".000001",
+              required: true,
+            },
+            select("unit", ["g", "kg", "pieces"], true),
+          ]
+        : []),
+      { ...scalarField("notes"), wide: true },
+    ];
   if (table === "plants" || table === "varieties")
     return [
       ...(table === "varieties" ? [plantField] : []),
@@ -214,6 +300,7 @@ export function fieldsFor(
       select("method", ["direct", "indoors", "transplant"], true),
       bedField,
       scalarField("quantity"),
+      { key: "plant_count", type: "number", min: 1, max: 1000000, step: "1" },
       ...temperatureFields,
       select("initial_status", ["sown", "planned"], true),
       scalarField("notes"),
@@ -301,6 +388,12 @@ export function initialData(
     },
     cultivation_events: { date: todayInZone(timeZone), status: "germinated" },
     tasks: { date: todayInZone(timeZone), activity: "care" },
+    seed_lots: { quantity: 0, unit: "seeds" },
+    cultivation_journal: {
+      date: todayInZone(timeZone),
+      entry_kind: "observation",
+      unit: "kg",
+    },
   };
   return { ...defaults[table], ...seed };
 }
@@ -325,9 +418,14 @@ export function formData(
         ? Number(value)
         : value;
   }
+  if (table === "cultivation_journal" && !original)
+    result.cultivation_id = draft.cultivation_id;
   if (table === "cultivation_events" && !original)
     result.cultivation_id = draft.cultivation_id;
-  if (["plants", "varieties"].includes(table) && draft.image_data !== undefined)
+  if (
+    ["plants", "varieties", "cultivation_journal"].includes(table) &&
+    draft.image_data !== undefined
+  )
     result.image_data = draft.image_data || null;
   const merged = { ...original?.data, ...result };
   const temperatures = [

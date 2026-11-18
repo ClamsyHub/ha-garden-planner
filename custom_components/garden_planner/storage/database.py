@@ -18,6 +18,7 @@ from ..models import (
     MAX_IMPORT_BYTES,
     MAX_RECORDS,
     NEIGHBOR_FIELDS,
+    NEW_TABLES,
     PARENTS,
     PLANT_MEASURE_FIELDS,
     SCHEMA_VERSION,
@@ -172,16 +173,23 @@ class Database:
 
     @staticmethod
     def _record(row: sqlite3.Row) -> dict[str, Any]:
-        return {
+        record = {
             "id": row["id"],
             "revision": row["revision"],
             "created_at": row["created_at"],
             "updated_at": row["updated_at"],
             "data": json.loads(row["data"]),
         }
+        if "image_present" in row.keys():
+            record["image_present"] = bool(row["image_present"])
+        return record
 
     def list_records(
-        self, table: str, filters: dict[str, Any] | None = None
+        self,
+        table: str,
+        filters: dict[str, Any] | None = None,
+        *,
+        include_images: bool = True,
     ) -> list[dict[str, Any]]:
         """Return stable records; bounded fields prevent arbitrary SQL filters."""
         table = self._table(table)
@@ -214,10 +222,17 @@ class Database:
                 conditions.append("COALESCE(json_extract(data, '$.archived'), 0)=?")
                 arguments.append(value)
         where = " WHERE " + " AND ".join(conditions) if conditions else ""
+        columns = "*"
+        if table == "cultivation_journal" and not include_images:
+            columns = (
+                "id, revision, created_at, updated_at, "
+                "json_remove(data, '$.image_data') AS data, "
+                "(json_type(data, '$.image_data') = 'text') AS image_present"
+            )
         records = [
             self._record(row)
             for row in self.db.execute(
-                f"SELECT * FROM {table}{where} ORDER BY id", arguments
+                f"SELECT {columns} FROM {table}{where} ORDER BY id", arguments
             )
         ]
         if "year" in filters:
@@ -418,6 +433,23 @@ class Database:
         self._insert(table, record)
         return record
 
+    def _harvest_context(self, culture_id: str) -> dict[str, Any]:
+        culture = self.get("cultivations", culture_id)["data"]
+        snapshot = culture["snapshot"]
+        location = (
+            self.get("locations", culture["location_id"])["data"]
+            if culture.get("location_id")
+            else None
+        )
+        return {
+            "plant_id": culture["plant_id"],
+            "variety_id": culture.get("variety_id"),
+            "location_id": culture.get("location_id"),
+            "plant_name": snapshot["plant"]["name"],
+            "variety_name": snapshot["variety"]["name"] if snapshot["variety"] else "",
+            "location_name": location["name"] if location else "",
+        }
+
     def create(self, table: str, data: dict[str, Any]) -> dict[str, Any]:
         """Create validated records and an initial lifecycle event atomically."""
         clean = validate_data(table, clean_master_data(table, data))
@@ -429,6 +461,10 @@ class Database:
                 clean["snapshot"] = self._snapshot(clean)
                 clean.setdefault("initial_status", "sown")
                 clean.setdefault("result", "unknown")
+            if table == "cultivation_journal" and clean["entry_kind"] == "harvest":
+                clean["harvest_context"] = self._harvest_context(
+                    clean["cultivation_id"]
+                )
             record = self._new(table, clean)
             if table == "cultivations":
                 self._new(
@@ -462,7 +498,11 @@ class Database:
         """Apply patches with optimistic concurrency; never rewrite snapshots."""
         self._table(table)
         positive_revision(revision)
-        if not isinstance(patch, dict) or {"snapshot", "origin"} & set(patch):
+        if not isinstance(patch, dict) or {
+            "snapshot",
+            "origin",
+            "harvest_context",
+        } & set(patch):
             raise ValidationError("Cannot edit server-managed data.")
         with self.transaction():
             record = self.get(table, record_id)
@@ -485,6 +525,7 @@ class Database:
                 "cultivations",
                 "growing_windows",
                 "cultivation_events",
+                "cultivation_journal",
             ):
                 immutable = {"plant_id", "variety_id", "cultivation_id"} & set(
                     PARENTS[table]
@@ -495,6 +536,11 @@ class Database:
                     raise ValidationError(
                         "Historical parent references cannot be reassigned."
                     )
+            if (
+                table == "cultivation_journal"
+                and clean["entry_kind"] != record["data"]["entry_kind"]
+            ):
+                raise ValidationError("Journal entry kind cannot be reassigned.")
             if (
                 table == "cultivation_events"
                 and record["data"].get("origin") == "initial"
@@ -675,8 +721,12 @@ class Database:
             raise ValidationError("Unsupported exchange schema version.")
         timestamp(payload["exported_at"])
         tables = payload["tables"]
-        if not isinstance(tables, dict) or set(tables) != set(TABLES):
+        if not isinstance(tables, dict) or set(tables) - set(TABLES):
+            raise ValidationError("Import contains unknown tables.")
+        missing = set(TABLES) - set(tables)
+        if missing and (payload["schema_version"] >= 4 or missing - set(NEW_TABLES)):
             raise ValidationError("Import must include every known table.")
+        tables = {**{t: [] for t in NEW_TABLES}, **tables}
         if any(not isinstance(tables[t], list) for t in TABLES):
             raise ValidationError("Each import table must be a list.")
         if sum(len(tables[t]) for t in TABLES) > MAX_RECORDS:
@@ -752,6 +802,16 @@ class Database:
                     raise ValidationError(
                         "Imported variety belongs to a different plant."
                     )
+                if table == "cultivation_journal" and data["entry_kind"] == "harvest":
+                    context = data.get("harvest_context")
+                    parent = desired["cultivations"][data["cultivation_id"]]["data"]
+                    if not context or any(
+                        context.get(k) != parent.get(k)
+                        for k in ("plant_id", "variety_id")
+                    ):
+                        raise ValidationError(
+                            "Harvest context disagrees with its culture."
+                        )
                 if table == "tasks" and data.get("cultivation_id"):
                     parent = desired["cultivations"][data["cultivation_id"]]["data"]
                     if any(

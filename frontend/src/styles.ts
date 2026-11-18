@@ -2167,4 +2167,217 @@ export const styles = css`
       max-width: 108px;
     }
   }
+
+  .culture-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .stock-panel {
+    margin-top: 24px;
+    scroll-margin-top: calc(var(--gp-sticky-top, 56px) + 80px);
+  }
+  .stock-total {
+    font-weight: 600;
+  }
+  .stock-lot {
+    border-top: 1px solid var(--gp-border);
+    padding: 18px 0;
+  }
+  .stock-lot dl {
+    display: grid;
+    grid-template-columns: minmax(100px, 1fr) minmax(0, 1.4fr);
+    gap: 6px 16px;
+    font-size: 13px;
+  }
+  .stock-lot dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .culture-journal {
+    margin: 24px 0;
+  }
+  .journal-entry {
+    border: 1px solid var(--gp-border);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .journal-entry time {
+    display: block;
+    font-size: 12px;
+    color: var(--gp-muted);
+    margin-top: 8px;
+  }
+  .journal-entry h4 {
+    margin: 8px 0;
+  }
+  .journal-photo {
+    aspect-ratio: 4 / 3;
+    min-height: 120px;
+    display: block;
+    max-width: 100%;
+    width: min(100%, 360px);
+    max-height: 360px;
+    border-radius: 14px;
+    object-fit: contain;
+    background: var(--gp-soft);
+    margin: 14px 0;
+  }
+  .single-harvest {
+    display: block;
+    font-size: 22px;
+    margin: 10px 0;
+  }
+  .harvest-total {
+    background: var(--gp-soft);
+    border-radius: 16px;
+    padding: 18px;
+    margin: 18px 0;
+  }
+  .harvest-total h3 {
+    margin-top: 0;
+  }
+  .harvest-total-values {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+  }
+  .harvest-total-values strong {
+    font-size: 24px;
+  }
+  .garden-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .garden-actions button {
+    min-height: 88px;
+    flex-direction: column;
+    font-size: 16px;
+    padding: 16px 10px;
+  }
+  .garden-actions svg {
+    width: 28px;
+    height: 28px;
+  }
+  .garden-mode select {
+    width: 100%;
+    max-width: 100%;
+  }
+  .camera-input {
+    margin-top: 12px;
+  }
+  .harvest-table-scroll {
+    overflow: auto;
+    max-height: 65dvh;
+    border: 1px solid var(--gp-border);
+    border-radius: 12px;
+  }
+  .harvest-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 720px;
+    font-size: 13px;
+  }
+  .harvest-table th,
+  .harvest-table td {
+    padding: 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--gp-border);
+    white-space: nowrap;
+  }
+  .harvest-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-card);
+    white-space: normal;
+  }
+  .harvest-table tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--gp-card);
+    text-align: left;
+    min-width: 110px;
+    max-width: 200px;
+    white-space: normal;
+  }
+  .harvest-table thead th:first-child {
+    z-index: 3;
+  }
+  @media (max-width: 600px) {
+    .culture-tools {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .culture-tools button {
+      min-width: 0;
+      padding: 8px 4px;
+      font-size: 11px;
+    }
+    .stock-lot .section-head,
+    .journal-entry .section-head {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .garden-mode {
+      padding: 16px;
+    }
+    .garden-actions button {
+      min-height: 96px;
+      font-size: 14px;
+    }
+    .harvest-table tr > :first-child {
+      max-width: 130px;
+    }
+  }
+  @media (max-width: 760px) {
+    .garden-page .topbar .eyebrow,
+    .garden-page .topbar p,
+    .garden-page .topbar-action-label {
+      display: none;
+    }
+    .garden-page .topbar h1 {
+      font-size: 24px;
+    }
+    .garden-page .topbar {
+      margin-bottom: 12px;
+    }
+    .garden-page .topbar .primary {
+      width: 44px;
+      padding: 8px;
+    }
+    .garden-page .garden-mode h3 {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    .garden-page .garden-actions {
+      margin: 12px 0;
+    }
+    .garden-page .garden-actions button {
+      min-height: 82px;
+    }
+  }
+  .harvest-help,
+  .harvest-extra {
+    margin: 12px 0;
+  }
+  .harvest-help summary,
+  .harvest-extra summary {
+    cursor: pointer;
+    min-height: 36px;
+    font-size: 13px;
+    color: var(--gp-muted);
+  }
+  .harvest-extra {
+    grid-column: 1/-1;
+  }
 `;

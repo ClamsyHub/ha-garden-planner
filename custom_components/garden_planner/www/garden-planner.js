@@ -6,7 +6,9 @@ var e = [
 	"locations",
 	"cultivations",
 	"cultivation_events",
-	"tasks"
+	"tasks",
+	"seed_lots",
+	"cultivation_journal"
 ], t = (e, t) => {
 	let n = e?.data[t];
 	return typeof n == "string" || typeof n == "number" ? String(n) : "";
@@ -20,7 +22,9 @@ var e = [
 	locations: [],
 	cultivations: [],
 	cultivation_events: [],
-	tasks: []
+	tasks: [],
+	seed_lots: [],
+	cultivation_journal: []
 });
 // src/dates.ts
 function i(e, t = /* @__PURE__ */ new Date()) {
@@ -840,73 +844,77 @@ var $e = {
 		} else if (this.ot === t) return V;
 		return this.ot = Array.isArray(t) ? Array.from(t) : t, this.render(t, n);
 	}
-});
-// src/image.ts
-async function _t(e) {
-	if (![
-		"image/jpeg",
-		"image/png",
-		"image/webp"
-	].includes(e.type) || e.size > 12582912) throw Error("invalid_image");
-	let t = URL.createObjectURL(e);
-	try {
-		let e = new Image();
-		if (e.src = t, await e.decode(), !e.naturalWidth || !e.naturalHeight || e.naturalWidth * e.naturalHeight > 4e7) throw Error("invalid_image");
-		let n = 512;
-		for (; n >= 64;) {
-			let t = Math.min(1, n / Math.max(e.naturalWidth, e.naturalHeight)), r = document.createElement("canvas");
-			r.width = Math.max(1, Math.round(e.naturalWidth * t)), r.height = Math.max(1, Math.round(e.naturalHeight * t));
-			let i = r.getContext("2d");
-			if (!i) throw Error("invalid_image");
-			i.drawImage(e, 0, 0, r.width, r.height);
-			let a = r.toDataURL("image/png");
-			if (a.startsWith("data:image/png;base64,") && a.length <= 109250) return a;
-			n = Math.floor(n * .8);
-		}
-		throw Error("invalid_image");
-	} finally {
-		URL.revokeObjectURL(t);
-	}
-}
-// src/api.ts
-var vt = class {
-	constructor(e) {
-		this.hass = e, this.connection = e.connection;
-	}
-	command(e, t = {}) {
-		if (this.hass.fetchWithAuth && [
-			"export",
-			"preview_import",
-			"import",
-			"list",
-			"history"
-		].includes(e)) return this.hass.fetchWithAuth("/api/garden_planner/exchange", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				operation: e,
-				parameters: t
-			})
-		}).then(async (e) => {
-			let t = await e.json();
-			if (!e.ok) throw t;
-			return t;
-		});
-		let n = {
-			type: "garden_planner/command",
-			operation: e,
-			parameters: t
-		};
-		return this.connection.sendMessagePromise ? this.connection.sendMessagePromise(n) : this.hass.callWS(n);
-	}
-	async load() {
-		let t = await Promise.all(e.map((e) => this.command("list", { table: e })));
-		return Object.fromEntries(e.map((e, n) => [e, t[n]]));
-	}
-	subscribe(e) {
-		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
-	}
-}, yt = {
+}), _t = {
+	harvestUnitsHint: "Gewicht und Stück werden getrennt ausgewertet. — bedeutet: Pflanzenanzahl nicht bekannt.",
+	calculationHelp: "Wie wird gerechnet?",
+	moreHarvestFilters: "Nach Pflanze, Sorte und Beet filtern",
+	photoLoading: "Foto wird geladen …",
+	photoLoadError: "Das Foto konnte nicht geladen werden.",
+	stockQuantity: "Bestandsmenge",
+	newSeedLot: "Saatgutlos hinzufügen",
+	seedLots: "Saatgutbestände",
+	manageStock: "Bestände öffnen",
+	stockTotal: "Gesamtbestand nach Einheit",
+	lot_label: "Packung / Los",
+	unit: "Einheit",
+	unit_seeds: "Samen",
+	unit_packets: "Packungen",
+	unit_g: "g",
+	unit_kg: "kg",
+	unit_pieces: "Stück",
+	purchase_year: "Kaufjahr",
+	best_before: "Haltbar / keimfähig bis",
+	opened_on: "Angebrochen am",
+	germination_percent: "Getestete Keimfähigkeit (%)",
+	germination_tested_on: "Keimtest am",
+	storage_location: "Lagerort",
+	seedLotHint: "Ein Los entspricht zum Beispiel einer Packung. Mengen verschiedener Einheiten werden getrennt summiert. Die Keimfähigkeit wird nur aus deiner Eingabe übernommen. Der Einkaufsstatus bleibt unabhängig davon.",
+	useOlderStock: "Zuerst nach angegebenem Haltbarkeitsdatum, dann nach Kaufjahr sortiert. Angebrochene und ältere Lose gezielt aufbrauchen.",
+	seedPastDate: "Das angegebene Datum ist überschritten. Ein Keimtest kann helfen; das Datum allein bedeutet nicht, dass keine Samen mehr keimen.",
+	noSeedLots: "Für diese Pflanze sind noch keine Saatgutlose erfasst.",
+	plant_count: "Pflanzenanzahl für die Ertragsberechnung",
+	plantCountHint: "Für Ertrag pro Pflanze bitte die tatsächlich ertragsbezogene Pflanzenanzahl in der Kultur pflegen. Die Aussaatmenge wird nicht automatisch dafür verwendet. Bei unbekannter Anzahl bleibt der Wert offen.",
+	newJournal: "Tagebucheintrag",
+	cultureJournal: "Gartentagebuch",
+	entry_kind: "Eintragsart",
+	kind_observation: "Beobachtung",
+	kind_germination: "Keimung",
+	kind_growth: "Wachstum",
+	kind_pest: "Schädlinge / Krankheiten",
+	kind_harvest: "Ernte",
+	amount: "Erntemenge",
+	pieces: "Stück",
+	journalHint: "Dieser Eintrag gehört zur ausgewählten Kultur und ändert ihren Status nicht automatisch. Eine Einzelerntenmenge wird zur Gesamternte addiert. Ein Foto pro Eintrag; weitere Fotos als eigene Einträge erfassen.",
+	takePhoto: "Foto aufnehmen",
+	addObservation: "Beobachtung notieren",
+	recordHarvest: "Ernte erfassen",
+	finishWork: "Aufgabe erledigen",
+	emptyJournal: "Noch keine Tagebucheinträge.",
+	totalHarvest: "Gesamternte",
+	singleHarvests: "Einzelernten",
+	perPlant: "Ertrag pro Pflanze",
+	noHarvests: "Noch keine Ernten für diese Auswahl.",
+	cultureTools: "Kulturansichten",
+	cultureView_list: "Kulturen & Aufgaben",
+	cultureView_garden: "Gartenmodus",
+	cultureView_harvest: "Ernte & Auswertung",
+	chooseCulture: "Kultur auswählen",
+	harvestAnalysisHint: "Gramm und Kilogramm werden als Kilogramm zusammengefasst; Stück bleiben getrennt. Pflanzen, Sorten und Beetzuordnungen werden beim Erfassen der Ernte festgehalten. Die Ertragsberechnung verwendet die aktuell gepflegte Pflanzenanzahl jeder beteiligten Kultur genau einmal je Einheit und Gruppe. Fehlt eine Anzahl, bleibt der entsprechende Durchschnitt offen. Jahre beziehen sich auf das Erntedatum.",
+	groupHarvest: "Vergleichen nach",
+	harvestYear: "Erntejahr",
+	harvestPlant: "Erntepflanze",
+	harvestVariety: "Erntesorte",
+	harvestLocation: "Erntebeet / Standort",
+	allValues: "Alle",
+	group_plant: "Pflanze",
+	group_variety: "Pflanze und Sorte",
+	group_location: "Beet / Standort",
+	group_year: "Erntejahr",
+	group_culture: "Kultur",
+	totalWeight: "Gesamtgewicht",
+	totalPieces: "Gesamtstückzahl",
+	weightPerPlant: "kg pro Pflanze",
+	piecesPerPlant: "Stück pro Pflanze",
 	backOverview: "Zurück zur Übersicht",
 	uploadImage: "Bild hochladen",
 	imagePreview: "Bildvorschau",
@@ -1040,7 +1048,77 @@ var vt = class {
 	noDeliveries: "Noch keine Versandversuche.",
 	grantedEditor: "Du hast eine Bearbeitungsfreigabe für diesen Garten.",
 	notifyEntityHint: "Eine Benachrichtigungs-Entität ist eine vorhandene HA-Kennung wie notify.mail_martin, keine E-Mail-Adresse. Bei notify.send_message hier eine solche Entität wählen; SMTP-Empfänger werden in Home Assistant eingerichtet. Bei einem älteren Dienst wie notify.email bleibt dieses Entitätsfeld leer. Für getrennte Empfänger verwende die Benutzertabelle mit eigener E-Mail-Adresse je Benutzer. Bei Aktivierung eines Benutzerziels wird der bisherige gemeinsame Kanal ausgeschaltet. Nur wenn ausdrücklich wieder zugeschaltet, sendet er zusätzlich an seine konfigurierten Standardempfänger."
-}, bt = {
+}, vt = {
+	harvestUnitsHint: "Weights and pieces are separate. — means the plant count is unknown.",
+	calculationHelp: "How are results calculated?",
+	moreHarvestFilters: "Filter by plant, variety and bed",
+	photoLoading: "Loading photo …",
+	photoLoadError: "The photo could not be loaded.",
+	stockQuantity: "Stock quantity",
+	newSeedLot: "Add seed lot",
+	seedLots: "Seed stock",
+	manageStock: "Open stock",
+	stockTotal: "Stock totals by unit",
+	lot_label: "Packet / lot",
+	unit: "Unit",
+	unit_seeds: "Seeds",
+	unit_packets: "Packets",
+	unit_g: "g",
+	unit_kg: "kg",
+	unit_pieces: "Pieces",
+	purchase_year: "Purchase year",
+	best_before: "Best before / viable until",
+	opened_on: "Opened on",
+	germination_percent: "Tested germination (%)",
+	germination_tested_on: "Germination tested on",
+	storage_location: "Storage location",
+	seedLotHint: "A lot can represent one packet. Units are summed separately. Germination is recorded from your input, never estimated. Shopping status remains independent.",
+	useOlderStock: "Sorted by stated best-before date, then purchase year. Use opened and older lots first.",
+	seedPastDate: "The stated date has passed. Consider a germination test; the date alone does not mean no seeds will germinate.",
+	noSeedLots: "No seed lots recorded for this plant.",
+	plant_count: "Plant count for yield calculation",
+	plantCountHint: "Enter the actual plant count used for yield in the cultivation. Sowing quantity is not used automatically. Unknown counts leave per-plant yield blank.",
+	newJournal: "Journal entry",
+	cultureJournal: "Garden journal",
+	entry_kind: "Entry kind",
+	kind_observation: "Observation",
+	kind_germination: "Germination",
+	kind_growth: "Growth",
+	kind_pest: "Pests / disease",
+	kind_harvest: "Harvest",
+	amount: "Harvest quantity",
+	pieces: "Pieces",
+	journalHint: "This entry belongs to the selected cultivation and does not change its lifecycle status automatically. Individual harvests contribute to the total. One photo per entry; add further photos as separate entries.",
+	takePhoto: "Take photo",
+	addObservation: "Record observation",
+	recordHarvest: "Record harvest",
+	finishWork: "Complete task",
+	emptyJournal: "No journal entries yet.",
+	totalHarvest: "Total harvest",
+	singleHarvests: "Individual harvests",
+	perPlant: "Yield per plant",
+	noHarvests: "No harvests for this selection.",
+	cultureTools: "Cultivation views",
+	cultureView_list: "Cultivations & tasks",
+	cultureView_garden: "Garden mode",
+	cultureView_harvest: "Harvest & analysis",
+	chooseCulture: "Select cultivation",
+	harvestAnalysisHint: "Grams and kilograms are combined as kilograms; piece counts stay separate. Plant, variety and location are captured when recording the harvest. Per-plant results use the current plant count for each contributing cultivation once per unit and group. Any unknown count leaves that average blank. Years refer to the harvest date.",
+	groupHarvest: "Compare by",
+	harvestYear: "Harvest year",
+	harvestPlant: "Harvest plant",
+	harvestVariety: "Harvest variety",
+	harvestLocation: "Harvest bed / location",
+	allValues: "All",
+	group_plant: "Plant",
+	group_variety: "Plant and variety",
+	group_location: "Bed / location",
+	group_year: "Harvest year",
+	group_culture: "Cultivation",
+	totalWeight: "Total weight",
+	totalPieces: "Total pieces",
+	weightPerPlant: "kg per plant",
+	piecesPerPlant: "Pieces per plant",
 	backOverview: "Back to overview",
 	uploadImage: "Upload image",
 	imagePreview: "Image preview",
@@ -1175,11 +1253,11 @@ var vt = class {
 	grantedEditor: "You have permission to edit this shared garden.",
 	notifyEntityHint: "A notification entity is an existing HA identifier such as notify.mail_martin, not an email address. Select it for notify.send_message; configure SMTP recipient entities in Home Assistant. Leave this field empty for legacy services such as notify.email. Use the user table with an explicit recipient address for separate legacy email recipients. Enabling a user destination switches off the existing shared channel. It sends additionally to its configured defaults only if explicitly switched back on."
 };
-function xt(e, t) {
-	return (e === "de" ? yt : bt)[t];
+function yt(e, t) {
+	return (e === "de" ? _t : vt)[t];
 }
 // src/i18n.ts
-var St = {
+var bt = {
 	overview: "Übersicht",
 	calendar: "Gartenkalender",
 	plants: "Meine Pflanzen",
@@ -1410,7 +1488,7 @@ var St = {
 	busy: "Wird gespeichert …",
 	new: "Neu",
 	historicalName: "Name zum Zeitpunkt der Aussaat"
-}, Ct = {
+}, xt = {
 	overview: "Overview",
 	calendar: "Garden calendar",
 	plants: "My plants",
@@ -1642,11 +1720,11 @@ var St = {
 	new: "New",
 	historicalName: "Name at sowing time"
 };
-function wt(e, t) {
-	return (e === "de" ? St : Ct)[t] ?? xt(e, t) ?? t;
+function St(e, t) {
+	return (e === "de" ? bt : xt)[t] ?? yt(e, t) ?? t;
 }
-function Tt(e, t) {
-	return wt(e, {
+function Ct(e, t) {
+	return St(e, {
 		soil: "soilTemperature",
 		care: "careActivity",
 		completed: "completedStatus",
@@ -1655,7 +1733,7 @@ function Tt(e, t) {
 }
 function U(e, t) {
 	let n = t && typeof t == "object" && "code" in t ? String(t.code) : "";
-	return wt(e, [
+	return St(e, [
 		"invalid_data",
 		"not_found",
 		"conflict",
@@ -1664,8 +1742,211 @@ function U(e, t) {
 		"not_loaded"
 	].includes(n) ? n : "unexpected");
 }
-// src/fields.ts
-var Et = [
+// src/journal-photo.ts
+var wt = class extends Ze {
+	static {
+		this.properties = {
+			api: { attribute: !1 },
+			record: { attribute: !1 },
+			language: { attribute: !1 },
+			image: { state: !0 },
+			failed: { state: !0 },
+			loading: { state: !0 }
+		};
+	}
+	static {
+		this.styles = M`
+    :host {
+      display: block;
+      aspect-ratio: 4/3;
+      min-height: 120px;
+      max-width: 360px;
+      background: var(--gp-soft, #edf4ec);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    div {
+      padding: 16px;
+      font: inherit;
+    }
+    button {
+      font: inherit;
+      padding: 10px;
+      min-height: 44px;
+      cursor: pointer;
+      color: inherit;
+      background: transparent;
+      border: 1px solid currentColor;
+      border-radius: 8px;
+    }
+  `;
+	}
+	constructor() {
+		super(), this.image = "", this.failed = !1, this.loading = !1, this.visible = !1, this.generation = 0, this.language = "de";
+	}
+	connectedCallback() {
+		super.connectedCallback(), this.observer = new IntersectionObserver((e) => {
+			e.some((e) => e.isIntersecting) && (this.visible = !0, this.load());
+		}, { rootMargin: "300px" }), this.observer.observe(this);
+	}
+	disconnectedCallback() {
+		this.observer?.disconnect(), this.generation++, this.image = "", this.loading = !1, super.disconnectedCallback();
+	}
+	updated(e) {
+		let t = e.get("record");
+		(e.has("api") || e.has("record") && (t?.id !== this.record?.id || t?.revision !== this.record?.revision)) && (this.generation++, this.image = "", this.failed = !1, this.loading = !1, this.visible && this.load());
+	}
+	async load() {
+		let e = this.api, n = this.record;
+		if (!e || !n || this.loading || this.image || !this.isConnected) return;
+		let r = ++this.generation;
+		this.loading = !0, this.failed = !1;
+		try {
+			let i = await e.command("get", {
+				table: "cultivation_journal",
+				id: n.id
+			});
+			if (r !== this.generation || e !== this.api || !this.isConnected) return;
+			let a = t(i, "image_data");
+			if (!a.startsWith("data:image/png;base64,")) throw Error("missing_image");
+			this.image = a;
+		} catch {
+			r === this.generation && this.isConnected && (this.failed = !0);
+		} finally {
+			r === this.generation && (this.loading = !1);
+		}
+	}
+	render() {
+		return this.image ? B`<img
+          src=${this.image}
+          alt=${t(this.record, "title") || St(this.language, "imagePreview")}
+        />` : B`<div role="status">
+          ${St(this.language, this.failed ? "photoLoadError" : "photoLoading")}${this.failed ? B`<button @click=${() => this.load()}>${St(this.language, "retry")}</button>` : B``}
+        </div>`;
+	}
+};
+customElements.define("garden-journal-photo", wt);
+// src/harvest.ts
+function Tt(e, n, r, i = {}) {
+	let a = new Map(n.map((e) => [e.id, e])), o = /* @__PURE__ */ new Map();
+	for (let n of e) {
+		if (n.data.entry_kind !== "harvest") continue;
+		let e = n.data.harvest_context;
+		if (!e) continue;
+		let s = t(n, "date").slice(0, 4);
+		if (i.year && s !== i.year || i.plant && e.plant_id !== i.plant || i.variety && (e.variety_id || "_") !== i.variety || i.location && (e.location_id || "_") !== i.location) continue;
+		let c = t(n, "cultivation_id"), l = String(e.plant_name || "—"), u = String(e.variety_name || "—"), d = String(e.location_name || "—"), f = r === "year" ? s : r === "plant" ? String(e.plant_id) : r === "variety" ? JSON.stringify([e.plant_id, e.variety_id]) : r === "location" ? String(e.location_id || "_") : c, p = r === "year" ? s : r === "plant" ? l : r === "variety" ? `${l} · ${u}` : r === "location" ? d : `${l} · ${t(a.get(c), "date")}`, m = o.get(f) ?? {
+			label: p,
+			mg: 0,
+			pieces: 0,
+			harvests: 0,
+			mass: /* @__PURE__ */ new Set(),
+			counts: /* @__PURE__ */ new Set()
+		}, h = Number(n.data.amount);
+		if (!(!Number.isFinite(h) || h <= 0)) {
+			if (n.data.unit === "pieces") m.pieces += h, m.counts.add(c);
+			else if (n.data.unit === "g" || n.data.unit === "kg") m.mg += Math.round(h * (n.data.unit === "kg" ? 1e6 : 1e3)), m.mass.add(c);
+			else continue;
+			m.harvests++, o.set(f, m);
+		}
+	}
+	let s = (e) => {
+		if (!e.size) return null;
+		let t = 0;
+		for (let n of e) {
+			let e = a.get(n)?.data.plant_count;
+			if (typeof e != "number" || !Number.isInteger(e) || e <= 0) return null;
+			t += e;
+		}
+		return t;
+	};
+	return [...o].map(([e, t]) => {
+		let n = s(t.mass), r = s(t.counts);
+		return {
+			key: e,
+			label: t.label,
+			kg: t.mg / 1e6,
+			pieces: t.pieces,
+			harvests: t.harvests,
+			kgPerPlant: n === null ? null : t.mg / 1e6 / n,
+			piecesPerPlant: r === null ? null : t.pieces / r,
+			massPlantCount: n,
+			piecePlantCount: r
+		};
+	}).sort((e, t) => e.label.localeCompare(t.label));
+}
+// src/image.ts
+async function Et(e) {
+	if (![
+		"image/jpeg",
+		"image/png",
+		"image/webp"
+	].includes(e.type) || e.size > 12582912) throw Error("invalid_image");
+	let t = URL.createObjectURL(e);
+	try {
+		let e = new Image();
+		if (e.src = t, await e.decode(), !e.naturalWidth || !e.naturalHeight || e.naturalWidth * e.naturalHeight > 4e7) throw Error("invalid_image");
+		let n = 512;
+		for (; n >= 64;) {
+			let t = Math.min(1, n / Math.max(e.naturalWidth, e.naturalHeight)), r = document.createElement("canvas");
+			r.width = Math.max(1, Math.round(e.naturalWidth * t)), r.height = Math.max(1, Math.round(e.naturalHeight * t));
+			let i = r.getContext("2d");
+			if (!i) throw Error("invalid_image");
+			i.drawImage(e, 0, 0, r.width, r.height);
+			let a = r.toDataURL("image/png");
+			if (a.startsWith("data:image/png;base64,") && a.length <= 109250) return a;
+			n = Math.floor(n * .8);
+		}
+		throw Error("invalid_image");
+	} finally {
+		URL.revokeObjectURL(t);
+	}
+}
+// src/api.ts
+var Dt = class {
+	constructor(e) {
+		this.hass = e, this.connection = e.connection;
+	}
+	command(e, t = {}) {
+		if (this.hass.fetchWithAuth && [
+			"export",
+			"preview_import",
+			"import",
+			"list",
+			"history"
+		].includes(e)) return this.hass.fetchWithAuth("/api/garden_planner/exchange", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				operation: e,
+				parameters: t
+			})
+		}).then(async (e) => {
+			let t = await e.json();
+			if (!e.ok) throw t;
+			return t;
+		});
+		let n = {
+			type: "garden_planner/command",
+			operation: e,
+			parameters: t
+		};
+		return this.connection.sendMessagePromise ? this.connection.sendMessagePromise(n) : this.hass.callWS(n);
+	}
+	async load() {
+		let t = await Promise.all(e.map((e) => this.command("list", { table: e })));
+		return Object.fromEntries(e.map((e, n) => [e, t[n]]));
+	}
+	subscribe(e) {
+		return this.hass.connection.subscribeMessage(e, { type: "garden_planner/subscribe" });
+	}
+}, Ot = [
 	"name",
 	"botanical_name",
 	"category",
@@ -1678,7 +1959,7 @@ var Et = [
 	"care",
 	"source",
 	"source_url"
-], Dt = [
+], kt = [
 	"germination_min_c",
 	"germination_optimal_min_c",
 	"germination_optimal_max_c",
@@ -1690,24 +1971,28 @@ var Et = [
 	"row_spacing_cm",
 	"duration_days_min",
 	"duration_days_max"
-], Ot = (e, t) => e.map((e) => ({
+], At = (e, t) => e.map((e) => ({
 	value: e,
-	label: Tt(t, e)
-})), kt = (e, n) => e.map((e) => ({
+	label: Ct(t, e)
+})), jt = (e, n) => e.map((e) => ({
 	value: e.id,
-	label: t(e, "name") || t(e, "title") || wt(n, "untitled")
+	label: t(e, "name") || t(e, "title") || St(n, "untitled")
 }));
 function W(e) {
-	return Dt.includes(e) || [
+	return kt.includes(e) || [
 		"quantity",
 		"temperature_c",
 		"start_day",
-		"end_day"
+		"end_day",
+		"plant_count",
+		"amount",
+		"purchase_year",
+		"germination_percent"
 	].includes(e) ? {
 		key: e,
 		type: "number",
 		min: e.endsWith("_c") ? void 0 : 0,
-		step: e.includes("days") || e.endsWith("_day") ? "1" : "any"
+		step: e.includes("days") || e.endsWith("_day") || ["plant_count", "purchase_year"].includes(e) ? "1" : "any"
 	} : {
 		key: e,
 		type: [
@@ -1719,16 +2004,19 @@ function W(e) {
 		required: e === "name" || e === "title"
 	};
 }
-function At(e, n, r, i, a) {
+function Mt(e, n, r, i, a) {
 	let o = (e, t, n = !1) => ({
 		key: e,
 		type: "select",
-		options: Ot(t, i),
+		options: e === "unit" || e === "entry_kind" ? t.map((t) => ({
+			value: t,
+			label: St(i, (e === "unit" ? "unit_" : "kind_") + t)
+		})) : At(t, i),
 		required: n
 	}), s = (e, t, n = !1, r = !1) => ({
 		key: e,
 		type: "select",
-		options: kt(t, i),
+		options: jt(t, i),
 		required: n,
 		disabled: r
 	}), c = (e, t) => e.filter((e) => !e.data.archived || e.id === t), l = String(n.plant_id ?? ""), u = s("plant_id", c(r.plants, l), !0, a && [
@@ -1740,12 +2028,97 @@ function At(e, n, r, i, a) {
 		"soil",
 		"air"
 	])];
-	return e === "plants" || e === "varieties" ? [
+	return e === "seed_lots" ? [
+		u,
+		d,
+		{
+			key: "lot_label",
+			required: !0
+		},
+		{
+			key: "quantity",
+			label: "stockQuantity",
+			type: "number",
+			min: 0,
+			max: 1e6,
+			step: n.unit === "seeds" ? "1" : "any",
+			required: !0
+		},
+		o("unit", [
+			"seeds",
+			"g",
+			"packets"
+		], !0),
+		{
+			key: "purchase_year",
+			type: "number",
+			min: 1900,
+			max: 9999,
+			step: "1"
+		},
+		{
+			key: "best_before",
+			type: "date"
+		},
+		{
+			key: "opened_on",
+			type: "date"
+		},
+		{
+			key: "germination_percent",
+			type: "number",
+			min: 0,
+			max: 100,
+			step: "any"
+		},
+		{
+			key: "germination_tested_on",
+			type: "date"
+		},
+		W("storage_location"),
+		W("notes")
+	] : e === "cultivation_journal" ? [
+		{
+			key: "date",
+			type: "date",
+			required: !0
+		},
+		{
+			...o("entry_kind", [
+				"observation",
+				"germination",
+				"growth",
+				"pest",
+				"harvest"
+			], !0),
+			disabled: a
+		},
+		{
+			...W("title"),
+			required: !1
+		},
+		...n.entry_kind === "harvest" ? [{
+			key: "amount",
+			type: "number",
+			min: n.unit === "pieces" ? 1 : n.unit === "g" ? .001 : 1e-6,
+			max: 1e5,
+			step: n.unit === "pieces" ? "1" : n.unit === "g" ? ".001" : ".000001",
+			required: !0
+		}, o("unit", [
+			"g",
+			"kg",
+			"pieces"
+		], !0)] : [],
+		{
+			...W("notes"),
+			wide: !0
+		}
+	] : e === "plants" || e === "varieties" ? [
 		...e === "varieties" ? [u] : [],
-		...Et.map((e) => e === "category" ? {
+		...Ot.map((e) => e === "category" ? {
 			key: e,
 			type: "select",
-			options: Ot([.../* @__PURE__ */ new Set([
+			options: At([.../* @__PURE__ */ new Set([
 				"vegetables",
 				"herbs",
 				"flowers",
@@ -1754,7 +2127,7 @@ function At(e, n, r, i, a) {
 				...r.plants.map((e) => t(e, "category")).filter(Boolean)
 			])], i)
 		} : W(e)),
-		...e === "plants" ? Dt.map((e) => ({
+		...e === "plants" ? kt.map((e) => ({
 			...W(e),
 			rowStart: ["depth_cm", "spacing_cm"].includes(e)
 		})) : []
@@ -1837,6 +2210,13 @@ function At(e, n, r, i, a) {
 		], !0),
 		f,
 		W("quantity"),
+		{
+			key: "plant_count",
+			type: "number",
+			min: 1,
+			max: 1e6,
+			step: "1"
+		},
 		...p,
 		o("initial_status", ["sown", "planned"], !0),
 		W("notes"),
@@ -1895,7 +2275,7 @@ function At(e, n, r, i, a) {
 		W("notes")
 	];
 }
-function jt(e, t, n = {}) {
+function Nt(e, t, n = {}) {
 	return {
 		...{
 			plants: { category: "vegetables" },
@@ -1920,12 +2300,21 @@ function jt(e, t, n = {}) {
 			tasks: {
 				date: i(t),
 				activity: "care"
+			},
+			seed_lots: {
+				quantity: 0,
+				unit: "seeds"
+			},
+			cultivation_journal: {
+				date: i(t),
+				entry_kind: "observation",
+				unit: "kg"
 			}
 		}[e],
 		...n
 	};
 }
-function Mt(e, t, n, r) {
+function Pt(e, t, n, r) {
 	let i = {};
 	for (let e of n) {
 		if (e.disabled) continue;
@@ -1935,7 +2324,11 @@ function Mt(e, t, n, r) {
 			r && r.data[e.key] !== void 0 && (i[e.key] = null);
 		} else i[e.key] = e.type === "number" || e.key.endsWith("_month") ? Number(n) : n;
 	}
-	e === "cultivation_events" && !r && (i.cultivation_id = t.cultivation_id), ["plants", "varieties"].includes(e) && t.image_data !== void 0 && (i.image_data = t.image_data || null);
+	e === "cultivation_journal" && !r && (i.cultivation_id = t.cultivation_id), e === "cultivation_events" && !r && (i.cultivation_id = t.cultivation_id), [
+		"plants",
+		"varieties",
+		"cultivation_journal"
+	].includes(e) && t.image_data !== void 0 && (i.image_data = t.image_data || null);
 	let a = {
 		...r?.data,
 		...i
@@ -1954,7 +2347,7 @@ function Mt(e, t, n, r) {
 	return i;
 }
 // node_modules/fflate/esm/browser.js
-var G = Uint8Array, K = Uint16Array, Nt = Int32Array, Pt = new G([
+var G = Uint8Array, K = Uint16Array, Ft = Int32Array, It = new G([
 	0,
 	0,
 	0,
@@ -1987,7 +2380,7 @@ var G = Uint8Array, K = Uint16Array, Nt = Int32Array, Pt = new G([
 	0,
 	0,
 	0
-]), Ft = new G([
+]), Lt = new G([
 	0,
 	0,
 	0,
@@ -2020,7 +2413,7 @@ var G = Uint8Array, K = Uint16Array, Nt = Int32Array, Pt = new G([
 	13,
 	0,
 	0
-]), It = new G([
+]), Rt = new G([
 	16,
 	17,
 	18,
@@ -2040,18 +2433,18 @@ var G = Uint8Array, K = Uint16Array, Nt = Int32Array, Pt = new G([
 	14,
 	1,
 	15
-]), Lt = function(e, t) {
+]), zt = function(e, t) {
 	for (var n = new K(31), r = 0; r < 31; ++r) n[r] = t += 1 << e[r - 1];
-	for (var i = new Nt(n[30]), r = 1; r < 30; ++r) for (var a = n[r]; a < n[r + 1]; ++a) i[a] = a - n[r] << 5 | r;
+	for (var i = new Ft(n[30]), r = 1; r < 30; ++r) for (var a = n[r]; a < n[r + 1]; ++a) i[a] = a - n[r] << 5 | r;
 	return {
 		b: n,
 		r: i
 	};
-}, Rt = Lt(Pt, 2), zt = Rt.b, Bt = Rt.r;
-zt[28] = 258, Bt[258] = 28;
-for (var Vt = Lt(Ft, 0), Ht = Vt.b, Ut = Vt.r, Wt = new K(32768), q = 0; q < 32768; ++q) {
-	var Gt = (q & 43690) >> 1 | (q & 21845) << 1;
-	Gt = (Gt & 52428) >> 2 | (Gt & 13107) << 2, Gt = (Gt & 61680) >> 4 | (Gt & 3855) << 4, Wt[q] = ((Gt & 65280) >> 8 | (Gt & 255) << 8) >> 1;
+}, Bt = zt(It, 2), Vt = Bt.b, Ht = Bt.r;
+Vt[28] = 258, Ht[258] = 28;
+for (var Ut = zt(Lt, 0), Wt = Ut.b, Gt = Ut.r, Kt = new K(32768), q = 0; q < 32768; ++q) {
+	var qt = (q & 43690) >> 1 | (q & 21845) << 1;
+	qt = (qt & 52428) >> 2 | (qt & 13107) << 2, qt = (qt & 61680) >> 4 | (qt & 3855) << 4, Kt[q] = ((qt & 65280) >> 8 | (qt & 255) << 8) >> 1;
 }
 for (var J = (function(e, t, n) {
 	for (var r = e.length, i = 0, a = new K(t); i < r; ++i) e[i] && ++a[e[i] - 1];
@@ -2061,28 +2454,28 @@ for (var J = (function(e, t, n) {
 	if (n) {
 		s = new K(1 << t);
 		var c = 15 - t;
-		for (i = 0; i < r; ++i) if (e[i]) for (var l = i << 4 | e[i], u = t - e[i], d = o[e[i] - 1]++ << u, f = d | (1 << u) - 1; d <= f; ++d) s[Wt[d] >> c] = l;
-	} else for (s = new K(r), i = 0; i < r; ++i) e[i] && (s[i] = Wt[o[e[i] - 1]++] >> 15 - e[i]);
+		for (i = 0; i < r; ++i) if (e[i]) for (var l = i << 4 | e[i], u = t - e[i], d = o[e[i] - 1]++ << u, f = d | (1 << u) - 1; d <= f; ++d) s[Kt[d] >> c] = l;
+	} else for (s = new K(r), i = 0; i < r; ++i) e[i] && (s[i] = Kt[o[e[i] - 1]++] >> 15 - e[i]);
 	return s;
-}), Kt = new G(288), q = 0; q < 144; ++q) Kt[q] = 8;
-for (var q = 144; q < 256; ++q) Kt[q] = 9;
-for (var q = 256; q < 280; ++q) Kt[q] = 7;
-for (var q = 280; q < 288; ++q) Kt[q] = 8;
-for (var qt = new G(32), q = 0; q < 32; ++q) qt[q] = 5;
-var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PURE__*/ J(qt, 5, 0), Zt = /*#__PURE__*/ J(qt, 5, 1), Qt = function(e) {
+}), Jt = new G(288), q = 0; q < 144; ++q) Jt[q] = 8;
+for (var q = 144; q < 256; ++q) Jt[q] = 9;
+for (var q = 256; q < 280; ++q) Jt[q] = 7;
+for (var q = 280; q < 288; ++q) Jt[q] = 8;
+for (var Yt = new G(32), q = 0; q < 32; ++q) Yt[q] = 5;
+var Xt = /*#__PURE__*/ J(Jt, 9, 0), Zt = /*#__PURE__*/ J(Jt, 9, 1), Qt = /*#__PURE__*/ J(Yt, 5, 0), $t = /*#__PURE__*/ J(Yt, 5, 1), en = function(e) {
 	for (var t = e[0], n = 1; n < e.length; ++n) e[n] > t && (t = e[n]);
 	return t;
 }, Y = function(e, t, n) {
 	var r = t / 8 | 0;
 	return (e[r] | e[r + 1] << 8) >> (t & 7) & n;
-}, $t = function(e, t) {
+}, tn = function(e, t) {
 	var n = t / 8 | 0;
 	return (e[n] | e[n + 1] << 8 | e[n + 2] << 16) >> (t & 7);
-}, en = function(e) {
+}, nn = function(e) {
 	return (e + 7) / 8 | 0;
-}, tn = function(e, t, n) {
+}, rn = function(e, t, n) {
 	return (t == null || t < 0) && (t = 0), (n == null || n > e.length) && (n = e.length), new G(e.subarray(t, n));
-}, nn = [
+}, an = [
 	"unexpected EOF",
 	"invalid block type",
 	"invalid length/literal",
@@ -2098,10 +2491,10 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 	"stream finishing",
 	"invalid zip data"
 ], X = function(e, t, n) {
-	var r = Error(t || nn[e]);
+	var r = Error(t || an[e]);
 	if (r.code = e, Error.captureStackTrace && Error.captureStackTrace(r, X), !n) throw r;
 	return r;
-}, rn = function(e, t, n, r) {
+}, on = function(e, t, n, r) {
 	var i = e.length, a = r ? r.length : 0;
 	if (!i || t.f && !t.l) return n || new G(0);
 	var o = !n, s = o || t.i != 2, c = t.i;
@@ -2118,7 +2511,7 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 			u = Y(e, d, 1);
 			var v = Y(e, d + 1, 3);
 			if (d += 3, !v) {
-				var y = en(d) + 4, b = e[y - 4] | e[y - 3] << 8, x = y + b;
+				var y = nn(d) + 4, b = e[y - 4] | e[y - 3] << 8, x = y + b;
 				if (x > i) {
 					c && X(0);
 					break;
@@ -2126,13 +2519,13 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 				s && l(f + b), n.set(e.subarray(y, x), f), t.b = f += b, t.p = d = x * 8, t.f = u;
 				continue;
 			}
-			if (v == 1) p = Yt, m = Zt, h = 9, g = 5;
+			if (v == 1) p = Zt, m = $t, h = 9, g = 5;
 			else if (v == 2) {
 				var S = Y(e, d, 31) + 257, C = Y(e, d + 10, 15) + 4, w = S + Y(e, d + 5, 31) + 1;
 				d += 14;
-				for (var T = new G(w), E = new G(19), D = 0; D < C; ++D) E[It[D]] = Y(e, d + D * 3, 7);
+				for (var T = new G(w), E = new G(19), D = 0; D < C; ++D) E[Rt[D]] = Y(e, d + D * 3, 7);
 				d += C * 3;
-				for (var O = Qt(E), ee = (1 << O) - 1, k = J(E, O, 1), D = 0; D < w;) {
+				for (var O = en(E), ee = (1 << O) - 1, k = J(E, O, 1), D = 0; D < w;) {
 					var A = k[Y(e, d, ee)];
 					d += A & 15;
 					var y = A >> 4;
@@ -2143,7 +2536,7 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 					}
 				}
 				var N = T.subarray(0, S), P = T.subarray(S);
-				h = Qt(N), g = Qt(P), p = J(N, h, 1), m = J(P, g, 1);
+				h = en(N), g = en(P), p = J(N, h, 1), m = J(P, g, 1);
 			} else X(1);
 			if (d > _) {
 				c && X(0);
@@ -2152,7 +2545,7 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 		}
 		s && l(f + 131072);
 		for (var te = (1 << h) - 1, F = (1 << g) - 1, ne = d;; ne = d) {
-			var j = p[$t(e, d) & te], I = j >> 4;
+			var j = p[tn(e, d) & te], I = j >> 4;
 			if (d += j & 15, d > _) {
 				c && X(0);
 				break;
@@ -2164,15 +2557,15 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 			} else {
 				var L = I - 254;
 				if (I > 264) {
-					var D = I - 257, R = Pt[D];
-					L = Y(e, d, (1 << R) - 1) + zt[D], d += R;
+					var D = I - 257, R = It[D];
+					L = Y(e, d, (1 << R) - 1) + Vt[D], d += R;
 				}
-				var z = m[$t(e, d) & F], re = z >> 4;
+				var z = m[tn(e, d) & F], re = z >> 4;
 				z || X(3), d += z & 15;
-				var P = Ht[re];
+				var P = Wt[re];
 				if (re > 3) {
-					var R = Ft[re];
-					P += $t(e, d) & (1 << R) - 1, d += R;
+					var R = Lt[re];
+					P += tn(e, d) & (1 << R) - 1, d += R;
 				}
 				if (d > _) {
 					c && X(0);
@@ -2189,23 +2582,23 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 		}
 		t.l = p, t.p = ne, t.b = f, t.f = u, p && (u = 1, t.m = h, t.d = m, t.n = g);
 	} while (!u);
-	return f != n.length && o ? tn(n, 0, f) : n.subarray(0, f);
-}, an = function(e, t, n) {
+	return f != n.length && o ? rn(n, 0, f) : n.subarray(0, f);
+}, sn = function(e, t, n) {
 	n <<= t & 7;
 	var r = t / 8 | 0;
 	e[r] |= n, e[r + 1] |= n >> 8;
-}, on = function(e, t, n) {
+}, cn = function(e, t, n) {
 	n <<= t & 7;
 	var r = t / 8 | 0;
 	e[r] |= n, e[r + 1] |= n >> 8, e[r + 2] |= n >> 16;
-}, sn = function(e, t) {
+}, ln = function(e, t) {
 	for (var n = [], r = 0; r < e.length; ++r) e[r] && n.push({
 		s: r,
 		f: e[r]
 	});
 	var i = n.length, a = n.slice();
 	if (!i) return {
-		t: mn,
+		t: gn,
 		l: 0
 	};
 	if (i == 1) {
@@ -2234,7 +2627,7 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 		r: c
 	};
 	for (var f = a[0].s, r = 1; r < i; ++r) a[r].s > f && (f = a[r].s);
-	var p = new K(f + 1), m = cn(n[u - 1], p, 0);
+	var p = new K(f + 1), m = un(n[u - 1], p, 0);
 	if (m > t) {
 		var r = 0, h = 0, g = m - t, _ = 1 << g;
 		for (a.sort(function(e, t) {
@@ -2258,9 +2651,9 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 		t: new G(p),
 		l: m
 	};
-}, cn = function(e, t, n) {
-	return e.s == -1 ? Math.max(cn(e.l, t, n + 1), cn(e.r, t, n + 1)) : t[e.s] = n;
-}, ln = function(e) {
+}, un = function(e, t, n) {
+	return e.s == -1 ? Math.max(un(e.l, t, n + 1), un(e.r, t, n + 1)) : t[e.s] = n;
+}, dn = function(e) {
 	for (var t = e.length; t && !e[--t];);
 	for (var n = new K(++t), r = 0, i = e[0], a = 1, o = function(e) {
 		n[r++] = e;
@@ -2280,44 +2673,44 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 		c: n.subarray(0, r),
 		n: t
 	};
-}, un = function(e, t) {
+}, fn = function(e, t) {
 	for (var n = 0, r = 0; r < t.length; ++r) n += e[r] * t[r];
 	return n;
-}, dn = function(e, t, n) {
-	var r = n.length, i = en(t + 2);
+}, pn = function(e, t, n) {
+	var r = n.length, i = nn(t + 2);
 	e[i] = r & 255, e[i + 1] = r >> 8, e[i + 2] = e[i] ^ 255, e[i + 3] = e[i + 1] ^ 255;
 	for (var a = 0; a < r; ++a) e[i + a + 4] = n[a];
 	return (i + 4 + r) * 8;
-}, fn = function(e, t, n, r, i, a, o, s, c, l, u) {
-	an(t, u++, n), ++i[256];
-	for (var d = sn(i, 15), f = d.t, p = d.l, m = sn(a, 15), h = m.t, g = m.l, _ = ln(f), v = _.c, y = _.n, b = ln(h), x = b.c, S = b.n, C = new K(19), w = 0; w < v.length; ++w) ++C[v[w] & 31];
+}, mn = function(e, t, n, r, i, a, o, s, c, l, u) {
+	sn(t, u++, n), ++i[256];
+	for (var d = ln(i, 15), f = d.t, p = d.l, m = ln(a, 15), h = m.t, g = m.l, _ = dn(f), v = _.c, y = _.n, b = dn(h), x = b.c, S = b.n, C = new K(19), w = 0; w < v.length; ++w) ++C[v[w] & 31];
 	for (var w = 0; w < x.length; ++w) ++C[x[w] & 31];
-	for (var T = sn(C, 7), E = T.t, D = T.l, O = 19; O > 4 && !E[It[O - 1]]; --O);
-	var ee = l + 5 << 3, k = un(i, Kt) + un(a, qt) + o, A = un(i, f) + un(a, h) + o + 14 + 3 * O + un(C, E) + 2 * C[16] + 3 * C[17] + 7 * C[18];
-	if (c >= 0 && ee <= k && ee <= A) return dn(t, u, e.subarray(c, c + l));
+	for (var T = ln(C, 7), E = T.t, D = T.l, O = 19; O > 4 && !E[Rt[O - 1]]; --O);
+	var ee = l + 5 << 3, k = fn(i, Jt) + fn(a, Yt) + o, A = fn(i, f) + fn(a, h) + o + 14 + 3 * O + fn(C, E) + 2 * C[16] + 3 * C[17] + 7 * C[18];
+	if (c >= 0 && ee <= k && ee <= A) return pn(t, u, e.subarray(c, c + l));
 	var j, M, N, P;
-	if (an(t, u, 1 + (A < k)), u += 2, A < k) {
+	if (sn(t, u, 1 + (A < k)), u += 2, A < k) {
 		j = J(f, p, 0), M = f, N = J(h, g, 0), P = h;
 		var te = J(E, D, 0);
-		an(t, u, y - 257), an(t, u + 5, S - 1), an(t, u + 10, O - 4), u += 14;
-		for (var w = 0; w < O; ++w) an(t, u + 3 * w, E[It[w]]);
+		sn(t, u, y - 257), sn(t, u + 5, S - 1), sn(t, u + 10, O - 4), u += 14;
+		for (var w = 0; w < O; ++w) sn(t, u + 3 * w, E[Rt[w]]);
 		u += 3 * O;
 		for (var F = [v, x], ne = 0; ne < 2; ++ne) for (var I = F[ne], w = 0; w < I.length; ++w) {
 			var L = I[w] & 31;
-			an(t, u, te[L]), u += E[L], L > 15 && (an(t, u, I[w] >> 5 & 127), u += I[w] >> 12);
+			sn(t, u, te[L]), u += E[L], L > 15 && (sn(t, u, I[w] >> 5 & 127), u += I[w] >> 12);
 		}
-	} else j = Jt, M = Kt, N = Xt, P = qt;
+	} else j = Xt, M = Jt, N = Qt, P = Yt;
 	for (var w = 0; w < s; ++w) {
 		var R = r[w];
 		if (R > 255) {
 			var L = R >> 18 & 31;
-			on(t, u, j[L + 257]), u += M[L + 257], L > 7 && (an(t, u, R >> 23 & 31), u += Pt[L]);
+			cn(t, u, j[L + 257]), u += M[L + 257], L > 7 && (sn(t, u, R >> 23 & 31), u += It[L]);
 			var z = R & 31;
-			on(t, u, N[z]), u += P[z], z > 3 && (on(t, u, R >> 5 & 8191), u += Ft[z]);
-		} else on(t, u, j[R]), u += M[R];
+			cn(t, u, N[z]), u += P[z], z > 3 && (cn(t, u, R >> 5 & 8191), u += Lt[z]);
+		} else cn(t, u, j[R]), u += M[R];
 	}
-	return on(t, u, j[256]), u + M[256];
-}, pn = /*#__PURE__*/ new Nt([
+	return cn(t, u, j[256]), u + M[256];
+}, hn = /*#__PURE__*/ new Ft([
 	65540,
 	131080,
 	131088,
@@ -2327,18 +2720,18 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 	1048832,
 	2114560,
 	2117632
-]), mn = /*#__PURE__*/ new G(0), hn = function(e, t, n, r, i, a) {
+]), gn = /*#__PURE__*/ new G(0), _n = function(e, t, n, r, i, a) {
 	var o = a.z || e.length, s = new G(r + o + 5 * (1 + Math.ceil(o / 7e3)) + i), c = s.subarray(r, s.length - i), l = a.l, u = (a.r || 0) & 7;
 	if (t) {
 		u && (c[0] = a.r >> 3);
-		for (var d = pn[t - 1], f = d >> 13, p = d & 8191, m = (1 << n) - 1, h = a.p || new K(32768), g = a.h || new K(m + 1), _ = Math.ceil(n / 3), v = 2 * _, y = function(t) {
+		for (var d = hn[t - 1], f = d >> 13, p = d & 8191, m = (1 << n) - 1, h = a.p || new K(32768), g = a.h || new K(m + 1), _ = Math.ceil(n / 3), v = 2 * _, y = function(t) {
 			return (e[t] ^ e[t + 1] << _ ^ e[t + 2] << v) & m;
-		}, b = new Nt(25e3), x = new K(288), S = new K(32), C = 0, w = 0, T = a.i || 0, E = 0, D = a.w || 0, O = 0; T + 2 < o; ++T) {
+		}, b = new Ft(25e3), x = new K(288), S = new K(32), C = 0, w = 0, T = a.i || 0, E = 0, D = a.w || 0, O = 0; T + 2 < o; ++T) {
 			var ee = y(T), k = T & 32767, A = g[ee];
 			if (h[k] = A, g[ee] = k, D <= T) {
 				var j = o - T;
 				if ((C > 7e3 || E > 24576) && (j > 423 || !l)) {
-					u = fn(e, c, 0, b, x, S, w, E, O, T - O, u), E = C = w = 0, O = T;
+					u = mn(e, c, 0, b, x, S, w, E, O, T - O, u), E = C = w = 0, O = T;
 					for (var M = 0; M < 286; ++M) x[M] = 0;
 					for (var M = 0; M < 30; ++M) S[M] = 0;
 				}
@@ -2357,63 +2750,63 @@ var Jt = /*#__PURE__*/ J(Kt, 9, 0), Yt = /*#__PURE__*/ J(Kt, 9, 1), Xt = /*#__PU
 					k = A, A = h[k], F += k - A & 32767;
 				}
 				if (P) {
-					b[E++] = 268435456 | Bt[N] << 18 | Ut[P];
-					var oe = Bt[N] & 31, se = Ut[P] & 31;
-					w += Pt[oe] + Ft[se], ++x[257 + oe], ++S[se], D = T + N, ++C;
+					b[E++] = 268435456 | Ht[N] << 18 | Gt[P];
+					var oe = Ht[N] & 31, se = Gt[P] & 31;
+					w += It[oe] + Lt[se], ++x[257 + oe], ++S[se], D = T + N, ++C;
 				} else b[E++] = e[T], ++x[e[T]];
 			}
 		}
 		for (T = Math.max(T, D); T < o; ++T) b[E++] = e[T], ++x[e[T]];
-		u = fn(e, c, l, b, x, S, w, E, O, T - O, u), l || (a.r = u & 7 | c[u / 8 | 0] << 3, u -= 7, a.h = g, a.p = h, a.i = T, a.w = D);
+		u = mn(e, c, l, b, x, S, w, E, O, T - O, u), l || (a.r = u & 7 | c[u / 8 | 0] << 3, u -= 7, a.h = g, a.p = h, a.i = T, a.w = D);
 	} else {
 		for (var T = a.w || 0; T < o + l; T += 65535) {
 			var ce = T + 65535;
-			ce >= o && (c[u / 8 | 0] = l, ce = o), u = dn(c, u + 1, e.subarray(T, ce));
+			ce >= o && (c[u / 8 | 0] = l, ce = o), u = pn(c, u + 1, e.subarray(T, ce));
 		}
 		a.i = o;
 	}
-	return tn(s, 0, r + en(u) + i);
-}, gn = /*#__PURE__*/ (function() {
+	return rn(s, 0, r + nn(u) + i);
+}, vn = /*#__PURE__*/ (function() {
 	for (var e = /* @__PURE__ */ new Int32Array(256), t = 0; t < 256; ++t) {
 		for (var n = t, r = 9; --r;) n = (n & 1 && -306674912) ^ n >>> 1;
 		e[t] = n;
 	}
 	return e;
-})(), _n = function() {
+})(), yn = function() {
 	var e = -1;
 	return {
 		p: function(t) {
-			for (var n = e, r = 0; r < t.length; ++r) n = gn[n & 255 ^ t[r]] ^ n >>> 8;
+			for (var n = e, r = 0; r < t.length; ++r) n = vn[n & 255 ^ t[r]] ^ n >>> 8;
 			e = n;
 		},
 		d: function() {
 			return ~e;
 		}
 	};
-}, vn = function(e, t, n, r, i) {
+}, bn = function(e, t, n, r, i) {
 	if (!i && (i = { l: 1 }, t.dictionary)) {
 		var a = t.dictionary.subarray(-32768), o = new G(a.length + e.length);
 		o.set(a), o.set(e, a.length), e = o, i.w = a.length;
 	}
-	return hn(e, t.level == null ? 6 : t.level, t.mem == null ? i.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(e.length))) * 1.5) : 20 : 12 + t.mem, n, r, i);
-}, yn = function(e, t) {
+	return _n(e, t.level == null ? 6 : t.level, t.mem == null ? i.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(e.length))) * 1.5) : 20 : 12 + t.mem, n, r, i);
+}, xn = function(e, t) {
 	var n = {};
 	for (var r in e) n[r] = e[r];
 	for (var r in t) n[r] = t[r];
 	return n;
-}, bn = function(e, t) {
-	return e[t] | e[t + 1] << 8;
-}, xn = function(e, t) {
-	return (e[t] | e[t + 1] << 8 | e[t + 2] << 16 | e[t + 3] << 24) >>> 0;
 }, Sn = function(e, t) {
-	return xn(e, t) + xn(e, t + 4) * 4294967296;
+	return e[t] | e[t + 1] << 8;
+}, Cn = function(e, t) {
+	return (e[t] | e[t + 1] << 8 | e[t + 2] << 16 | e[t + 3] << 24) >>> 0;
+}, wn = function(e, t) {
+	return Cn(e, t) + Cn(e, t + 4) * 4294967296;
 }, Z = function(e, t, n) {
 	for (; n; ++t) e[t] = n, n >>>= 8;
 };
-function Cn(e, t) {
-	return vn(e, t || {}, 0, 0);
+function Tn(e, t) {
+	return bn(e, t || {}, 0, 0);
 }
-var wn = /* @__PURE__ */ function() {
+var En = /* @__PURE__ */ function() {
 	function e(e, t) {
 		typeof e == "function" && (t = e, e = {}), this.ondata = t;
 		var n = e && e.dictionary && e.dictionary.subarray(-32768);
@@ -2430,36 +2823,36 @@ var wn = /* @__PURE__ */ function() {
 		}
 	}, e.prototype.c = function(e) {
 		this.s.i = +(this.d = e || !1);
-		var t = this.s.b, n = rn(this.p, this.s, this.o);
-		this.ondata(tn(n, t, this.s.b), this.d), this.o = tn(n, this.s.b - 32768), this.s.b = this.o.length, this.p = tn(this.p, this.s.p / 8 | 0), this.s.p &= 7;
+		var t = this.s.b, n = on(this.p, this.s, this.o);
+		this.ondata(rn(n, t, this.s.b), this.d), this.o = rn(n, this.s.b - 32768), this.s.b = this.o.length, this.p = rn(this.p, this.s.p / 8 | 0), this.s.p &= 7;
 	}, e.prototype.push = function(e, t) {
 		this.e(e), this.c(t);
 	}, e;
-}(), Tn = function(e, t, n, r) {
+}(), Dn = function(e, t, n, r) {
 	for (var i in e) {
 		var a = e[i], o = t + i, s = r;
-		Array.isArray(a) && (s = yn(r, a[1]), a = a[0]), ArrayBuffer.isView(a) ? n[o] = [a, s] : (n[o += "/"] = [new G(0), s], Tn(a, o, n, r));
+		Array.isArray(a) && (s = xn(r, a[1]), a = a[0]), ArrayBuffer.isView(a) ? n[o] = [a, s] : (n[o += "/"] = [new G(0), s], Dn(a, o, n, r));
 	}
-}, En = typeof TextEncoder < "u" && /*#__PURE__*/ new TextEncoder(), Dn = typeof TextDecoder < "u" && /*#__PURE__*/ new TextDecoder();
+}, On = typeof TextEncoder < "u" && /*#__PURE__*/ new TextEncoder(), kn = typeof TextDecoder < "u" && /*#__PURE__*/ new TextDecoder();
 try {
-	Dn.decode(mn, { stream: !0 });
+	kn.decode(gn, { stream: !0 });
 } catch {}
-var On = function(e) {
+var An = function(e) {
 	for (var t = "", n = 0;;) {
 		var r = e[n++], i = (r > 127) + (r > 223) + (r > 239);
 		if (n + i > e.length) return {
 			s: t,
-			r: tn(e, n - 1)
+			r: rn(e, n - 1)
 		};
 		i ? i == 3 ? (r = ((r & 15) << 18 | (e[n++] & 63) << 12 | (e[n++] & 63) << 6 | e[n++] & 63) - 65536, t += String.fromCharCode(55296 | r >> 10, 56320 | r & 1023)) : i & 1 ? t += String.fromCharCode((r & 31) << 6 | e[n++] & 63) : t += String.fromCharCode((r & 15) << 12 | (e[n++] & 63) << 6 | e[n++] & 63) : t += String.fromCharCode(r);
 	}
 };
-function kn(e, t) {
+function jn(e, t) {
 	if (t) {
 		for (var n = new G(e.length), r = 0; r < e.length; ++r) n[r] = e.charCodeAt(r);
 		return n;
 	}
-	if (En) return En.encode(e);
+	if (On) return On.encode(e);
 	for (var i = e.length, a = new G(e.length + (e.length >> 1)), o = 0, s = function(e) {
 		a[o++] = e;
 	}, r = 0; r < i; ++r) {
@@ -2470,24 +2863,24 @@ function kn(e, t) {
 		var l = e.charCodeAt(r);
 		l < 128 || t ? s(l) : l < 2048 ? (s(192 | l >> 6), s(128 | l & 63)) : l > 55295 && l < 57344 ? (l = 65536 + (l & 1047552) | e.charCodeAt(++r) & 1023, s(240 | l >> 18), s(128 | l >> 12 & 63), s(128 | l >> 6 & 63), s(128 | l & 63)) : (s(224 | l >> 12), s(128 | l >> 6 & 63), s(128 | l & 63));
 	}
-	return tn(a, 0, o);
+	return rn(a, 0, o);
 }
-function An(e, t) {
+function Mn(e, t) {
 	if (t) {
 		for (var n = "", r = 0; r < e.length; r += 16384) n += String.fromCharCode.apply(null, e.subarray(r, r + 16384));
 		return n;
 	}
-	if (Dn) return Dn.decode(e);
-	var i = On(e), a = i.s, n = i.r;
+	if (kn) return kn.decode(e);
+	var i = An(e), a = i.s, n = i.r;
 	return n.length && X(8), a;
 }
-var jn = function(e, t, n, r, i, a, o) {
+var Nn = function(e, t, n, r, i, a, o) {
 	var s = i == 4294967295, c = a == 4294967295, l = o == 4294967295, u = t + n, d = s + c + l;
 	if (r && d) {
-		for (; t + 4 < u; t += 4 + bn(e, t + 2)) if (bn(e, t) == 1) return [
-			s ? Sn(e, t + 4 + 8 * c) : i,
-			c ? Sn(e, t + 4) : a,
-			l ? Sn(e, t + 4 + 8 * (c + s)) : o,
+		for (; t + 4 < u; t += 4 + Sn(e, t + 2)) if (Sn(e, t) == 1) return [
+			s ? wn(e, t + 4 + 8 * c) : i,
+			c ? wn(e, t + 4) : a,
+			l ? wn(e, t + 4 + 8 * (c + s)) : o,
 			1
 		];
 		r < 2 && X(13);
@@ -2498,15 +2891,15 @@ var jn = function(e, t, n, r, i, a, o) {
 		o,
 		0
 	];
-}, Mn = function(e) {
+}, Pn = function(e) {
 	var t = 0;
 	if (e) for (var n in e) {
 		var r = e[n].length;
 		r > 65535 && X(9), t += r + 4;
 	}
 	return t;
-}, Nn = function(e, t, n, r, i, a, o, s) {
-	var c = r.length, l = n.extra, u = s && s.length, d = Mn(l);
+}, Fn = function(e, t, n, r, i, a, o, s) {
+	var c = r.length, l = n.extra, u = s && s.length, d = Pn(l);
 	Z(e, t, o == null ? 67324752 : 33639248), t += 4, o != null && (e[t++] = 20, e[t++] = n.os), e[t] = 20, t += 2, e[t++] = n.flag << 1 | (a < 0 && 8), e[t++] = i && 8, e[t++] = n.compression & 255, e[t++] = n.compression >> 8;
 	var f = new Date(n.mtime == null ? Date.now() : n.mtime), p = f.getFullYear() - 1980;
 	if ((p < 0 || p > 119) && X(10), Z(e, t, p << 25 | f.getMonth() + 1 << 21 | f.getDate() << 16 | f.getHours() << 11 | f.getMinutes() << 5 | f.getSeconds() >> 1), t += 4, a != -1 && (Z(e, t, n.crc), Z(e, t + 4, a < 0 ? -a - 2 : a), Z(e, t + 8, n.size)), Z(e, t + 12, c), Z(e, t + 14, d), t += 16, o != null && (Z(e, t, u), Z(e, t + 6, n.attrs), Z(e, t + 10, o), t += 14), e.set(r, t), t += c, d) for (var m in l) {
@@ -2514,19 +2907,19 @@ var jn = function(e, t, n, r, i, a, o) {
 		Z(e, t, +m), Z(e, t + 2, g), e.set(h, t + 4), t += 4 + g;
 	}
 	return u && (e.set(s, t), t += u), t;
-}, Pn = function(e, t, n, r, i) {
+}, In = function(e, t, n, r, i) {
 	Z(e, t, 101010256), Z(e, t + 8, n), Z(e, t + 10, n), Z(e, t + 12, r), Z(e, t + 16, i);
 };
-function Fn(e, t) {
+function Ln(e, t) {
 	t ||= {};
 	var n = {}, r = [];
-	Tn(e, "", n, t);
+	Dn(e, "", n, t);
 	var i = 0, a = 0;
 	for (var o in n) {
-		var s = n[o], c = s[0], l = s[1], u = l.level == 0 ? 0 : 8, d = kn(o), f = d.length, p = l.comment, m = p && kn(p), h = m && m.length, g = Mn(l.extra);
+		var s = n[o], c = s[0], l = s[1], u = l.level == 0 ? 0 : 8, d = jn(o), f = d.length, p = l.comment, m = p && jn(p), h = m && m.length, g = Pn(l.extra);
 		f > 65535 && X(11);
-		var _ = u ? Cn(c, l) : c, v = _.length, y = _n();
-		y.p(c), r.push(yn(l, {
+		var _ = u ? Tn(c, l) : c, v = _.length, y = yn();
+		y.p(c), r.push(xn(l, {
 			size: c.length,
 			crc: y.d(),
 			c: _,
@@ -2539,21 +2932,21 @@ function Fn(e, t) {
 	}
 	for (var b = new G(a + 22), x = i, S = a - i, C = 0; C < r.length; ++C) {
 		var d = r[C];
-		Nn(b, d.o, d, d.f, d.u, d.c.length);
-		var w = 30 + d.f.length + Mn(d.extra);
-		b.set(d.c, d.o + w), Nn(b, i, d, d.f, d.u, d.c.length, d.o, d.m), i += 16 + w + (d.m ? d.m.length : 0);
+		Fn(b, d.o, d, d.f, d.u, d.c.length);
+		var w = 30 + d.f.length + Pn(d.extra);
+		b.set(d.c, d.o + w), Fn(b, i, d, d.f, d.u, d.c.length, d.o, d.m), i += 16 + w + (d.m ? d.m.length : 0);
 	}
-	return Pn(b, i, r.length, S, x), b;
+	return In(b, i, r.length, S, x), b;
 }
-var In = /* @__PURE__ */ function() {
+var Rn = /* @__PURE__ */ function() {
 	function e() {}
 	return e.prototype.push = function(e, t) {
 		this.ondata(null, e, t);
 	}, e.compression = 0, e;
-}(), Ln = /* @__PURE__ */ function() {
+}(), zn = /* @__PURE__ */ function() {
 	function e() {
 		var e = this;
-		this.i = new wn(function(t, n) {
+		this.i = new En(function(t, n) {
 			e.ondata(null, t, n);
 		});
 	}
@@ -2564,9 +2957,9 @@ var In = /* @__PURE__ */ function() {
 			this.ondata(e, null, t);
 		}
 	}, e.compression = 8, e;
-}(), Rn = /* @__PURE__ */ function() {
+}(), Bn = /* @__PURE__ */ function() {
 	function e(e) {
-		this.onfile = e, this.k = [], this.o = { 0: In }, this.p = mn;
+		this.onfile = e, this.k = [], this.o = { 0: Rn }, this.p = gn;
 	}
 	return e.prototype.push = function(e, t) {
 		var n = this;
@@ -2577,20 +2970,20 @@ var In = /* @__PURE__ */ function() {
 			var a = 0, o = 0, s = void 0, c = void 0;
 			this.p.length ? e.length ? (c = new G(this.p.length + e.length), c.set(this.p), c.set(e, this.p.length)) : c = this.p : c = e;
 			for (var l = c.length, u = this.c, d = u && this.d, f = function() {
-				var e = xn(c, o);
+				var e = Cn(c, o);
 				if (e == 67324752) {
 					a = 1, s = o, p.d = null, p.c = 0;
-					var t = bn(c, o + 6), r = bn(c, o + 8), i = t & 2048, d = t & 8, f = bn(c, o + 26), m = bn(c, o + 28);
+					var t = Sn(c, o + 6), r = Sn(c, o + 8), i = t & 2048, d = t & 8, f = Sn(c, o + 26), m = Sn(c, o + 28);
 					if (l > o + 30 + f + m) {
 						var h = [];
 						p.k.unshift(h), a = 2;
-						var g = xn(c, o + 18), _ = xn(c, o + 22), v = An(c.subarray(o + 30, o += 30 + f), !i), y = jn(c, o, m, 2, g, _, 0), b = y[0], x = y[1], S = y[3];
+						var g = Cn(c, o + 18), _ = Cn(c, o + 22), v = Mn(c.subarray(o + 30, o += 30 + f), !i), y = Nn(c, o, m, 2, g, _, 0), b = y[0], x = y[1], S = y[3];
 						d && (b = -1 - S), o += m, p.c = b;
 						var C, w = {
 							name: v,
 							compression: r,
 							start: function() {
-								if (w.ondata || X(5), !b) w.ondata(null, mn, !0);
+								if (w.ondata || X(5), !b) w.ondata(null, gn, !0);
 								else {
 									var e = n.o[r];
 									e || w.ondata(X(14, "unknown compression type " + r, 1), null, !1), C = b < 0 ? new e(v) : new e(v, b, x), C.ondata = function(e, t, n) {
@@ -2600,7 +2993,7 @@ var In = /* @__PURE__ */ function() {
 										var a = i[t];
 										C.push(a, !1);
 									}
-									n.k[0] == h && n.c ? n.d = C : C.push(mn, !0);
+									n.k[0] == h && n.c ? n.d = C : C.push(gn, !0);
 								}
 							},
 							terminate: function() {
@@ -2616,8 +3009,8 @@ var In = /* @__PURE__ */ function() {
 					if (e == 33639248) return s = o -= 4, a = 3, p.c = 0, "break";
 				}
 			}, p = this; o < l - 4 && f() !== "break"; ++o);
-			if (this.p = mn, u < 0) {
-				var m = a ? c.subarray(0, s - 12 - (u == -2 && 8) - (xn(c, s - 16) == 134695760 && 4)) : c.subarray(0, o);
+			if (this.p = gn, u < 0) {
+				var m = a ? c.subarray(0, s - 12 - (u == -2 && 8) - (Cn(c, s - 16) == 134695760 && 4)) : c.subarray(0, o);
 				d ? d.push(m, !!a) : this.k[+(a == 2)].push(m);
 			}
 			if (a & 2) return this.push(c.subarray(o), t);
@@ -2628,16 +3021,16 @@ var In = /* @__PURE__ */ function() {
 		this.o[e.compression] = e;
 	}, e;
 }();
-function zn(e, t, n) {
+function Vn(e, t, n) {
 	let r = URL.createObjectURL(new Blob([e], { type: n })), i = document.createElement("a");
 	i.href = r, i.download = t, i.click(), setTimeout(() => URL.revokeObjectURL(r), 1e3);
 }
-function Bn(e) {
-	return Fn(Object.fromEntries(Object.entries(e).map(([e, t]) => [e, [kn(t), { mtime: /* @__PURE__ */ new Date("2000-01-01T00:00:00Z") }]])), { level: 6 });
+function Hn(e) {
+	return Ln(Object.fromEntries(Object.entries(e).map(([e, t]) => [e, [jn(t), { mtime: /* @__PURE__ */ new Date("2000-01-01T00:00:00Z") }]])), { level: 6 });
 }
-function Vn(t) {
+function Un(t) {
 	if (t.byteLength > 20971520) throw Error("invalid_file");
-	let n = /* @__PURE__ */ new Set(["metadata.json", ...e.map((e) => `${e}.csv`)]), r = {}, i = 0, a, o = new Rn((e) => {
+	let n = /* @__PURE__ */ new Set(["metadata.json", ...e.map((e) => `${e}.csv`)]), r = {}, i = 0, a, o = new Bn((e) => {
 		if (!n.has(e.name) || e.name in r || (e.originalSize ?? 0) > 20971520) {
 			a = /* @__PURE__ */ Error("invalid_file"), e.terminate();
 			return;
@@ -2650,15 +3043,18 @@ function Vn(t) {
 			else if (t.push(o), s) {
 				let n = new Uint8Array(t.reduce((e, t) => e + t.byteLength, 0)), i = 0;
 				for (let e of t) n.set(e, i), i += e.byteLength;
-				r[e.name] = An(n);
+				r[e.name] = Mn(n);
 			}
 		}, e.start();
 	});
-	if (o.register(Ln), o.push(t, !0), a || Object.keys(r).length !== n.size) throw Error("invalid_file");
+	if (o.register(zn), o.push(t, !0), a) throw Error("invalid_file");
+	if (Object.keys(r).length === n.size) return r;
+	let s = JSON.parse(r["metadata.json"] ?? "null"), c = /* @__PURE__ */ new Set(["seed_lots.csv", "cultivation_journal.csv"]);
+	if (!s || typeof s.schema_version != "number" || [...n].some((e) => !(e in r) && !(s.schema_version < 4 && c.has(e)))) throw Error("invalid_file");
 	return r;
 }
 // src/styles.ts
-var Hn = M`
+var Wn = M`
   :host {
     display: block;
     color: var(--primary-text-color, #263b30);
@@ -4826,7 +5222,220 @@ var Hn = M`
       max-width: 108px;
     }
   }
-`, Un = [
+
+  .culture-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .stock-panel {
+    margin-top: 24px;
+    scroll-margin-top: calc(var(--gp-sticky-top, 56px) + 80px);
+  }
+  .stock-total {
+    font-weight: 600;
+  }
+  .stock-lot {
+    border-top: 1px solid var(--gp-border);
+    padding: 18px 0;
+  }
+  .stock-lot dl {
+    display: grid;
+    grid-template-columns: minmax(100px, 1fr) minmax(0, 1.4fr);
+    gap: 6px 16px;
+    font-size: 13px;
+  }
+  .stock-lot dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  .culture-journal {
+    margin: 24px 0;
+  }
+  .journal-entry {
+    border: 1px solid var(--gp-border);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .journal-entry time {
+    display: block;
+    font-size: 12px;
+    color: var(--gp-muted);
+    margin-top: 8px;
+  }
+  .journal-entry h4 {
+    margin: 8px 0;
+  }
+  .journal-photo {
+    aspect-ratio: 4 / 3;
+    min-height: 120px;
+    display: block;
+    max-width: 100%;
+    width: min(100%, 360px);
+    max-height: 360px;
+    border-radius: 14px;
+    object-fit: contain;
+    background: var(--gp-soft);
+    margin: 14px 0;
+  }
+  .single-harvest {
+    display: block;
+    font-size: 22px;
+    margin: 10px 0;
+  }
+  .harvest-total {
+    background: var(--gp-soft);
+    border-radius: 16px;
+    padding: 18px;
+    margin: 18px 0;
+  }
+  .harvest-total h3 {
+    margin-top: 0;
+  }
+  .harvest-total-values {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+  }
+  .harvest-total-values strong {
+    font-size: 24px;
+  }
+  .garden-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .garden-actions button {
+    min-height: 88px;
+    flex-direction: column;
+    font-size: 16px;
+    padding: 16px 10px;
+  }
+  .garden-actions svg {
+    width: 28px;
+    height: 28px;
+  }
+  .garden-mode select {
+    width: 100%;
+    max-width: 100%;
+  }
+  .camera-input {
+    margin-top: 12px;
+  }
+  .harvest-table-scroll {
+    overflow: auto;
+    max-height: 65dvh;
+    border: 1px solid var(--gp-border);
+    border-radius: 12px;
+  }
+  .harvest-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 720px;
+    font-size: 13px;
+  }
+  .harvest-table th,
+  .harvest-table td {
+    padding: 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--gp-border);
+    white-space: nowrap;
+  }
+  .harvest-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--gp-card);
+    white-space: normal;
+  }
+  .harvest-table tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--gp-card);
+    text-align: left;
+    min-width: 110px;
+    max-width: 200px;
+    white-space: normal;
+  }
+  .harvest-table thead th:first-child {
+    z-index: 3;
+  }
+  @media (max-width: 600px) {
+    .culture-tools {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .culture-tools button {
+      min-width: 0;
+      padding: 8px 4px;
+      font-size: 11px;
+    }
+    .stock-lot .section-head,
+    .journal-entry .section-head {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .garden-mode {
+      padding: 16px;
+    }
+    .garden-actions button {
+      min-height: 96px;
+      font-size: 14px;
+    }
+    .harvest-table tr > :first-child {
+      max-width: 130px;
+    }
+  }
+  @media (max-width: 760px) {
+    .garden-page .topbar .eyebrow,
+    .garden-page .topbar p,
+    .garden-page .topbar-action-label {
+      display: none;
+    }
+    .garden-page .topbar h1 {
+      font-size: 24px;
+    }
+    .garden-page .topbar {
+      margin-bottom: 12px;
+    }
+    .garden-page .topbar .primary {
+      width: 44px;
+      padding: 8px;
+    }
+    .garden-page .garden-mode h3 {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+    .garden-page .garden-actions {
+      margin: 12px 0;
+    }
+    .garden-page .garden-actions button {
+      min-height: 82px;
+    }
+  }
+  .harvest-help,
+  .harvest-extra {
+    margin: 12px 0;
+  }
+  .harvest-help summary,
+  .harvest-extra summary {
+    cursor: pointer;
+    min-height: 36px;
+    font-size: 13px;
+    color: var(--gp-muted);
+  }
+  .harvest-extra {
+    grid-column: 1/-1;
+  }
+`, Gn = [
 	"overview",
 	"calendar",
 	"plants",
@@ -4847,10 +5456,12 @@ var Hn = M`
 	"prune",
 	"harvest",
 	"other"
-], Wn = {
+], Kn = {
 	temperature: "M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0M12 8v10",
 	clock: "M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
 	ruler: "M3 7l4-4 14 14-4 4zM7 7l2-2M10 10l2-2M13 13l2-2",
+	camera: "M3 7h4l2-3h6l2 3h4v13H3zM16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+	harvest: "M6 10h12l2 11H4zM9 10V7a3 3 0 0 1 6 0v3",
 	menu: "M3 6h18M3 12h18M3 18h18",
 	overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
 	calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
@@ -4870,18 +5481,18 @@ var Hn = M`
 	check: "M4 12l5 5L20 6"
 };
 function $(e) {
-	return Ne`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${Wn[e] ?? Wn.plants}></path></svg>`;
+	return Ne`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${Kn[e] ?? Kn.plants}></path></svg>`;
 }
-function Gn() {
+function qn() {
 	try {
 		return localStorage.getItem("garden-planner-language") ?? "";
 	} catch {
 		return "";
 	}
 }
-var Kn = class extends Ze {
+var Jn = class extends Ze {
 	constructor(...e) {
-		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = Gn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.imageLoading = !1, this.imageGeneration = 0, this.matrixQuery = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
+		super(...e), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration = 0, this.reminderQuery = "", this.preferencesGeneration = 0, this.capabilities = null, this.hostSettings = null, this.hostDraftRevision = 0, this.hostDraft = null, this.deliveries = [], this.page = "overview", this.tables = r(), this.loaded = !1, this.busy = !1, this.error = "", this.toast = "", this.languagePreference = qn(), this.query = "", this.category = "", this.method = "", this.sort = "name", this.showArchived = !1, this.calendarMode = "month", this.anchor = "", this.calendarCategories = [], this.calendarActivities = [], this.selected = null, this.editor = null, this.sensorOpen = !1, this.sensorIndex = -1, this.sensorAbove = !1, this.sensorMaxHeight = 240, this.completing = null, this.neighborPlant = "", this.neighborQuery = "", this.neighborEditor = null, this.stockPlant = "", this.cultureView = "list", this.gardenCulture = "", this.harvestBy = "plant", this.harvestYear = "", this.harvestPlant = "", this.harvestVariety = "", this.harvestLocation = "", this.imageLoading = !1, this.imageGeneration = 0, this.matrixQuery = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.layoutNodes = /* @__PURE__ */ new Set(), this.seedSaving = !1, this.seedFailed = !1, this.seedFlight = /* @__PURE__ */ new Map(), this.seedDraft = /* @__PURE__ */ new Map(), this.seedRevisions = /* @__PURE__ */ new Map(), this.seedQuery = "", this.seedFilter = "", this.deleting = null, this.reviewed = null, this.importMode = "merge", this.replaceConfirmed = !1, this.backups = [], this.historyYear = "", this.historyPlant = "", this.boundUser = "", this.connectionGeneration = 0, this.loadGeneration = 0, this.reconnect = () => {
 			this.refresh();
 		}, this.dialogTriggers = /* @__PURE__ */ new Map(), this.rememberTrigger = (e) => {
 			let t = e.composedPath().find((e) => e instanceof HTMLElement && e.matches("button, input, select, a[href]"));
@@ -4929,7 +5540,7 @@ var Kn = class extends Ze {
 		};
 	}
 	static {
-		this.styles = Hn;
+		this.styles = Wn;
 	}
 	static {
 		this.properties = {
@@ -4972,6 +5583,14 @@ var Kn = class extends Ze {
 			seedDraft: { state: !0 },
 			imageLoading: { state: !0 },
 			matrixQuery: { state: !0 },
+			stockPlant: { state: !0 },
+			cultureView: { state: !0 },
+			gardenCulture: { state: !0 },
+			harvestBy: { state: !0 },
+			harvestYear: { state: !0 },
+			harvestPlant: { state: !0 },
+			harvestVariety: { state: !0 },
+			harvestLocation: { state: !0 },
 			seedSaving: { state: !0 },
 			seedFailed: { state: !0 },
 			seedFlight: { state: !0 },
@@ -4991,10 +5610,10 @@ var Kn = class extends Ze {
 		return (this.languagePreference || this.hass?.locale?.language || this.hass?.language || "de").startsWith("de") ? "de" : "en";
 	}
 	tr(e) {
-		return wt(this.language, e);
+		return St(this.language, e);
 	}
 	lab(e) {
-		return Tt(this.language, e);
+		return Ct(this.language, e);
 	}
 	get timeZone() {
 		return this.hass?.config.time_zone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -5043,7 +5662,7 @@ var Kn = class extends Ze {
 	async bind() {
 		this.flushReminderChanges(), this.saveSeedInventory();
 		let e = ++this.connectionGeneration;
-		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new vt(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
+		if (this.loadGeneration++, this.boundConnection?.removeEventListener?.("ready", this.reconnect), this.unsubscribe?.().catch(() => void 0), this.unsubscribe = void 0, this.boundConnection = this.hass?.connection, this.boundUser = this.hass?.user?.id ?? "", this.api = this.hass?.user ? new Dt(this.hass) : void 0, this.tables = r(), this.personalReminders = null, this.reminderConfirmed = null, this.reminderPending = /* @__PURE__ */ new Map(), this.reminderFlush = void 0, this.reminderSaving = !1, this.reminderTasksDirty = !1, this.reminderTaskVersion = 0, this.navigationGeneration++, this.preferencesGeneration++, this.capabilities = null, this.hostSettings = null, this.hostDraft = null, this.deliveries = [], this.loaded = !1, this.selected = null, this.editor = null, this.deleting = null, this.completing = null, this.neighborEditor = null, this.neighborPlant = "", this.neighborQuery = "", this.resetSeeds(), this.stockPlant = "", this.gardenCulture = "", this.cultureView = "list", this.harvestYear = this.harvestPlant = this.harvestVariety = this.harvestLocation = "", this.seedQuery = "", this.seedFilter = "", this.cultureScope = "current", this.historySuccessOnly = !1, this.reviewed = null, this.backups = [], this.lastTrigger = void 0, this.dialogTriggers.clear(), this.error = "", this.toast = "", this.busy = !1, this.toastTimer && clearTimeout(this.toastTimer), this.api && this.boundConnection) {
 			this.anchor ||= this.today, this.boundConnection.addEventListener?.("ready", this.reconnect);
 			try {
 				let t = await this.api.subscribe(() => {
@@ -5097,7 +5716,7 @@ var Kn = class extends Ze {
 				if (!await this.flushReminderChanges() || n !== this.connectionGeneration || t !== this.navigationGeneration || !this.isConnected || this.reminderTasksDirty && !await this.refreshReminderTasks()) return;
 			while (this.reminderPending.size || this.reminderSaving || this.reminderTasksDirty);
 			else if (this.page === "reminders" && e === "reminders") return;
-			n === this.connectionGeneration && t === this.navigationGeneration && (this.page = e, e === "cultures" && (this.cultureScope = "current"), e === "history" && (this.historySuccessOnly = !1), this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings()));
+			n === this.connectionGeneration && t === this.navigationGeneration && (this.page = e, e === "cultures" && (this.cultureScope = "current", this.cultureView = "list"), e === "history" && (this.historySuccessOnly = !1), this.error = "", e === "reminders" && (this.personalReminders = null, this.loadPersonalReminders()), e === "settings" && this.admin && (this.loadBackups(), this.loadHostSettings()));
 		}
 	}
 	plantName(e) {
@@ -5124,11 +5743,11 @@ var Kn = class extends Ze {
 		this.imageGeneration++, this.imageLoading = !1, this.sensorOpen = !1, this.sensorIndex = -1, this.error = "", this.editor = {
 			table: e,
 			record: t,
-			draft: t ? structuredClone(t.data) : jt(e, this.timeZone, n)
+			draft: t ? structuredClone(t.data) : Nt(e, this.timeZone, n)
 		};
 	}
 	fieldList(e) {
-		return At(e.table, e.draft, this.tables, this.language, !!e.record);
+		return Mt(e.table, e.draft, this.tables, this.language, !!e.record);
 	}
 	changeField(e, n) {
 		if (!this.editor) return;
@@ -5136,7 +5755,7 @@ var Kn = class extends Ze {
 			...this.editor.draft,
 			[e]: n
 		};
-		if (e === "plant_id" && !this.editor.record && (r = {
+		if (e !== "plant_id" || this.editor.record && this.editor.table !== "seed_lots" || (r = {
 			...r,
 			variety_id: ""
 		}), e === "cultivation_id" && this.editor.table === "tasks") {
@@ -5156,7 +5775,7 @@ var Kn = class extends Ze {
 		if (e.preventDefault(), !this.editor || this.busy || this.imageLoading || !e.currentTarget.reportValidity()) return;
 		let t = this.editor, n;
 		try {
-			n = Mt(t.table, t.draft, this.fieldList(t), t.record);
+			n = Pt(t.table, t.draft, this.fieldList(t), t.record);
 		} catch {
 			this.error = this.tr("numberRange");
 			return;
@@ -5271,7 +5890,7 @@ var Kn = class extends Ze {
       for=${r}
     >
       <span id=${`${r}-label`}
-        >${this.tr(e.key)}${e.required ? " *" : ""}</span
+        >${this.tr(e.label ?? e.key)}${e.required ? " *" : ""}</span
       >
       ${e.type === "select" ? B`<select
               id=${r}
@@ -5319,7 +5938,7 @@ var Kn = class extends Ze {
 		let r = ++this.imageGeneration, i = this.connectionGeneration;
 		this.imageLoading = !0, this.error = "";
 		try {
-			let e = await _t(n);
+			let e = await Et(n);
 			r === this.imageGeneration && i === this.connectionGeneration && this.editor && this.editable && this.changeField("image_data", e);
 		} catch {
 			r === this.imageGeneration && i === this.connectionGeneration && this.editor && (this.error = this.tr("imageInvalid"));
@@ -5332,7 +5951,7 @@ var Kn = class extends Ze {
 		return r.startsWith("data:image/png;base64,") ? B`<img
           class=${n}
           src=${r}
-          alt=${t(e, "name")}
+          alt=${t(e, "name") || t(e, "title") || this.tr("imagePreview")}
           loading="lazy"
         />` : B`<span class=${`${n} photo-placeholder`} aria-hidden="true"
           >${$("plants")}</span
@@ -5340,7 +5959,11 @@ var Kn = class extends Ze {
 	}
 	renderImageEditor() {
 		let e = this.editor;
-		return !e || !["plants", "varieties"].includes(e.table) ? H : B`<section class="image-editor">
+		return !e || ![
+			"plants",
+			"varieties",
+			"cultivation_journal"
+		].includes(e.table) ? H : B`<section class="image-editor">
       ${typeof e.draft.image_data == "string" && e.draft.image_data ? B`<img class="plant-photo" src=${e.draft.image_data} alt=${this.tr("imagePreview")} />` : H}
       <div>
         <label
@@ -5350,6 +5973,7 @@ var Kn = class extends Ze {
             ?disabled=${this.busy || this.imageLoading}
             @change=${this.uploadImage}
         /></label>
+        ${e.table === "cultivation_journal" ? B`<label class="camera-input">${this.tr("takePhoto")}<input class="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" ?disabled=${this.busy || this.imageLoading} @change=${this.uploadImage} /></label>` : H}
         <small class="muted">${this.tr("imageHint")}</small>
         ${this.imageLoading ? B`<p role="status">${this.tr("imageProcessing")}</p>` : H}
         ${e.draft.image_data ? B`<button type="button" ?disabled=${this.busy || this.imageLoading} @click=${() => this.changeField("image_data", null)}>${this.tr("removeImage")}</button>` : H}
@@ -5372,6 +5996,8 @@ var Kn = class extends Ze {
               <div class="dialog-head">
                 <h2 id="editor-title">
                   ${this.tr(e.record ? "edit" : {
+			seed_lots: "newSeedLot",
+			cultivation_journal: "newJournal",
 			plants: "newPlant",
 			cultivations: "newSowing",
 			locations: "newLocation",
@@ -5403,6 +6029,9 @@ var Kn = class extends Ze {
 			"locations"
 		].includes(e.table) ? B`<p class="notice">${this.tr("temperatureHint")}</p>` : H}
                 ${e.draft.origin === "initial" ? B`<p class="notice">${this.tr("initialEventHint")}</p>` : H}
+                ${e.table === "cultivations" ? B`<p class="notice">${this.tr("plantCountHint")}</p>` : H}
+                ${e.table === "seed_lots" ? B`<p class="notice">${this.tr("seedLotHint")}</p>` : H}
+                ${e.table === "cultivation_journal" ? B`<p class="notice">${this.tr("journalHint")}</p>` : H}
                 ${this.renderImageEditor()}
                 <div class="form-grid">
                   ${this.fieldList(e).map((e) => this.renderField(e))}
@@ -6045,6 +6674,306 @@ var Kn = class extends Ze {
 			this.seedFlush === s && (this.seedFlush = void 0);
 		}), s;
 	}
+	renderSeedLots() {
+		let e = this.plantList.find((e) => e.id === this.stockPlant);
+		if (!e) return B``;
+		let n = this.tables.seed_lots.filter((n) => t(n, "plant_id") === e.id).sort((e, n) => (t(e, "best_before") || "9999").localeCompare(t(n, "best_before") || "9999") || Number(e.data.purchase_year || 9999) - Number(n.data.purchase_year || 9999) || t(e, "lot_label").localeCompare(t(n, "lot_label"))), r = /* @__PURE__ */ new Map();
+		for (let e of n) r.set(t(e, "unit"), (r.get(t(e, "unit")) || 0) + Number(e.data.quantity));
+		return B`<section id="seed-lots" class="panel stock-panel">
+      <div class="section-head">
+        <div>
+          <h2>${this.tr("seedLots")} · ${t(e, "name")}</h2>
+          <p class="muted">${this.tr("useOlderStock")}</p>
+        </div>
+        ${this.editable ? B`<button class="primary" @click=${() => this.startEditor("seed_lots", void 0, { plant_id: e.id })}>${$("plus")}${this.tr("newSeedLot")}</button>` : H}
+      </div>
+      <p class="stock-total">
+        ${this.tr("stockTotal")}:
+        ${[...r].map(([e, t]) => `${t.toLocaleString(this.language, { maximumFractionDigits: 3 })} ${this.tr("unit_" + e)}`).join(" · ") || "—"}
+      </p>
+      ${n.map((e) => B`<article class="stock-lot">
+            <div class="section-head">
+              <div>
+                <h3>
+                  ${t(e, "lot_label")}${t(e, "variety_id") ? ` · ${this.nameFor(t(e, "variety_id"), "varieties")}` : ""}
+                </h3>
+                <strong
+                  >${Number(e.data.quantity).toLocaleString(this.language)}
+                  ${this.tr("unit_" + t(e, "unit"))}</strong
+                >
+              </div>
+              ${this.editable ? B`<div class="actions">
+                      <button
+                        @click=${() => this.startEditor("seed_lots", e)}
+                      >
+                        ${this.tr("edit")}</button
+                      ><button
+                        class="danger"
+                        @click=${() => {
+			this.deleting = {
+				table: "seed_lots",
+				record: e
+			};
+		}}
+                      >
+                        ${this.tr("delete")}
+                      </button>
+                    </div>` : H}
+            </div>
+            ${t(e, "opened_on") ? B`<span class="badge">${this.tr("opened_on")}: ${h(t(e, "opened_on"), this.language)}</span>` : H}
+            ${t(e, "best_before") && t(e, "best_before") < this.today ? B`<p class="notice">${this.tr("seedPastDate")}</p>` : H}
+            ${this.renderData(e.data, [
+			"plant_id",
+			"variety_id",
+			"lot_label",
+			"quantity",
+			"unit"
+		])}
+          </article>`)}${n.length ? H : B`<p class="muted">${this.tr("noSeedLots")}</p>`}
+    </section>`;
+	}
+	async editJournal(e) {
+		if (!this.api || !this.editable || this.busy) return;
+		let t = this.api, n = this.connectionGeneration;
+		this.busy = !0;
+		try {
+			let r = await t.command("get", {
+				table: "cultivation_journal",
+				id: e.id
+			});
+			n === this.connectionGeneration && this.editable && this.startEditor("cultivation_journal", r);
+		} catch (e) {
+			n === this.connectionGeneration && (this.error = U(this.language, e));
+		} finally {
+			n === this.connectionGeneration && (this.busy = !1);
+		}
+	}
+	async newJournal(e, t = "observation", n = !1) {
+		this.editable && !this.busy && (this.startEditor("cultivation_journal", void 0, {
+			cultivation_id: e.id,
+			entry_kind: t
+		}), n && (await this.updateComplete, this.renderRoot.querySelector("#editor-dialog .camera-file")?.click()));
+	}
+	renderHarvestSummary(e) {
+		let t = Tt(this.tables.cultivation_journal, this.tables.cultivations, "culture").find((t) => t.key === e.id);
+		return B`<section class="harvest-total">
+      <h3>${this.tr("totalHarvest")}</h3>
+      ${t ? B`<div class="harvest-total-values">
+                <strong
+                  >${t.kg.toLocaleString(this.language, { maximumFractionDigits: 6 })}
+                  kg</strong
+                ><strong
+                  >${t.pieces.toLocaleString(this.language)}
+                  ${this.tr("pieces")}</strong
+                ><small>${t.harvests} ${this.tr("singleHarvests")}</small>
+              </div>
+              <p>
+                ${this.tr("perPlant")}:
+                ${t.kgPerPlant === null ? "—" : `${t.kgPerPlant.toLocaleString(this.language, { maximumFractionDigits: 6 })} kg`}
+                ·
+                ${t.piecesPerPlant === null ? "—" : `${t.piecesPerPlant.toLocaleString(this.language, { maximumFractionDigits: 3 })} ${this.tr("pieces")}`}
+              </p>` : B`<p>${this.tr("noHarvests")}</p>`}<small class="muted">${this.tr("plantCountHint")}</small>
+    </section>`;
+	}
+	renderJournal(e) {
+		let n = this.tables.cultivation_journal.filter((n) => t(n, "cultivation_id") === e.id).sort((e, n) => t(n, "date").localeCompare(t(e, "date")) || n.created_at.localeCompare(e.created_at) || n.id.localeCompare(e.id));
+		return B`<section class="culture-journal">
+      <div class="section-head">
+        <h3>${this.tr("cultureJournal")}</h3>
+        ${this.editable ? B`<div class="actions"><button @click=${() => this.newJournal(e)}>${this.tr("addObservation")}</button><button class="primary" @click=${() => this.newJournal(e, "harvest")}>${this.tr("recordHarvest")}</button></div>` : H}
+      </div>
+      ${pt(n, (e) => e.id, (e) => B`<article class="journal-entry">
+            <div class="section-head">
+              <div>
+                <span class="badge"
+                  >${this.tr("kind_" + t(e, "entry_kind"))}</span
+                ><time datetime=${t(e, "date")}
+                  >${h(t(e, "date"), this.language)}</time
+                >
+                ${t(e, "title") ? B`<h4>${t(e, "title")}</h4>` : H}
+              </div>
+              ${this.editable ? B`<div class="actions">
+                      <button @click=${() => this.editJournal(e)}>
+                        ${this.tr("edit")}</button
+                      ><button
+                        class="danger"
+                        @click=${() => {
+			this.deleting = {
+				table: "cultivation_journal",
+				record: e
+			};
+		}}
+                      >
+                        ${this.tr("delete")}
+                      </button>
+                    </div>` : H}
+            </div>
+            ${e.data.entry_kind === "harvest" ? B`<strong class="single-harvest">${Number(e.data.amount).toLocaleString(this.language, { maximumFractionDigits: 6 })} ${this.tr("unit_" + t(e, "unit"))}</strong>` : H}
+            ${e.image_present || t(e, "image_data") ? B`<garden-journal-photo class="journal-photo" .api=${this.api} .record=${e} .language=${this.language}></garden-journal-photo>` : H}
+            <p class="profile-text">${t(e, "notes")}</p>
+          </article>`)}
+      ${n.length ? H : B`<p class="muted">${this.tr("emptyJournal")}</p>`}
+    </section>`;
+	}
+	cultureTools() {
+		return B`<div
+      class="culture-tools"
+      role="group"
+      aria-label=${this.tr("cultureTools")}
+    >
+      ${[
+			"list",
+			"garden",
+			"harvest"
+		].map((e) => B`<button
+            class=${this.cultureView === e ? "primary" : ""}
+            aria-pressed=${this.cultureView === e}
+            @click=${() => {
+			this.cultureView = e;
+		}}
+          >
+            ${this.tr("cultureView_" + e)}
+          </button>`)}
+    </div>`;
+	}
+	renderGardenMode() {
+		let e = [...this.tables.cultivations].sort((e, n) => t(n, "date").localeCompare(t(e, "date"))), n = e.find((e) => e.id === this.gardenCulture) || e.find((e) => !["completed", "failed"].includes(this.status(e))) || e[0];
+		return B`<section class="panel garden-mode">
+      <h2>${this.tr("cultureView_garden")}</h2>
+      ${n ? B`<label
+                >${this.tr("chooseCulture")}<select
+                  aria-label=${this.tr("chooseCulture")}
+                  .value=${n.id}
+                  @change=${(e) => {
+			this.gardenCulture = e.target.value;
+		}}
+                >
+                  ${e.map((e) => B`<option value=${e.id} .selected=${e.id === n.id}>${this.plantName(e)} · ${t(e, "date")} · ${this.nameFor(t(e, "location_id"), "locations")}</option>`)}
+                </select></label
+              >
+              <h3>${this.plantName(n)}</h3>
+              ${this.editable ? B`<div class="garden-actions">
+                      <button
+                        @click=${() => this.newJournal(n, "observation", !0)}
+                      >
+                        ${$("camera")}${this.tr("takePhoto")}</button
+                      ><button @click=${() => this.newJournal(n)}>
+                        ${$("edit")}${this.tr("addObservation")}</button
+                      ><button
+                        class="primary"
+                        @click=${() => this.newJournal(n, "harvest")}
+                      >
+                        ${$("harvest")}${this.tr("recordHarvest")}</button
+                      ><button
+                        @click=${async () => {
+			await this.navigate("overview"), await this.updateComplete, this.renderRoot.querySelector("#upcoming-work")?.scrollIntoView({ block: "start" });
+		}}
+                      >
+                        ${$("check")}${this.tr("finishWork")}
+                      </button>
+                    </div>` : H}${this.renderHarvestSummary(n)}${this.renderJournal(n)}` : this.empty("emptyCultures")}
+    </section>`;
+	}
+	renderHarvestAnalysis() {
+		let e = this.tables.cultivation_journal.filter((e) => e.data.entry_kind === "harvest"), n = [...new Set(e.map((e) => t(e, "date").slice(0, 4)))].sort().reverse(), r = Tt(e, this.tables.cultivations, this.harvestBy, {
+			year: this.harvestYear,
+			plant: this.harvestPlant,
+			variety: this.harvestVariety,
+			location: this.harvestLocation
+		}), i = (e, t, n) => B`<label
+        >${this.tr(t)}<select
+          aria-label=${this.tr(t)}
+          .value=${this[e]}
+          @change=${(t) => {
+			this[e] = t.target.value;
+		}}
+        >
+          <option value="">${this.tr("allValues")}</option>
+          ${n.map((t) => B`<option value=${t.id} .selected=${t.id === this[e]}>${t.name}</option>`)}
+        </select></label
+      >`, a = (t, n) => {
+			let r = /* @__PURE__ */ new Map();
+			for (let i of e) {
+				let e = i.data.harvest_context;
+				r.set(String(e[t] || "_"), String(e[n] || "—"));
+			}
+			return [...r].map(([e, t]) => ({
+				id: e,
+				name: t
+			})).sort((e, t) => e.name.localeCompare(t.name, this.language));
+		}, o = (e, t = 6) => e === null ? "—" : e.toLocaleString(this.language, { maximumFractionDigits: t });
+		return B`<section class="panel harvest-analysis">
+      <h2>${this.tr("cultureView_harvest")}</h2>
+      <p class="muted">${this.tr("harvestUnitsHint")}</p>
+      <details class="harvest-help">
+        <summary>${this.tr("calculationHelp")}</summary>
+        <p class="notice">${this.tr("harvestAnalysisHint")}</p>
+      </details>
+      <div class="filters">
+        <label
+          >${this.tr("groupHarvest")}<select
+            aria-label=${this.tr("groupHarvest")}
+            .value=${this.harvestBy}
+            @change=${(e) => {
+			this.harvestBy = e.target.value;
+		}}
+          >
+            ${[
+			"plant",
+			"variety",
+			"location",
+			"year",
+			"culture"
+		].map((e) => B`<option value=${e} .selected=${this.harvestBy === e}>${this.tr("group_" + e)}</option>`)}
+          </select></label
+        >
+        ${i("harvestYear", "harvestYear", n.map((e) => ({
+			id: e,
+			name: e
+		})))}
+        <details class="harvest-extra">
+          <summary>${this.tr("moreHarvestFilters")}</summary>
+          <div class="filters">
+            ${i("harvestPlant", "harvestPlant", a("plant_id", "plant_name"))}${i("harvestVariety", "harvestVariety", a("variety_id", "variety_name"))}${i("harvestLocation", "harvestLocation", a("location_id", "location_name"))}
+          </div>
+        </details>
+      </div>
+      <div
+        class="harvest-table-scroll"
+        tabindex="0"
+        role="region"
+        aria-label=${this.tr("cultureView_harvest")}
+      >
+        <table class="harvest-table">
+          <thead>
+            <tr>
+              ${[
+			"groupHarvest",
+			"singleHarvests",
+			"totalWeight",
+			"totalPieces",
+			"weightPerPlant",
+			"piecesPerPlant"
+		].map((e) => B`<th scope="col">${this.tr(e)}</th>`)}
+            </tr>
+          </thead>
+          <tbody>
+            ${r.map((e) => B`<tr>
+                  <th scope="row">${e.label}</th>
+                  <td>${e.harvests}</td>
+                  <td>${o(e.kg)} kg</td>
+                  <td>${o(e.pieces, 0)}</td>
+                  <td>
+                    ${o(e.kgPerPlant)}${e.kgPerPlant === null ? "" : " kg"}
+                  </td>
+                  <td>${o(e.piecesPerPlant, 3)}</td>
+                </tr>`)}
+          </tbody>
+        </table>
+      </div>
+      ${r.length ? H : B`<p>${this.tr("noHarvests")}</p>`}
+    </section>`;
+	}
 	renderSeeds() {
 		let e = [
 			"available",
@@ -6106,11 +7035,22 @@ var Kn = class extends Ze {
             <tr>
               <th scope="col">${this.tr("plants")}</th>
               ${e.map((e) => B`<th scope="col">${this.tr("seed_" + e)}</th>`)}
+              <th scope="col">${this.tr("seedLots")}</th>
             </tr>
           </thead>
           <tbody>
             ${n.map((n) => B`<tr>
-                  <th scope="row">${t(n, "name")}</th>
+                  <th scope="row">
+                    <button
+                      class="link stock-open"
+                      aria-label=${`${this.tr("manageStock")}: ${t(n, "name")}`}
+                      @click=${async () => {
+			this.stockPlant = n.id, await this.updateComplete, this.renderRoot.querySelector("#seed-lots")?.scrollIntoView({ block: "start" });
+		}}
+                    >
+                      ${t(n, "name")}
+                    </button>
+                  </th>
                   ${e.map((e) => B`<td>
                         <label class="seed-choice"
                           ><input
@@ -6122,11 +7062,22 @@ var Kn = class extends Ze {
                             @change=${() => this.changeSeed(n, e)}
                         /></label>
                       </td>`)}
+                  <td>
+                    <button
+                      aria-label=${`${this.tr("seedLots")}: ${t(n, "name")}`}
+                      @click=${async () => {
+			this.stockPlant = n.id, await this.updateComplete, this.renderRoot.querySelector("#seed-lots")?.scrollIntoView({ block: "start" });
+		}}
+                    >
+                      ${this.tables.seed_lots.filter((e) => t(e, "plant_id") === n.id).length}
+                      · ${this.tr("manageStock")}
+                    </button>
+                  </td>
                 </tr>`)}
           </tbody>
         </table>
       </div>
-      ${n.length ? H : this.empty("noResults")}`;
+      ${n.length ? H : this.empty("noResults")}${this.renderSeedLots()}`;
 	}
 	renderTasks(e = !0) {
 		let n = this.tables.tasks.filter((t) => e || !t.data.completed).sort((e, n) => t(e, "date").localeCompare(t(n, "date")));
@@ -6418,7 +7369,8 @@ var Kn = class extends Ze {
 			"completed",
 			"failed"
 		].includes(this.status(e)) : !["completed", "failed"].includes(this.status(e)));
-		return B`<div class="filters culture-scope">
+		return this.cultureView === "garden" ? B`${this.cultureTools()}${this.renderGardenMode()}` : this.cultureView === "harvest" ? B`${this.cultureTools()}${this.renderHarvestAnalysis()}` : B`${this.cultureTools()}
+      <div class="filters culture-scope">
         <label
           >${this.tr("cultureScope")}<select
             aria-label=${this.tr("cultureScope")}
@@ -6739,7 +7691,11 @@ var Kn = class extends Ze {
 			"germination_result",
 			"harvest_result",
 			"measurement_kind"
-		].includes(e) ? this.lab(String(t)) : typeof t == "boolean" ? t ? "✓" : "—" : String(t)}
+		].includes(e) ? this.lab(String(t)) : typeof t == "boolean" ? t ? "✓" : "—" : [
+			"best_before",
+			"opened_on",
+			"germination_tested_on"
+		].includes(e) ? h(String(t), this.language) : String(t)}
               </dd>`)}
     </dl>`;
 	}
@@ -7159,6 +8115,7 @@ var Kn = class extends Ze {
       </dl>
       ${this.renderData(e.data, ["snapshot", "date"])}
       ${this.tables.locations.find((n) => n.id === t(e, "location_id")) ? this.renderTemperature(this.tables.locations.find((n) => n.id === t(e, "location_id")), e) : H}
+      ${this.renderHarvestSummary(e)}${this.renderJournal(e)}
       <h3>${this.tr("timeline")}</h3>
       <div class="timeline">
         ${y(e, this.tables.cultivation_events).map((e) => B`<article>
@@ -7224,11 +8181,11 @@ var Kn = class extends Ze {
 			if (e === "json") {
 				let r = await t.command("export", { format: e });
 				if (n !== this.connectionGeneration) return;
-				zn(JSON.stringify(r, null, 2), `garden-planner-${this.today}.json`, "application/json");
+				Vn(JSON.stringify(r, null, 2), `garden-planner-${this.today}.json`, "application/json");
 			} else {
 				let r = await t.command("export", { format: e });
 				if (n !== this.connectionGeneration) return;
-				zn(Bn(r).slice().buffer, `garden-planner-csv-${this.today}.zip`, "application/zip");
+				Vn(Hn(r).slice().buffer, `garden-planner-csv-${this.today}.zip`, "application/zip");
 			}
 		} catch (e) {
 			n === this.connectionGeneration && (this.error = U(this.language, e));
@@ -7245,7 +8202,7 @@ var Kn = class extends Ze {
 			if (n.size > 20971520) throw Error("invalid_file");
 			let e = new Uint8Array(await n.arrayBuffer());
 			if (i !== this.connectionGeneration) return;
-			let t = e[0] === 80 && e[1] === 75 ? "csv" : "json", a = t === "csv" ? Vn(e) : JSON.parse(new TextDecoder("utf-8", { fatal: !0 }).decode(e)), o = await r.command("preview_import", {
+			let t = e[0] === 80 && e[1] === 75 ? "csv" : "json", a = t === "csv" ? Un(e) : JSON.parse(new TextDecoder("utf-8", { fatal: !0 }).decode(e)), o = await r.command("preview_import", {
 				payload: a,
 				format: t,
 				mode: this.importMode
@@ -7757,11 +8714,13 @@ var Kn = class extends Ze {
             </div>
           </div>
           <nav aria-label="Garden Planner">
-            ${Un.map((e) => B`<button aria-current=${this.page === e ? "page" : H} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
+            ${Gn.map((e) => B`<button aria-current=${this.page === e ? "page" : H} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>
-        <main class=${this.page === "overview" ? "overview-page" : ""}>
+        <main
+          class=${this.page === "overview" ? "overview-page" : this.page === "cultures" && this.cultureView === "garden" ? "garden-page" : ""}
+        >
           ${this.page === "overview" ? H : B`<div class="back-overview-bar"><button class="back-overview" aria-label=${this.tr("backOverview")} @click=${() => this.navigate("overview")}>← ${this.tr("backOverview")}</button></div>`}
           <header class="topbar">
             <div>
@@ -7836,5 +8795,5 @@ var Kn = class extends Ze {
       </div>`;
 	}
 };
-customElements.get("garden-planner-panel") || customElements.define("garden-planner-panel", Kn);
-export { Kn as GardenPlannerPanel };
+customElements.get("garden-planner-panel") || customElements.define("garden-planner-panel", Jn);
+export { Jn as GardenPlannerPanel };

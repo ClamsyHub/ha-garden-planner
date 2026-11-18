@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.12 — 2026-11-18
+
+- Add seed lots with quantity/unit, purchase year, best-before/opening dates, tested germination and storage location. Keep shopping status independent.
+- Add culture journal entries with local photo previews, observations and individual harvests.
+- Sum grams/kilograms separately from pieces and calculate per-plant yield from explicit plant counts once per contributing culture/unit. Compare by plant, variety, bed, harvest year or cultivation. Freeze harvest context when entries are created.
+- Add a mobile garden mode with large photo, observation, harvest and task actions.
+- Migrate SQLite from schema 3 to 4 transactionally with a pre-migration backup; preserve existing data, permissions and legacy JSON/CSV/managed backup imports.
+
 ## 0.1.11 — 2026-11-17
 
 - Direkte Übersicht-Navigation, Nachbarschaftsmatrix mit fixierten Überschriften, lokale Pflanzen-/Sortenbilder und überarbeitete Pflanzenkarten/Profile mit Jahresübersicht.
