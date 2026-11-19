@@ -11,7 +11,7 @@ from .images import validate_image
 MAX_TEXT = 20000
 MAX_RECORDS = 50000
 MAX_IMPORT_BYTES = 20 * 1024 * 1024
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 FORMAT_VERSION = 1
 STATUSES = (
     "planned",
@@ -64,6 +64,7 @@ class StorageError(PlannerError):
 TEXT_FIELDS = {
     "name",
     "botanical_name",
+    "family",
     "category",
     "description",
     "notes",
@@ -135,6 +136,7 @@ PLANT_FIELDS = {
     "image_data",
     "name",
     "botanical_name",
+    "family",
     "category",
     "description",
     "notes",
@@ -170,8 +172,35 @@ SEED_STATES = ("unplanned", "available", "buy", "unneeded")
 
 
 FIELDS: dict[str, set[str]] = {
+    "bed_layouts": {
+        "location_id",
+        "width_cm",
+        "height_cm",
+        "outline",
+        "holes",
+        "rotation_years",
+        "neighbor_distance_cm",
+        "notes",
+    },
+    "bed_plantings": {
+        "layout_id",
+        "plant_id",
+        "variety_id",
+        "cultivation_id",
+        "start_date",
+        "end_date",
+        "x_cm",
+        "y_cm",
+        "plant_count",
+        "columns",
+        "spacing_cm",
+        "row_spacing_cm",
+        "state",
+        "notes",
+        "family_snapshot",
+    },
     "plants": PLANT_FIELDS | GARDEN_FIELDS,
-    "varieties": (PLANT_FIELDS - {"frost_sensitive"}) | {"plant_id"},
+    "varieties": (PLANT_FIELDS - {"frost_sensitive", "family"}) | {"plant_id"},
     "growing_windows": {
         "plant_id",
         "variety_id",
@@ -274,9 +303,18 @@ FIELDS: dict[str, set[str]] = {
     },
 }
 NEW_TABLES = ("seed_lots", "cultivation_journal")
-LEGACY_TABLES = tuple(t for t in FIELDS if t not in NEW_TABLES)
-TABLES = (*LEGACY_TABLES, *NEW_TABLES)
+PLAN_TABLES = ("bed_layouts", "bed_plantings")
+TABLE_VERSIONS = {**{t: 4 for t in NEW_TABLES}, **{t: 5 for t in PLAN_TABLES}}
+LEGACY_TABLES = tuple(t for t in FIELDS if t not in TABLE_VERSIONS)
+TABLES = (*LEGACY_TABLES, *NEW_TABLES, *PLAN_TABLES)
 PARENTS: dict[str, dict[str, str]] = {
+    "bed_layouts": {"location_id": "locations"},
+    "bed_plantings": {
+        "layout_id": "bed_layouts",
+        "plant_id": "plants",
+        "variety_id": "varieties",
+        "cultivation_id": "cultivations",
+    },
     "seed_lots": {"plant_id": "plants", "variety_id": "varieties"},
     "cultivation_journal": {"cultivation_id": "cultivations"},
     "plants": {},
@@ -296,6 +334,20 @@ PARENTS: dict[str, dict[str, str]] = {
     },
 }
 REQUIRED = {
+    "bed_layouts": {"location_id", "width_cm", "height_cm", "outline"},
+    "bed_plantings": {
+        "layout_id",
+        "plant_id",
+        "start_date",
+        "end_date",
+        "x_cm",
+        "y_cm",
+        "plant_count",
+        "columns",
+        "spacing_cm",
+        "row_spacing_cm",
+        "state",
+    },
     "seed_lots": {"plant_id", "lot_label", "quantity", "unit"},
     "cultivation_journal": {"cultivation_id", "date", "entry_kind"},
     "plants": {"name"},
@@ -361,6 +413,13 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
     if set(data) - FIELDS[table] or REQUIRED[table] - set(data):
         raise ValidationError("Unknown or missing record fields.")
     result: dict[str, Any] = dict(data)
+    if table in PLAN_TABLES:
+        from .bed_geometry import validate_plan_data
+
+        try:
+            validate_plan_data(table, result)
+        except ValueError as error:
+            raise ValidationError(str(error)) from error
     for key, value in result.items():
         if value is None:
             if key in REQUIRED[table] or key in {
@@ -370,6 +429,14 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
             }:
                 raise ValidationError(f"{key} must not be null.")
             continue
+        if (
+            key == "family"
+            and value is not None
+            and (not isinstance(value, str) or len(value) > 200)
+        ):
+            raise ValidationError(
+                "Plant family must be text of at most 200 characters."
+            )
         if key == "image_data":
             try:
                 result[key] = validate_image(value)
@@ -616,6 +683,7 @@ def validate_data(table: str, data: Any, *, internal: bool = False) -> dict[str,
         or "origin" in result
         or "harvest_context" in result
         or "next_task_id" in result
+        or "family_snapshot" in result
     ):
         raise ValidationError(
             "Historical snapshots and event origin are server-managed."

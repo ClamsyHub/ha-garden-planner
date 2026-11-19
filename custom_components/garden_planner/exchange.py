@@ -10,7 +10,7 @@ from .models import (
     GARDEN_FIELDS,
     MAX_IMPORT_BYTES,
     MAX_RECORDS,
-    NEW_TABLES,
+    TABLE_VERSIONS,
     TABLES,
     ValidationError,
 )
@@ -49,7 +49,7 @@ def import_csv(files: Any) -> dict[str, Any]:
     if (
         not isinstance(files, dict)
         or set(files) - required
-        or (required - set(files)) - {f"{t}.csv" for t in NEW_TABLES}
+        or (required - set(files)) - {f"{t}.csv" for t in TABLE_VERSIONS}
         or not all(isinstance(v, str) for v in files.values())
     ):
         raise ValidationError(
@@ -70,9 +70,9 @@ def import_csv(files: Any) -> dict[str, Any]:
         for table in TABLES:
             if f"{table}.csv" not in files:
                 if (
-                    table not in NEW_TABLES
+                    table not in TABLE_VERSIONS
                     or type(metadata["schema_version"]) is not int
-                    or metadata["schema_version"] >= 4
+                    or metadata["schema_version"] >= TABLE_VERSIONS.get(table, 1)
                 ):
                     raise ValueError
                 tables[table] = []
@@ -85,7 +85,7 @@ def import_csv(files: Any) -> dict[str, Any]:
             present = header[len(META) :]
             missing = set(fields) - set(present)
             optional = (
-                (GARDEN_FIELDS | {"image_data", "frost_sensitive"})
+                (GARDEN_FIELDS | {"image_data", "frost_sensitive", "family"})
                 if table == "plants"
                 else (
                     {"image_data"}

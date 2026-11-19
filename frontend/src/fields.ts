@@ -234,7 +234,10 @@ export function fieldsFor(
           }))
         : []),
       ...(table === "plants"
-        ? [{ key: "frost_sensitive", type: "checkbox" as const }]
+        ? [
+            { key: "family", type: "text" as const },
+            { key: "frost_sensitive", type: "checkbox" as const },
+          ]
         : []),
     ];
   if (table === "growing_windows")

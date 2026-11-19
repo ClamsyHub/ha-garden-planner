@@ -168,3 +168,8 @@ Shared tasks support a daily interval and optional end date. Confirming completi
 Administrators may select an existing HA weather entity, forecast horizon and frost threshold. Overview/garden-mode hints consider only active cultivations explicitly marked outdoors and frost-sensitive. Planned, completed and failed cultivations are excluded. Forecasts are cached for 15 minutes; missing/stale data means unknown, not frost-free. Weather hints do not send additional automatic messages. The selected HA weather provider may itself use an external service.
 
 Upload or capture an optional photo directly from **Current cultivations → Add event**. Each event retains its own photo in the timeline. Editing preserves it unless replaced or removed; cultivation covers and journal entries remain independent.
+
+
+## In development: Bed planner (v0.1.13)
+
+[Usage, backup and limits](../bed-planner.md). Not published yet.

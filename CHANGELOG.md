@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.13 — Unreleased
+
+- Add scaled bed layouts with free polygons/freehand, cut-outs and rectangle, ellipse, triangle and U presets.
+- Add shared date-based seasonal plantings, row groups, succession, spacing/neighbor warnings, frozen-family rotation hints and season seed requirements.
+- Add schema 5 with two tables, automatic backup, preserved existing records and legacy schema 1–4 exchange compatibility.
+
 ## 0.1.12 — 2026-11-18
 
 - Support local photos on cultivation events, including camera capture, lazy timeline display and lossless export.

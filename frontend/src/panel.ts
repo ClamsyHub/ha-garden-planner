@@ -23,6 +23,7 @@ import { repeat } from "lit/directives/repeat.js";
 import { live } from "lit/directives/live.js";
 import { guard } from "lit/directives/guard.js";
 import "./journal-photo";
+import { BedPlanner } from "./bed-plan";
 import { harvestRows, type HarvestBy } from "./harvest";
 import { imagePreview } from "./image";
 import { PlannerApi } from "./api";
@@ -73,6 +74,7 @@ type Reviewed = {
 const pages: Page[] = [
   "overview",
   "calendar",
+  "bedplan",
   "plants",
   "cultures",
   "history",
@@ -102,6 +104,7 @@ const paths: Record<string, string> = {
   menu: "M3 6h18M3 12h18M3 18h18",
   overview: "M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z",
   calendar: "M4 5h16v16H4zM8 2v6m8-6v6M4 10h16",
+  bedplan: "M3 3h18v18H3zM3 9h18M9 9v12M15 3v6M9 15h12",
   plants: "M12 21V10M12 15C3 15 3 6 3 6s9-1 9 9zm0-5c0-8 9-8 9-8s1 9-9 8z",
   cultures:
     "M5 20h14l2-10H3zM12 10V4m0 4C6 8 6 3 6 3s6 0 6 5zm0-2c0-5 6-5 6-5s0 5-6 5z",
@@ -683,6 +686,14 @@ export class GardenPlannerPanel extends LitElement {
     }
   }
   private async navigate(page: Page): Promise<void> {
+    if (
+      this.page === "bedplan" &&
+      page !== "bedplan" &&
+      this.renderRoot.querySelector<BedPlanner>("garden-bed-planner")
+        ?.hasUnsavedChanges &&
+      !window.confirm(this.tr("discardBedPlan"))
+    )
+      return;
     const navigation = ++this.navigationGeneration;
     const connection = this.connectionGeneration;
     if (
@@ -5231,7 +5242,7 @@ export class GardenPlannerPanel extends LitElement {
                 @click=${() => this.refresh()}
               >
                 ${icon("refresh")}</button
-              >${this.editable && !["settings", "reminders", "neighbors", "seeds"].includes(this.page) ? html`<button class="primary" aria-label=${this.tr(newAction[0])} ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}<span class="topbar-action-label">${this.tr(newAction[0])}</span></button>` : nothing}
+              >${this.editable && !["settings", "reminders", "neighbors", "seeds", "bedplan"].includes(this.page) ? html`<button class="primary" aria-label=${this.tr(newAction[0])} ?disabled=${this.busy || !this.loaded || (newAction[1] === "cultivations" && !this.plantList.length)} @click=${() => this.startEditor(newAction[1])}>${icon("plus")}<span class="topbar-action-label">${this.tr(newAction[0])}</span></button>` : nothing}
             </div>
           </header>
           ${this.error ? html`<p class="notice error" role="alert">${this.error}<button class="link" @click=${() => this.refresh()}>${this.tr("retry")}</button></p>` : nothing}
@@ -5243,40 +5254,49 @@ export class GardenPlannerPanel extends LitElement {
                 ? this.renderOverview()
                 : this.page === "calendar"
                   ? this.renderCalendar()
-                  : this.page === "plants"
-                    ? html`${this.renderFilters()}${
-                        !this.tables.plants.length
-                          ? this.empty(
-                              "emptyPlants",
-                              "emptyPlantsBody",
-                              "newPlant",
-                              () => this.startEditor("plants"),
-                            )
-                          : this.filteredPlants().length
-                            ? html`<div class="grid">
-                                ${repeat(
-                                  this.filteredPlants(),
-                                  (p) => p.id,
-                                  (p) => this.renderPlantCard(p),
-                                )}
-                              </div>`
-                            : this.empty("noResults")
-                      }`
-                    : this.page === "cultures"
-                      ? this.renderCultures()
-                      : this.page === "history"
-                        ? html`<section class="panel">
-                            ${this.renderHistory()}
-                          </section>`
-                        : this.page === "locations"
-                          ? this.renderLocations()
-                          : this.page === "reminders"
-                            ? this.renderPersonalReminders()
-                            : this.page === "neighbors"
-                              ? this.renderNeighbors()
-                              : this.page === "seeds"
-                                ? this.renderSeeds()
-                                : this.renderSettings()
+                  : this.page === "bedplan"
+                    ? html`<garden-bed-planner
+                        .api=${this.api}
+                        .tables=${this.tables}
+                        .editable=${this.editable}
+                        .language=${this.language}
+                        .today=${todayInZone(this.timeZone)}
+                        @planner-changed=${() => this.refresh()}
+                      ></garden-bed-planner>`
+                    : this.page === "plants"
+                      ? html`${this.renderFilters()}${
+                          !this.tables.plants.length
+                            ? this.empty(
+                                "emptyPlants",
+                                "emptyPlantsBody",
+                                "newPlant",
+                                () => this.startEditor("plants"),
+                              )
+                            : this.filteredPlants().length
+                              ? html`<div class="grid">
+                                  ${repeat(
+                                    this.filteredPlants(),
+                                    (p) => p.id,
+                                    (p) => this.renderPlantCard(p),
+                                  )}
+                                </div>`
+                              : this.empty("noResults")
+                        }`
+                      : this.page === "cultures"
+                        ? this.renderCultures()
+                        : this.page === "history"
+                          ? html`<section class="panel">
+                              ${this.renderHistory()}
+                            </section>`
+                          : this.page === "locations"
+                            ? this.renderLocations()
+                            : this.page === "reminders"
+                              ? this.renderPersonalReminders()
+                              : this.page === "neighbors"
+                                ? this.renderNeighbors()
+                                : this.page === "seeds"
+                                  ? this.renderSeeds()
+                                  : this.renderSettings()
           }
         </main>
       </div>

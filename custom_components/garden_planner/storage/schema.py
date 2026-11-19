@@ -1,6 +1,12 @@
 """Versioned schema statements; migration execution belongs to the worker."""
 
-from ..models import LEGACY_TABLES, NEW_TABLES, PARENTS, PLANT_MEASURE_FIELDS
+from ..models import (
+    LEGACY_TABLES,
+    NEW_TABLES,
+    PARENTS,
+    PLAN_TABLES,
+    PLANT_MEASURE_FIELDS,
+)
 
 APPLICATION_ID = 0x47504C4E
 
@@ -65,10 +71,10 @@ def plant_level_traits() -> list[str]:
     ]
 
 
-def stock_and_journal() -> list[str]:
+def stock_and_journal(tables: tuple[str, ...] = NEW_TABLES) -> list[str]:
     """Add seed lots and journal without modifying any existing records."""
     result = []
-    for table in NEW_TABLES:
+    for table in tables:
         parents = [
             f"{field} TEXT REFERENCES {target}(id) ON DELETE RESTRICT"
             for field, target in PARENTS[table].items()
@@ -96,4 +102,10 @@ MIGRATIONS = {
     2: performance_indexes(),
     3: plant_level_traits(),
     4: stock_and_journal(),
+    5: stock_and_journal(PLAN_TABLES)[:-1]
+    + [
+        "CREATE UNIQUE INDEX idx_bed_layout_location ON bed_layouts(location_id)",
+        "CREATE INDEX idx_bed_planting_start "
+        "ON bed_plantings(json_extract(data, '$.start_date'))",
+    ],
 }

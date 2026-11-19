@@ -3538,3 +3538,369 @@ test("cultivation event photos upload, survive editing and reload, and can be re
   await expect(editor).not.toBeVisible();
   await expect(event.locator("garden-journal-photo")).toHaveCount(0);
 });
+
+test("bed planner saves a scaled U bed, crop rows and succession without losing history", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(operation: string, parameters: Record<string, unknown>) {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role: "admin" },
+    });
+    expect(r.ok()).toBe(true);
+    return r.json();
+  }
+  const plant = await api("create", {
+    table: "plants",
+    data: {
+      name: "Beetplan Erbse",
+      family: "Fabaceae",
+      spacing_cm: 20,
+      row_spacing_cm: 30,
+    },
+  });
+  const bed = await api("create", {
+    table: "locations",
+    data: { name: "Freies Testbeet" },
+  });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await navigate(page, "Beetplan");
+  const plan = page.locator("garden-bed-planner");
+  await plan
+    .getByLabel("Beet / Standort", { exact: true })
+    .selectOption(bed.id);
+  await plan.getByText("Beetform & Maße", { exact: true }).click();
+  await plan.getByRole("button", { name: "U-Form", exact: true }).click();
+  await plan
+    .getByRole("button", { name: "Beetform speichern", exact: true })
+    .click();
+  await expect(plan.getByText("Gespeichert.", { exact: true })).toBeVisible();
+  await plan
+    .getByRole("button", { name: "Belegung hinzufügen", exact: false })
+    .click();
+  await plan.getByLabel("Pflanze", { exact: true }).selectOption(plant.id);
+  await plan.getByLabel("Pflanzenanzahl", { exact: true }).fill("6");
+  await plan.getByLabel("Pflanzenanzahl", { exact: true }).press("Tab");
+  await plan.getByLabel("Pflanzen je Reihe", { exact: true }).fill("3");
+  await plan.getByLabel("Pflanzen je Reihe", { exact: true }).press("Tab");
+  for (const [label, value] of [
+    ["X (cm)", "20"],
+    ["Y (cm)", "20"],
+    ["Belegung von", "2027-03-01"],
+    ["Belegung bis", "2027-05-31"],
+  ]) {
+    await plan.getByLabel(label!, { exact: true }).fill(value!);
+    await plan.getByLabel(label!, { exact: true }).press("Tab");
+  }
+  await plan
+    .getByRole("button", { name: "Belegung speichern", exact: true })
+    .click();
+  await expect(plan.locator(".editor")).toHaveCount(0);
+  await expect(plan.locator(".map [data-entry] circle")).toHaveCount(6);
+  await page.reload();
+  await navigate(page, "Beetplan");
+  await plan
+    .getByLabel("Beet / Standort", { exact: true })
+    .selectOption(bed.id);
+  await expect(plan.locator(".map [data-entry] circle")).toHaveCount(6);
+  await plan
+    .getByRole("button", { name: "Belegung hinzufügen", exact: false })
+    .click();
+  for (const [label, value] of [
+    ["X (cm)", "20"],
+    ["Y (cm)", "20"],
+    ["Belegung von", "2027-06-01"],
+    ["Belegung bis", "2027-09-30"],
+  ]) {
+    await plan.getByLabel(label!, { exact: true }).fill(value!);
+    await plan.getByLabel(label!, { exact: true }).press("Tab");
+  }
+  await plan
+    .getByRole("button", { name: "Belegung speichern", exact: true })
+    .click();
+  await expect(plan.locator(".editor")).toHaveCount(0);
+  await expect(
+    plan.getByText("Räumliche und zeitliche Überschneidung", { exact: true }),
+  ).toHaveCount(0);
+  const records = await api("list", { table: "bed_plantings" });
+  expect(records).toHaveLength(2);
+  expect(records[0].data.family_snapshot).toBe("Fabaceae");
+  await page.screenshot({
+    path: testInfo.outputPath("bed-plan.png"),
+    fullPage: true,
+    scale: "css",
+  });
+});
+
+async function bedScenario(page: Page) {
+  const session = new URL(page.url()).searchParams.get("session");
+  async function api(
+    operation: string,
+    parameters: Record<string, unknown>,
+    role = "admin",
+  ) {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: { operation, parameters, role },
+    });
+    expect(r.ok()).toBe(true);
+    return r.json();
+  }
+  const a = await api("create", {
+    table: "plants",
+    data: {
+      name: "Plan A",
+      family: "Testfamily",
+      spacing_cm: 60,
+      row_spacing_cm: 70,
+    },
+  });
+  const b = await api("create", {
+    table: "plants",
+    data: {
+      name: "Plan B",
+      family: "Testfamily",
+      spacing_cm: 60,
+      row_spacing_cm: 70,
+    },
+  });
+  await api("set_neighbors", {
+    plant_id: a.id,
+    revision: a.revision,
+    neighbors: {
+      neighbor_good_ids: [],
+      neighbor_bad_ids: [b.id],
+      neighbor_good_names: [],
+      neighbor_bad_names: [],
+    },
+  });
+  const bed = await api("create", {
+    table: "locations",
+    data: { name: "Plan test bed" },
+  });
+  const layout = await api("create", {
+    table: "bed_layouts",
+    data: {
+      location_id: bed.id,
+      width_cm: 400,
+      height_cm: 300,
+      outline: [
+        [0, 0],
+        [400, 0],
+        [400, 300],
+        [0, 300],
+      ],
+    },
+  });
+  const values = {
+    layout_id: layout.id,
+    plant_id: a.id,
+    start_date: "2027-03-01",
+    end_date: "2027-08-31",
+    x_cm: 50,
+    y_cm: 80,
+    plant_count: 1,
+    columns: 1,
+    spacing_cm: 60,
+    row_spacing_cm: 70,
+    state: "planned",
+  };
+  const previous = await api("create", {
+    table: "bed_plantings",
+    data: {
+      ...values,
+      start_date: "2025-03-01",
+      end_date: "2025-08-31",
+      state: "completed",
+    },
+  });
+  const next = await api("create", { table: "bed_plantings", data: values });
+  await api("create", {
+    table: "bed_plantings",
+    data: { ...values, plant_id: b.id, x_cm: 90 },
+  });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await navigate(page, "Beetplan");
+  return {
+    api,
+    a,
+    b,
+    bed,
+    layout,
+    next,
+    previous,
+    plan: page.locator("garden-bed-planner"),
+  };
+}
+test("bed plan shows stored neighbors and rotation and rejects stale editor saves", async ({
+  page,
+}) => {
+  await open(page);
+  const { api, plan, layout, next } = await bedScenario(page);
+  await expect(
+    plan.getByText("Ungünstige Nachbarn", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    plan
+      .getByText(
+        "Fruchtfolge prüfen: gleiche Pflanzenfamilie innerhalb der Anbaupause",
+        { exact: true },
+      )
+      .first(),
+  ).toBeVisible();
+  await expect(plan.locator(".map line")).toHaveCount(1);
+  await plan.locator(`[data-entry="${next.id}"]`).press("Enter");
+  await plan
+    .getByLabel("Notizen", { exact: true })
+    .fill("Local unsaved choice");
+  await api("update", {
+    table: "bed_plantings",
+    id: next.id,
+    revision: next.revision,
+    data: { notes: "Saved by another editor" },
+  });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await plan
+    .getByRole("button", { name: "Belegung speichern", exact: true })
+    .click();
+  await expect(plan.getByRole("alert")).toContainText("inzwischen geändert");
+  expect(
+    (await api("get", { table: "bed_plantings", id: next.id })).data.notes,
+  ).toBe("Saved by another editor");
+  await plan.getByRole("button", { name: "Abbrechen", exact: true }).click();
+  await plan.getByText("Beetform & Maße", { exact: true }).click();
+  await plan.getByLabel("Breite (cm)", { exact: true }).fill("450");
+  await plan.getByLabel("Breite (cm)", { exact: true }).press("Tab");
+  await api("update", {
+    table: "bed_layouts",
+    id: layout.id,
+    revision: layout.revision,
+    data: { neighbor_distance_cm: 150 },
+  });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await plan
+    .getByRole("button", { name: "Beetform speichern", exact: true })
+    .click();
+  await expect(plan.getByRole("alert")).toContainText("inzwischen geändert");
+  expect(
+    (await api("get", { table: "bed_layouts", id: layout.id })).data.width_cm,
+  ).toBe(400);
+});
+test("bed plan free polygons and cut-outs are drawn with metric pointer input", async ({
+  page,
+}) => {
+  await open(page);
+  const session = new URL(page.url()).searchParams.get("session");
+  async function create(table: string, data: Record<string, unknown>) {
+    const r = await page.request.post(`/__test_api/${session}`, {
+      data: { operation: "create", parameters: { table, data }, role: "admin" },
+    });
+    expect(r.ok()).toBe(true);
+    return r.json();
+  }
+  await create("plants", { name: "Drawing plant" });
+  await create("locations", { name: "Drawing bed" });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await navigate(page, "Beetplan");
+  const plan = page.locator("garden-bed-planner");
+  await plan.getByText("Beetform & Maße", { exact: true }).click();
+  async function tap(x: number, y: number) {
+    await plan
+      .locator(".map")
+      .evaluate((el) =>
+        el.scrollIntoView({ block: "center", inline: "center" }),
+      );
+    const position = await plan.locator(".map").evaluate(
+      (el, point) => {
+        const svg = el as SVGSVGElement;
+        const p = svg.createSVGPoint();
+        p.x = point[0]!;
+        p.y = point[1]!;
+        const c = p.matrixTransform(svg.getScreenCTM()!);
+        return { x: c.x, y: c.y };
+      },
+      [x, y],
+    );
+    await page.mouse.click(position.x, position.y);
+  }
+  await plan
+    .getByRole("button", { name: "Umriss zeichnen", exact: true })
+    .click();
+  await plan.locator(".map").scrollIntoViewIfNeeded();
+  for (const [x, y] of [
+    [5, 5],
+    [290, 5],
+    [290, 140],
+    [160, 140],
+    [160, 70],
+    [5, 70],
+  ])
+    await tap(x!, y!);
+  await plan
+    .getByRole("button", { name: "Zeichnung übernehmen", exact: true })
+    .click();
+  await plan
+    .getByRole("button", { name: "Beetform speichern", exact: true })
+    .click();
+  await expect(plan.getByText("Gespeichert.", { exact: true })).toBeVisible();
+  await plan
+    .getByRole("button", { name: "Aussparung zeichnen", exact: true })
+    .click();
+  await plan.locator(".map").scrollIntoViewIfNeeded();
+  for (const [x, y] of [
+    [220, 25],
+    [260, 25],
+    [260, 55],
+    [220, 55],
+  ])
+    await tap(x!, y!);
+  await plan
+    .getByRole("button", { name: "Zeichnung übernehmen", exact: true })
+    .click();
+  await plan
+    .getByRole("button", { name: "Beetform speichern", exact: true })
+    .click();
+  await expect(plan.getByText("Gespeichert.", { exact: true })).toBeVisible();
+  await plan
+    .getByRole("button", { name: "Belegung hinzufügen", exact: false })
+    .click();
+  for (const [label, value] of [
+    ["X (cm)", "240"],
+    ["Y (cm)", "40"],
+  ]) {
+    await plan.getByLabel(label!, { exact: true }).fill(value!);
+    await plan.getByLabel(label!, { exact: true }).press("Tab");
+  }
+  await plan
+    .getByRole("button", { name: "Belegung speichern", exact: true })
+    .click();
+  await expect(plan.getByRole("alert")).toContainText("außerhalb");
+  await plan.getByRole("button", { name: "Abbrechen", exact: true }).click();
+});
+test("read-only users inspect bed plans without changing geometry or plantings", async ({
+  page,
+}) => {
+  await open(page, { role: "reader" });
+  const { plan, next } = await bedScenario(page);
+  await expect(
+    plan.getByRole("button", { name: "Belegung hinzufügen", exact: false }),
+  ).toHaveCount(0);
+  await expect(
+    plan.getByRole("button", { name: "Beetform speichern", exact: true }),
+  ).toHaveCount(0);
+  await plan.locator(`[data-entry="${next.id}"]`).press("Enter");
+  await expect(plan.getByLabel("X (cm)", { exact: true })).toBeDisabled();
+  await expect(
+    plan.getByRole("button", { name: "Belegung speichern", exact: true }),
+  ).toHaveCount(0);
+});

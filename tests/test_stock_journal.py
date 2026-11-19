@@ -13,6 +13,8 @@ from unittest.mock import patch
 from custom_components.garden_planner.exchange import export_csv, import_csv
 from custom_components.garden_planner.models import (
     LEGACY_TABLES,
+    SCHEMA_VERSION,
+    TABLES,
     ConflictError,
     ValidationError,
 )
@@ -221,12 +223,11 @@ class StockJournalTests(unittest.TestCase):
                 | {
                     "tables": {
                         **old["tables"],
-                        "seed_lots": [],
-                        "cultivation_journal": [],
+                        **{t: [] for t in TABLES if t not in LEGACY_TABLES},
                     }
                 }
             ).items()
-            if k not in {"seed_lots.csv", "cultivation_journal.csv"}
+            if k in {"metadata.json", *(f"{t}.csv" for t in LEGACY_TABLES)}
         }
         rows = list(csv.reader(io.StringIO(oldfiles["cultivations.csv"])))
         index = rows[0].index("plant_count")
@@ -244,9 +245,11 @@ class StockJournalTests(unittest.TestCase):
     def test_schema_three_migration_and_failure_are_atomic(self) -> None:
         self.db.close()
         with closing(sqlite3.connect(self.directory / "garden_planner.sqlite3")) as con:
+            con.execute("DROP TABLE bed_plantings")
+            con.execute("DROP TABLE bed_layouts")
             con.execute("DROP TABLE cultivation_journal")
             con.execute("DROP TABLE seed_lots")
-            con.execute("DELETE FROM schema_migrations WHERE version=4")
+            con.execute("DELETE FROM schema_migrations WHERE version>=4")
             con.execute("PRAGMA user_version=3")
             con.commit()
         with patch.dict(
@@ -263,5 +266,7 @@ class StockJournalTests(unittest.TestCase):
             )
         self.db.open()
         self.assertEqual(self.db.get("cultivations", self.culture["id"]), self.culture)
-        self.assertEqual(self.db.db.execute("PRAGMA user_version").fetchone()[0], 4)
+        self.assertEqual(
+            self.db.db.execute("PRAGMA user_version").fetchone()[0], SCHEMA_VERSION
+        )
         self.assertTrue(self.db.list_backups())

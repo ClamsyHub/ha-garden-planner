@@ -97,3 +97,12 @@ Journal kind and parent are immutable. Harvest context is server-managed and cap
 
 
 Journal lists in the authorized service omit image payloads by default and return only an `image_present` flag. SQLite removes the image JSON field in the projection before decoding rows. Full `get` and explicit `include_images=true` remain authenticated reads; export/backup use full records without transient flags. A viewport-observed photo component fetches only needed previews and discards stale responses on identity/revision/disconnect changes. Editing retrieves the full current entry. This keeps multiyear photo archives out of routine list refreshes and statistics.
+
+
+## Bed planning (schema 5)
+
+`bed_layouts` stores one metric polygon/cut-out layout per existing location, protected by a unique index. `bed_plantings` stores plant/variety, optional actual-culture linkage, grid coordinates/count/spacing, inclusive occupancy dates, state and server-managed family snapshot. Foreign keys and bounded polygon validation apply to CRUD and imports. Schema 1–4 tables/migrations remain frozen; schema 5 adds two tables and indexes without modifying existing records. Shared authorization/revisions and worker-thread SQLite transactions remain the same. Plan geometries and history are included in all export/restore paths.
+
+The Lit bed-planner component keeps explicit local drafts and their original revisions, rejects stale saves, guards unsaved navigation and supports pointer or numeric position editing. SVG uses cm viewBox coordinates with even-odd cut-outs; no third-party drawing library or cloud data is involved. Rotation hints use explicit frozen families and whole-bed historical occupancy; absent family data remains unknown. Seed requirements are a transparent count comparison, not automatic inventory allocation.
+
+Planned occupancies use the current explicit plant family and refresh the server-managed snapshot on save. Actual and completed occupancies retain their frozen family across later master-data edits.

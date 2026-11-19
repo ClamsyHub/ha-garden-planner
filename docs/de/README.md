@@ -199,3 +199,8 @@ Gemeinsame Aufgaben können ein Tagesintervall und ein optionales Serienende erh
 Administratoren können in den Einstellungen optional eine bestehende **weather.**-Entität, Vorschauzeit und Frost-Warnschwelle wählen. In der Übersicht und im Gartenmodus erscheinen Hinweise für aktive Kulturen, die beim Bearbeiten ausdrücklich als **im Freien** und **frostempfindlich** markiert wurden. Geplante, abgeschlossene und fehlgeschlagene Kulturen sind ausgenommen. Vorhersagen werden höchstens alle 15 Minuten abgefragt. Fehlende oder veraltete Vorhersagen gelten als unbekannt, niemals als Frostfreiheit. Wetterhinweise versenden keine zusätzlichen automatischen Nachrichten; die Wetterintegration kann selbst einen externen Dienst verwenden.
 
 Fotos können auch direkt unter **Aktuelle Kulturen → Ereignis erfassen** hochgeladen oder über die Kameraauswahl aufgenommen werden. Jedes Ereignis hat sein eigenes optionales Bild im Kulturverlauf. Beim Bearbeiten bleibt es erhalten und kann ersetzt oder entfernt werden; das Kultur-Titelbild und das Tagebuch bleiben eigenständig.
+
+
+## In Entwicklung: Beetplan (v0.1.13)
+
+[Bedienung, Datensicherung und Grenzen](../bed-planner.md). Noch nicht veröffentlicht.

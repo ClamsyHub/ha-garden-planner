@@ -73,14 +73,19 @@ export function readCsvZip(input: Uint8Array): Record<string, string> {
   const metadata = JSON.parse(result["metadata.json"] ?? "null") as {
     schema_version?: number;
   } | null;
-  const optional = new Set(["seed_lots.csv", "cultivation_journal.csv"]);
+  const optional: Record<string, number> = {
+    "seed_lots.csv": 4,
+    "cultivation_journal.csv": 4,
+    "bed_layouts.csv": 5,
+    "bed_plantings.csv": 5,
+  };
   if (
     !metadata ||
     typeof metadata.schema_version !== "number" ||
     [...expected].some(
       (name) =>
         !(name in result) &&
-        !(metadata.schema_version! < 4 && optional.has(name)),
+        !(metadata.schema_version! < (optional[name] ?? 1)),
     )
   )
     throw new Error("invalid_file");

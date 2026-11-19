@@ -19,12 +19,15 @@ export const TABLES = [
   "tasks",
   "seed_lots",
   "cultivation_journal",
+  "bed_layouts",
+  "bed_plantings",
 ] as const;
 export type Table = (typeof TABLES)[number];
 export type Tables = Record<Table, Entity[]>;
 export type Page =
   | "overview"
   | "calendar"
+  | "bedplan"
   | "plants"
   | "cultures"
   | "history"
@@ -102,6 +105,8 @@ export const emptyTables = (): Tables => ({
   tasks: [],
   seed_lots: [],
   cultivation_journal: [],
+  bed_layouts: [],
+  bed_plantings: [],
 });
 
 export interface Capabilities {

@@ -18,10 +18,10 @@ from ..models import (
     MAX_IMPORT_BYTES,
     MAX_RECORDS,
     NEIGHBOR_FIELDS,
-    NEW_TABLES,
     PARENTS,
     PLANT_MEASURE_FIELDS,
     SCHEMA_VERSION,
+    TABLE_VERSIONS,
     TABLES,
     ConflictError,
     NotFoundError,
@@ -258,6 +258,24 @@ class Database:
             variety = self.get("varieties", data["variety_id"])["data"]
             if variety["plant_id"] != data.get("plant_id"):
                 raise ValidationError("Variety belongs to a different plant.")
+        if table == "bed_plantings":
+            from ..bed_geometry import validate_placement
+
+            layout = self.get("bed_layouts", data["layout_id"])["data"]
+            try:
+                validate_placement(layout, data)
+            except ValueError as error:
+                raise ValidationError(str(error)) from error
+            if data.get("cultivation_id"):
+                culture = self.get("cultivations", data["cultivation_id"])["data"]
+                if (
+                    culture["plant_id"] != data["plant_id"]
+                    or culture.get("variety_id") != data.get("variety_id")
+                    or culture.get("location_id") != layout["location_id"]
+                ):
+                    raise ValidationError(
+                        "Linked culture must match plant, variety and bed."
+                    )
         if table == "tasks" and data.get("cultivation_id"):
             cultivation = self.get("cultivations", data["cultivation_id"])["data"]
             for field in ("plant_id", "location_id"):
@@ -460,6 +478,10 @@ class Database:
             raise ValidationError("Create a plant before assigning its neighbors.")
         with self.transaction():
             self._references(table, clean)
+            if table == "bed_plantings":
+                clean["family_snapshot"] = (
+                    self.get("plants", clean["plant_id"])["data"].get("family") or ""
+                )
             if table == "cultivations":
                 clean["snapshot"] = self._snapshot(clean)
                 clean.setdefault("initial_status", "sown")
@@ -506,6 +528,7 @@ class Database:
             "origin",
             "harvest_context",
             "next_task_id",
+            "family_snapshot",
         } & set(patch):
             raise ValidationError("Cannot edit server-managed data.")
         with self.transaction():
@@ -524,6 +547,29 @@ class Database:
                 clean_master_data(table, {**record["data"], **patch}),
                 internal=True,
             )
+            if table == "bed_plantings" and (
+                clean["plant_id"] != record["data"]["plant_id"]
+                or record["data"]["state"] == "planned"
+            ):
+                clean["family_snapshot"] = (
+                    self.get("plants", clean["plant_id"])["data"].get("family") or ""
+                )
+            if table == "bed_layouts":
+                if clean["location_id"] != record["data"]["location_id"]:
+                    raise ValidationError(
+                        "A bed layout cannot be reassigned to another location."
+                    )
+                from ..bed_geometry import validate_placement
+
+                for placement in self.list_records(
+                    "bed_plantings", {"layout_id": record_id}
+                ):
+                    try:
+                        validate_placement(clean, placement["data"])
+                    except ValueError as error:
+                        raise ValidationError(
+                            "Move existing plants before changing the bed boundary."
+                        ) from error
             if table in (
                 "varieties",
                 "cultivations",
@@ -556,6 +602,13 @@ class Database:
             if table == "cultivations" and clean.get("location_id") != record[
                 "data"
             ].get("location_id"):
+                links = self.list_records(
+                    "bed_plantings", {"cultivation_id": record_id}
+                )
+                if links:
+                    raise ConflictError(
+                        "Unlink the bed planting before moving its cultivation."
+                    )
                 tasks = self.list_records("tasks", {"cultivation_id": record_id})
                 if any(
                     t["data"].get("location_id") is not None
@@ -762,9 +815,9 @@ class Database:
         if not isinstance(tables, dict) or set(tables) - set(TABLES):
             raise ValidationError("Import contains unknown tables.")
         missing = set(TABLES) - set(tables)
-        if missing and (payload["schema_version"] >= 4 or missing - set(NEW_TABLES)):
+        if any(payload["schema_version"] >= TABLE_VERSIONS.get(t, 1) for t in missing):
             raise ValidationError("Import must include every known table.")
-        tables = {**{t: [] for t in NEW_TABLES}, **tables}
+        tables = {**{t: [] for t in TABLE_VERSIONS}, **tables}
         if any(not isinstance(tables[t], list) for t in TABLES):
             raise ValidationError("Each import table must be a list.")
         if sum(len(tables[t]) for t in TABLES) > MAX_RECORDS:
@@ -792,6 +845,8 @@ class Database:
                 clean = validate_data(
                     table, clean_master_data(table, record["data"]), internal=True
                 )
+                if table == "bed_plantings" and "family_snapshot" not in clean:
+                    raise ValidationError("Imported bed planting lacks family history.")
                 if table == "cultivations" and "snapshot" not in clean:
                     raise ValidationError(
                         "Imported culture lacks its historical snapshot."
@@ -857,6 +912,26 @@ class Database:
                         for k in ("plant_id", "location_id")
                     ):
                         raise ValidationError("Imported task relationships disagree.")
+        from ..bed_geometry import validate_placement
+
+        locations = [r["data"]["location_id"] for r in desired["bed_layouts"].values()]
+        if len(locations) != len(set(locations)):
+            raise ValidationError("Only one layout per location is supported.")
+        for record in desired["bed_plantings"].values():
+            data = record["data"]
+            layout = desired["bed_layouts"][data["layout_id"]]["data"]
+            try:
+                validate_placement(layout, data)
+            except ValueError as error:
+                raise ValidationError(str(error)) from error
+            if data.get("cultivation_id"):
+                culture = desired["cultivations"][data["cultivation_id"]]["data"]
+                if (
+                    culture["plant_id"] != data["plant_id"]
+                    or culture.get("variety_id") != data.get("variety_id")
+                    or culture.get("location_id") != layout["location_id"]
+                ):
+                    raise ValidationError("Imported planting and culture disagree.")
         self._neighbor_graph(desired["plants"])
         initial_events: dict[str, list[dict[str, Any]]] = {}
         for event in desired["cultivation_events"].values():

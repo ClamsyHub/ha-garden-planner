@@ -4,6 +4,9 @@ import type { Language } from "./types";
 const de = {
   overview: "Übersicht",
   calendar: "Gartenkalender",
+  bedplan: "Beetplan",
+  family: "Pflanzenfamilie (für Fruchtfolge)",
+  discardBedPlan: "Ungespeicherte Beetplan-Änderungen verwerfen?",
   plants: "Meine Pflanzen",
   cultures: "Aktuelle Kulturen",
   history: "Aussaat-Historie",
@@ -259,6 +262,9 @@ const de = {
 const en: Record<keyof typeof de, string> = {
   overview: "Overview",
   calendar: "Garden calendar",
+  bedplan: "Bed planner",
+  family: "Plant family (for rotation)",
+  discardBedPlan: "Discard unsaved bed-plan changes?",
   plants: "My plants",
   cultures: "Current crops",
   history: "Sowing history",
