@@ -45,3 +45,6 @@ Neighbor hints use only the stored reciprocal catalog relationships and the conf
 Season requirements across beds sum planned plants by plant/variety. Only seed-count stock is compared numerically; grams/packets, germination losses and other reservations are not converted or automatically deducted. Shopping status is not changed automatically.
 
 Schema 5 adds two tables without modifying existing records, with an automatic pre-migration backup. Back up the full HA configuration before updating. JSON/CSV/SQLite backups include geometry, occupancies and frozen families. Schema 1–4 JSON/CSV imports remain supported; exchange format stays 1. Downgrading requires a compatible full backup. No new runtime dependencies or external services are required.
+
+
+Der aktive Zeichenmodus zeigt direkt über der Fläche eine Anleitung sowie **Zeichnung übernehmen**, **Letzten Punkt entfernen** und **Zeichnen abbrechen**. Nach der Übernahme ist **Beetform speichern** erforderlich; Abbrechen oder Escape lässt die bisherige Form bestehen. Drawing mode shows explicit apply/undo/cancel actions above the canvas; applying exits drawing and saving persists the shape.

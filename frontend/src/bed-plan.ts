@@ -50,6 +50,23 @@ const de = {
   freehand: "Freihand zeichnen",
   hole: "Aussparung zeichnen",
   finish: "Zeichnung übernehmen",
+  drawingActive: "Zeichenmodus aktiv",
+  cancelDrawing: "Zeichnen abbrechen",
+  freehandStep:
+    "Mit gedrückter Maustaste oder mit dem Finger den gewünschten Umriss zeichnen.",
+  outlineStep:
+    "Die gewünschten Eckpunkte nacheinander auf der Zeichenfläche antippen (mindestens drei).",
+  holeStep:
+    "Die Eckpunkte der Aussparung innerhalb des Beets nacheinander antippen (mindestens drei).",
+  applyStep:
+    "Danach auf „Zeichnung übernehmen“ klicken. Damit beendest du den Zeichenmodus und kannst wieder die weißen Eckpunkte ziehen.",
+  saveDrawingStep:
+    "Anschließend mit „Beetform speichern“ die Änderung dauerhaft sichern.",
+  cancelDrawingHint:
+    "Mit „Zeichnen abbrechen“ oder Escape kehrst du ohne Übernahme der Zeichnung zur bisherigen Form zurück.",
+  drawingApplied:
+    "Zeichnung übernommen. Bitte jetzt mit „Beetform speichern“ dauerhaft sichern.",
+  unsavedShape: "Die geänderte Beetform ist noch nicht gespeichert.",
   undo: "Letzten Punkt entfernen",
   clearHoles: "Aussparungen entfernen",
   deleteLayout: "Leere Beetform löschen",
@@ -57,7 +74,7 @@ const de = {
   saveShape: "Beetform speichern",
   newBed: "Bitte zuerst unter Beete & Standorte einen Standort anlegen.",
   drawHint:
-    "Eckpunkte antippen oder freihändig zeichnen. Mindestens drei Punkte; mit Übernehmen schließen. Eckpunkte lassen sich ziehen. Aussparungen bleiben frei.",
+    "Nach dem Zeichnen „Zeichnung übernehmen“ klicken, um zu den weißen Eckpunkten zurückzukehren. Danach „Beetform speichern“. Mit „Zeichnen abbrechen“ ohne Übernahme zurückkehren.",
   moveHint:
     "Pflanzen zum Auswählen antippen; zum Verschieben ziehen oder die cm-Koordinaten bearbeiten. Änderungen mit Belegung speichern bestätigen.",
   position: "Position auf dem Beet wählen",
@@ -149,6 +166,23 @@ const en: Record<keyof typeof de, string> = {
   freehand: "Freehand outline",
   hole: "Draw cut-out",
   finish: "Apply drawing",
+  drawingActive: "Drawing mode active",
+  cancelDrawing: "Cancel drawing",
+  freehandStep:
+    "Hold the mouse button or use your finger to draw the desired outline.",
+  outlineStep:
+    "Tap the desired corners on the canvas one after another (at least three).",
+  holeStep:
+    "Tap the cut-out corners inside the bed one after another (at least three).",
+  applyStep:
+    "Then click “Apply drawing”. This exits drawing mode so you can drag the white corner handles again.",
+  saveDrawingStep:
+    "Finally use “Save bed shape” to store the change permanently.",
+  cancelDrawingHint:
+    "Use “Cancel drawing” or Escape to return to the previous shape without applying the drawing.",
+  drawingApplied:
+    "Drawing applied. Please use “Save bed shape” to store it permanently.",
+  unsavedShape: "The changed bed shape has not been saved yet.",
   undo: "Remove last point",
   clearHoles: "Remove cut-outs",
   deleteLayout: "Delete empty bed layout",
@@ -156,7 +190,7 @@ const en: Record<keyof typeof de, string> = {
   saveShape: "Save bed shape",
   newBed: "First add a location under Beds & locations.",
   drawHint:
-    "Tap corners or draw freehand. At least three points; Apply closes the outline. Drag corners to edit. Cut-outs remain empty.",
+    "After drawing, click “Apply drawing” to return to the white corner handles, then “Save bed shape”. Use “Cancel drawing” to return without applying.",
   moveHint:
     "Tap plants to select them. Drag to move, or edit metric coordinates. Confirm with Save occupancy.",
   position: "Choose position on bed",
@@ -418,9 +452,11 @@ export class BedPlanner extends LitElement {
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("beforeunload", this.beforeUnload);
+    this.addEventListener("keydown", this.escapeDrawing);
   }
   disconnectedCallback(): void {
     window.removeEventListener("beforeunload", this.beforeUnload);
+    this.removeEventListener("keydown", this.escapeDrawing);
     super.disconnectedCallback();
     this.generation++;
   }
@@ -480,10 +516,86 @@ export class BedPlanner extends LitElement {
     });
     this.corner = -1;
   }
+  private get isDrawing(): boolean {
+    return ["outline", "freehand", "hole"].includes(this.tool);
+  }
+  private cancelDrawing(): void {
+    this.drawing = [];
+    this.drag = undefined;
+    this.tool = "select";
+    this.corner = -1;
+    this.message = "";
+  }
+  private escapeDrawing = (event: KeyboardEvent): void => {
+    if (event.key === "Escape" && this.isDrawing && !event.defaultPrevented) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.cancelDrawing();
+    }
+  };
+  private drawingGuidance(): TemplateResult | typeof nothing {
+    if (!this.editable || !this.isDrawing) return nothing;
+    const label =
+      this.tool === "freehand"
+        ? "freehand"
+        : this.tool === "hole"
+          ? "hole"
+          : "draw";
+    const step =
+      this.tool === "freehand"
+        ? "freehandStep"
+        : this.tool === "hole"
+          ? "holeStep"
+          : "outlineStep";
+    return html`<section
+      class="drawing-guidance"
+      role="region"
+      tabindex="-1"
+      aria-label=${this.t("drawingActive")}
+    >
+      <h3 role="status">${this.t("drawingActive")}: ${this.t(label)}</h3>
+      <ol>
+        <li>${this.t(step)}</li>
+        <li><strong>${this.t("applyStep")}</strong></li>
+        <li>${this.t("saveDrawingStep")}</li>
+      </ol>
+      <div class="buttons">
+        <button
+          class="primary"
+          @click=${this.finishDraw}
+          ?disabled=${this.drawing.length < 3 || this.busy}
+        >
+          ${this.t("finish")}</button
+        ><button
+          @click=${() => {
+            this.drawing = this.drawing.slice(0, -1);
+          }}
+          ?disabled=${!this.drawing.length || this.busy}
+        >
+          ${this.t("undo")}</button
+        ><button @click=${this.cancelDrawing} ?disabled=${this.busy}>
+          ${this.t("cancelDrawing")}
+        </button>
+      </div>
+      <p class="muted">${this.t("cancelDrawingHint")}</p>
+    </section>`;
+  }
   private startDraw(tool: Tool): void {
+    if (this.tool === tool) {
+      this.cancelDrawing();
+      return;
+    }
     this.tool = tool;
+    this.message = "";
     this.drawing = [];
     this.corner = -1;
+    void this.updateComplete.then(() => {
+      if (this.tool !== tool || !this.isDrawing) return;
+      const guide =
+        this.renderRoot.querySelector<HTMLElement>(".drawing-guidance");
+      guide?.scrollIntoView({ block: "center" });
+      guide?.focus({ preventScroll: true });
+    });
   }
   private finishDraw(): void {
     if (
@@ -499,6 +611,16 @@ export class BedPlanner extends LitElement {
     this.markLayout(l);
     this.tool = "select";
     this.drawing = [];
+    this.message = this.t("drawingApplied");
+    void this.updateComplete.then(() => {
+      if (this.isDrawing || !this.layoutDirty) return;
+      const controls =
+        this.renderRoot.querySelector<HTMLElement>(".shape-save");
+      controls?.scrollIntoView({ block: "center" });
+      controls
+        ?.querySelector<HTMLButtonElement>("button")
+        ?.focus({ preventScroll: true });
+    });
   }
   private point(e: PointerEvent): Point {
     const s = this.renderRoot.querySelector<SVGSVGElement>(".map")!;
@@ -529,6 +651,12 @@ export class BedPlanner extends LitElement {
     if (this.busy) return;
     const p = this.point(e);
     const target = e.target as Element;
+    if (this.isDrawing) {
+      e.preventDefault();
+      this.renderRoot
+        .querySelector<HTMLElement>(".drawing-guidance")
+        ?.focus({ preventScroll: true });
+    }
     const id = target.closest("[data-entry]")?.getAttribute("data-entry");
     if (this.tool === "select" && id) {
       const record = this.entries.find((r) => r.id === id);
@@ -881,7 +1009,7 @@ export class BedPlanner extends LitElement {
         max=${max}
         step="1"
         .value=${String(value)}
-        ?disabled=${!this.editable || this.busy}
+        ?disabled=${!this.editable || this.busy || this.isDrawing}
         @change=${(e: Event) => {
           const input = e.target as HTMLInputElement;
           const n = Number(input.value);
@@ -901,7 +1029,7 @@ export class BedPlanner extends LitElement {
           >${this.t("plant")}<select
             aria-label=${this.t("plant")}
             .value=${p.plant_id}
-            ?disabled=${!this.editable || this.busy}
+            ?disabled=${!this.editable || this.busy || this.isDrawing}
             @change=${(e: Event) => this.field("plant_id", (e.target as HTMLSelectElement).value)}
           >
             ${this.tables.plants.filter((e) => !e.data.archived || e.id === p.plant_id).map((e) => html`<option value=${e.id}>${text(e, "name")}</option>`)}
@@ -911,7 +1039,7 @@ export class BedPlanner extends LitElement {
           >${this.t("variety")}<select
             aria-label=${this.t("variety")}
             .value=${p.variety_id ?? ""}
-            ?disabled=${!this.editable || this.busy}
+            ?disabled=${!this.editable || this.busy || this.isDrawing}
             @change=${(e: Event) => this.field("variety_id", (e.target as HTMLSelectElement).value)}
           >
             <option value="">${this.t("none")}</option>
@@ -929,7 +1057,7 @@ export class BedPlanner extends LitElement {
               >${this.t(label)}<input
                 type="date"
                 .value=${p[key]}
-                ?disabled=${!this.editable || this.busy}
+                ?disabled=${!this.editable || this.busy || this.isDrawing}
                 @change=${(e: Event) => this.field(key, (e.target as HTMLInputElement).value)}
             /></label>`,
         )}
@@ -938,7 +1066,7 @@ export class BedPlanner extends LitElement {
           >${this.t("state")}<select
             aria-label=${this.t("state")}
             .value=${p.state}
-            ?disabled=${!this.editable || this.busy}
+            ?disabled=${!this.editable || this.busy || this.isDrawing}
             @change=${(e: Event) => this.field("state", (e.target as HTMLSelectElement).value)}
           >
             ${(["planned", "planted", "completed"] as const).map((s) => html`<option value=${s}>${this.t(s)}</option>`)}
@@ -948,7 +1076,7 @@ export class BedPlanner extends LitElement {
           >${this.t("cultivation")}<select
             aria-label=${this.t("cultivation")}
             .value=${p.cultivation_id ?? ""}
-            ?disabled=${!this.editable || this.busy}
+            ?disabled=${!this.editable || this.busy || this.isDrawing}
             @change=${(e: Event) => this.field("cultivation_id", (e.target as HTMLSelectElement).value)}
           >
             <option value="">${this.t("none")}</option>
@@ -958,7 +1086,7 @@ export class BedPlanner extends LitElement {
         <label class="wide"
           >${this.t("notes")}<textarea
             .value=${p.notes ?? ""}
-            ?disabled=${!this.editable || this.busy}
+            ?disabled=${!this.editable || this.busy || this.isDrawing}
             @input=${(e: Event) => this.field("notes", (e.target as HTMLTextAreaElement).value)}
           ></textarea>
         </label>
@@ -1178,11 +1306,14 @@ export class BedPlanner extends LitElement {
                     this.tool = this.tool === "pan" ? "select" : "pan";
                   }}
                   aria-pressed=${this.tool === "pan"}
+                  ?disabled=${this.isDrawing || this.busy}
                 >
                   ${this.t("pan")}
                 </button>`
               : nothing
-          }${this.map()}
+          }${this.drawingGuidance()}
+          ${this.editable && !this.isDrawing ? html`<div class="shape-save"><button class="primary" @click=${() => this.save("bed_layouts", l, this.layoutDraft ? this.layoutBase : this.record)} ?disabled=${this.busy || this.draftDirty || (!this.layoutDirty && !!this.record)}>${this.t("saveShape")}</button>${this.layoutDirty ? html`<span role="status">${this.t("unsavedShape")}</span>` : nothing}</div>` : nothing}
+          ${this.map()}
           <p class="muted">
             ${this.t(this.tool === "select" ? "moveHint" : "drawHint")}
           </p>
@@ -1203,33 +1334,24 @@ export class BedPlanner extends LitElement {
                       ${this.number("width", l.width_cm, (n) => this.shapeChange("width_cm", n), 20)}${this.number("height", l.height_cm, (n) => this.shapeChange("height_cm", n), 20)}${this.number("years", l.rotation_years, (n) => this.shapeChange("rotation_years", n), 1, 10)}${this.number("distance", l.neighbor_distance_cm, (n) => this.shapeChange("neighbor_distance_cm", n), 10, 1000)}
                     </div>
                     <div class="buttons">
-                      ${(["rectangle", "circle", "triangle", "u"] as const).map((kind) => html`<button @click=${() => this.usePreset(kind)} ?disabled=${this.busy}>${this.t(kind)}</button>`)}<button
+                      ${(["rectangle", "circle", "triangle", "u"] as const).map((kind) => html`<button @click=${() => this.usePreset(kind)} ?disabled=${this.busy || this.isDrawing}>${this.t(kind)}</button>`)}<button
                         @click=${() => this.startDraw("outline")}
+                        aria-pressed=${this.tool === "outline"}
                         ?disabled=${this.busy}
                       >
                         ${this.t("draw")}</button
                       ><button
                         @click=${() => this.startDraw("freehand")}
+                        aria-pressed=${this.tool === "freehand"}
                         ?disabled=${this.busy}
                       >
                         ${this.t("freehand")}</button
                       ><button
                         @click=${() => this.startDraw("hole")}
+                        aria-pressed=${this.tool === "hole"}
                         ?disabled=${this.busy}
                       >
                         ${this.t("hole")}</button
-                      ><button
-                        @click=${() => {
-                          this.drawing = this.drawing.slice(0, -1);
-                        }}
-                        ?disabled=${!this.drawing.length}
-                      >
-                        ${this.t("undo")}</button
-                      ><button
-                        @click=${this.finishDraw}
-                        ?disabled=${this.drawing.length < 3 || this.busy}
-                      >
-                        ${this.t("finish")}</button
                       ><button
                         @click=${() => {
                           this.markLayout({ ...structuredClone(l), holes: [] });
@@ -1272,19 +1394,13 @@ export class BedPlanner extends LitElement {
                               ${this.t("deleteCorner")}
                             </button>`
                         : nothing
-                    }<button
-                      class="primary"
-                      @click=${() => this.save("bed_layouts", l, this.layoutDraft ? this.layoutBase : this.record)}
-                      ?disabled=${this.busy || this.draftDirty}
-                    >
-                      ${this.t("saveShape")}
-                    </button>
+                    }
                     ${this.record && !this.entries.length ? html`<button class="danger" @click=${this.deleteLayout} ?disabled=${this.busy}>${this.t("deleteLayout")}</button>` : nothing}
                   </details>
                   <button
                     class="primary"
                     @click=${this.newPlanting}
-                    ?disabled=${!this.record || this.busy || this.layoutDirty}
+                    ?disabled=${!this.record || this.busy || this.layoutDirty || this.isDrawing}
                   >
                     ＋ ${this.t("add")}
                   </button>`
@@ -1476,6 +1592,37 @@ export class BedPlanner extends LitElement {
     }
     h4 {
       margin-bottom: 8px;
+    }
+    .drawing-guidance {
+      border: 2px solid var(--gp-accent, #326c49);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 12px 0;
+      background: var(
+        --secondary-background-color,
+        var(--card-background-color, #f1f7ee)
+      );
+    }
+    .drawing-guidance ol {
+      padding-left: 22px;
+      line-height: 1.6;
+      margin: 8px 0;
+    }
+    .drawing-guidance h3 {
+      margin-bottom: 8px;
+    }
+    .drawing-guidance p {
+      margin-bottom: 0;
+    }
+    .shape-save {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    button[aria-pressed="true"] {
+      box-shadow: inset 0 0 0 2px var(--gp-accent, #326c49);
     }
     .toolbar,
     .buttons {

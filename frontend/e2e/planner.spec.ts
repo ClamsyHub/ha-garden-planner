@@ -3904,3 +3904,98 @@ test("read-only users inspect bed plans without changing geometry or plantings",
     plan.getByRole("button", { name: "Belegung speichern", exact: true }),
   ).toHaveCount(0);
 });
+
+test("drawing guidance explains apply and save and every drawing tool can be cancelled", async ({
+  page,
+}) => {
+  await open(page);
+  const session = new URL(page.url()).searchParams.get("session");
+  const r = await page.request.post(`/__test_api/${session}`, {
+    data: {
+      operation: "create",
+      parameters: {
+        table: "locations",
+        data: { name: "Drawing guidance bed" },
+      },
+      role: "admin",
+    },
+  });
+  expect(r.ok()).toBe(true);
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  await navigate(page, "Beetplan");
+  const plan = page.locator("garden-bed-planner");
+  await plan.getByText("Beetform & Maße", { exact: true }).click();
+  const guide = plan.getByRole("region", {
+    name: "Zeichenmodus aktiv",
+    exact: true,
+  });
+  for (const name of [
+    "Freihand zeichnen",
+    "Aussparung zeichnen",
+    "Umriss zeichnen",
+  ]) {
+    await plan.getByRole("button", { name, exact: true }).click();
+    await expect(guide).toBeVisible();
+    await expect(guide).toContainText(
+      "Danach auf „Zeichnung übernehmen“ klicken",
+    );
+    await expect(guide).toContainText("Beetform speichern");
+    await expect(
+      guide.getByRole("button", { name: "Zeichnung übernehmen", exact: true }),
+    ).toBeDisabled();
+    await expect(plan.locator(".map [data-vertex]")).toHaveCount(0);
+    await guide
+      .getByRole("button", { name: "Zeichnen abbrechen", exact: true })
+      .click();
+    await expect(guide).toHaveCount(0);
+    await expect(plan.locator(".map [data-vertex]")).toHaveCount(4);
+  }
+  await plan
+    .getByRole("button", { name: "Freihand zeichnen", exact: true })
+    .click();
+  await plan
+    .locator(".map")
+    .evaluate((el) => el.scrollIntoView({ block: "center", inline: "center" }));
+  const points = await plan.locator(".map").evaluate((el) => {
+    const svg = el as SVGSVGElement;
+    return [
+      [30, 30],
+      [240, 30],
+      [240, 120],
+      [30, 120],
+    ].map(([x, y]) => {
+      const p = svg.createSVGPoint();
+      p.x = x!;
+      p.y = y!;
+      const c = p.matrixTransform(svg.getScreenCTM()!);
+      return { x: c.x, y: c.y };
+    });
+  });
+  await page.mouse.move(points[0]!.x, points[0]!.y);
+  await page.mouse.down();
+  for (const p of points.slice(1))
+    await page.mouse.move(p.x, p.y, { steps: 8 });
+  await page.mouse.up();
+  await expect(
+    guide.getByRole("button", { name: "Zeichnung übernehmen", exact: true }),
+  ).toBeEnabled();
+  await page.keyboard.press("Escape");
+  await expect(guide).toHaveCount(0);
+  await expect(plan.locator(".map [data-vertex]")).toHaveCount(4);
+  await plan
+    .getByRole("button", { name: "Aussparung zeichnen", exact: true })
+    .click();
+  await expect(guide).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(guide).toHaveCount(0);
+  await expect(plan.locator(".map [data-vertex]")).toHaveCount(4);
+  await plan
+    .getByRole("button", { name: "Umriss zeichnen", exact: true })
+    .click();
+  await plan
+    .getByRole("button", { name: "Umriss zeichnen", exact: true })
+    .click();
+  await expect(guide).toHaveCount(0);
+});
