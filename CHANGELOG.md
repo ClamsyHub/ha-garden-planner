@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.13 — Unreleased
+## 0.1.13 — 2026-11-24
 
 - Replace the resizing side-column editor with a modal-to-canvas workflow, direct save controls and live named neighbor feedback.
 - Suggest occupancy dates from stored direct sowing/transplant/harvest windows, preserving manual dates and exposing the plant profile/year chart.

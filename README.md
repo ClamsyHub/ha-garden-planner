@@ -16,18 +16,14 @@ Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzei
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.12:** Saatgutlose mit Mengen, Haltbarkeit, Keimtest und Lagerort; Kultur-Tagebuch mit Fotoverlauf; Einzelernten, Gesamtertrag und Auswertung nach Pflanze, Sorte, Beet und Erntejahr. Ein Gartenmodus bietet große Schnellaktionen für unterwegs. Fotos sind auch direkt bei Kulturereignissen möglich. Aufgaben lassen sich verschieben und wiederholen; optionale Wetterhinweise berücksichtigen frostempfindliche Freilandkulturen.
-[Updatehinweise und Datensicherung](docs/releases/v0.1.12.md). Die neue Version migriert die Datenbank auf Schema 4 mit automatischer vorheriger Sicherung.
-
-## In Entwicklung: v0.1.13
-
-Interaktiver **Beetplan** mit freien Beetformen, maßstäblicher Pflanzenplatzierung, Saison-/Nachkulturplanung und Fruchtfolgehinweisen. Noch nicht veröffentlicht. [Bedienung und Grenzen](docs/bed-planner.md).
+**Änderungen v0.1.13:** Interaktiver **Beetplan** mit freien Beetformen, maßstäblicher Pflanzenplatzierung, Saison-/Nachkulturplanung und Fruchtfolgehinweisen. Dialog für Pflanze, Menge und Zeitraum; Platzieren und Speichern direkt am Beet mit unmittelbaren Nachbarschaftshinweisen und Zeitraumvorschlägen aus den Pflanzendaten.
+[Updatehinweise und Datensicherung](docs/releases/v0.1.13.md). Die neue Version migriert die Datenbank auf Schema 5 mit automatischer vorheriger Sicherung. [Bedienung und Grenzen](docs/bed-planner.md).
 
 ## Oberfläche
 
 ![Garden Planner im nativen Home Assistant](docs/screenshots/native-marketplace.png)
 
-Eine zusammenhängende Anwendung; die Entwicklungsversion ergänzt den Beetplan zu den veröffentlichten Bereichen:
+Eine zusammenhängende Anwendung; mit folgenden Bereichen:
 
 1. **Übersicht:** hinterlegte Tätigkeitszeiträume des aktuellen Monats, Aufgaben und Kennzahlen.
 2. **Gartenkalender:** Jahr, Monat und Woche mit Tagesgrenzen, Filtern, Notiz-Tooltips und Zeitraum-/Pflanzendetails.

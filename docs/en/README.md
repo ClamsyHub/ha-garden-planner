@@ -10,7 +10,7 @@ release. Available in the official HACS community catalog. [Publication evidence
 
 ## Interface and features
 
-Ten German/English views: overview, year/month/week calendar, plants, current
+German/English views: overview, year/month/week calendar, interactive bed planner, plants, current
 crops, multi-year history, beds/locations, personal generated tasks/reminders, neighbors, seeds/shopping and settings. Responsive light/dark
 layouts, keyboard dialogs, multiple seasonal windows and dated cultivation events.
 Historical snapshots retain context after master-data edits. Outcomes are explicit
@@ -127,7 +127,7 @@ From **v0.1.10**, personal activity tasks display both start and end dates. Noti
 
 Choose catalog plants as multiple good/bad neighbors. Catalog links are reciprocal and saved atomically; changing the classification updates both sides. Optional free names (one per line) support plants outside the catalog. A unique catalog name entered as text is resolved to that existing plant by the editor; use catalog selection for ambiguous names. Entries without a catalog match remain attached to the selected plant. These are user observations, with no prefilled recommendations. Unlink or archive a linked plant before deleting it.
 
-**Seeds & shopping** is shared garden data. Select one state per plant: Available, Buy, Not needed or Undecided. Changes save automatically in batches, without disabling other choices. Internal navigation waits for pending saves. Wait for the saving indicator to finish before closing the app. Failed choices remain visible for review; explicit retry/discard controls appear only for recovery. Filter Buy to view your shopping choices. After a concurrent edit, unsaved choices remain visible; discard/reload before selecting again. Editors and administrators can change both sections; readers can browse them. Data lives with plants in SQLite and is included in garden JSON/CSV exports and database backups. Legacy CSV files without the optional columns remain supported. Version 0.1.12 uses schema 4; exchange format 1 is unchanged.
+**Seeds & shopping** is shared garden data. Select one state per plant: Available, Buy, Not needed or Undecided. Changes save automatically in batches, without disabling other choices. Internal navigation waits for pending saves. Wait for the saving indicator to finish before closing the app. Failed choices remain visible for review; explicit retry/discard controls appear only for recovery. Filter Buy to view your shopping choices. After a concurrent edit, unsaved choices remain visible; discard/reload before selecting again. Editors and administrators can change both sections; readers can browse them. Data lives with plants in SQLite and is included in garden JSON/CSV exports and database backups. Legacy CSV files without the optional columns remain supported. Version 0.1.13 uses schema 5; exchange format 1 is unchanged.
 
 Completing shared or personal garden tasks now requires explicit confirmation. Cancel or Escape leaves the task unchanged. Reopen completed work through the task list.
 
@@ -170,6 +170,6 @@ Administrators may select an existing HA weather entity, forecast horizon and fr
 Upload or capture an optional photo directly from **Current cultivations → Add event**. Each event retains its own photo in the timeline. Editing preserves it unless replaced or removed; cultivation covers and journal entries remain independent.
 
 
-## In development: Bed planner (v0.1.13)
+## Bed planner (v0.1.13)
 
-[Usage, backup and limits](../bed-planner.md). Not published yet.
+[Usage, backup and limits](../bed-planner.md). Prepare plantings in a dialog, then position and save directly on the canvas with live neighbor feedback. Back up HA before upgrading; schema 5 adds two tables and an automatic local backup.

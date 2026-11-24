@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.12
+## Stand dieser Dokumentation: v0.1.13
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
@@ -156,7 +156,7 @@ Unter **Nachbarn** eine Pflanze auswählen und gute/schlechte Nachbarn aus dem b
 
 **Saatgut & Einkauf** gehört zum gemeinsamen Garten, nicht zum persönlichen Benutzerprofil. Pro aktiver Pflanze genau einen Zustand wählen: **Vorhanden**, **Kaufen**, **Nicht benötigt** oder **Offen**. Ohne vorherige Angabe ist der Zustand offen. „Nicht benötigt“ passt z. B. zu Bäumen oder einer Saisonpause. Änderungen reagieren sofort und werden automatisch gebündelt gespeichert. Weitere Änderungen bleiben während laufender Anfragen möglich. Beim Wechsel in einen anderen Panel-Bereich wird die Speicherung abgewartet. Vor dem Schließen der App warten, bis der Speicherstatus verschwindet. Bei Fehlern wird kein Erfolg gemeldet; die Auswahl bleibt zur Prüfung erhalten. **Erneut speichern** oder **Auswahl verwerfen** erscheinen nur zur Fehlerbehandlung. Der Statusfilter **Kaufen** zeigt die Einkaufsauswahl. Bei einem konkurrierenden Schreibzugriff bleiben nicht gespeicherte Auswahlen erhalten; mit **Auswahl verwerfen** neu laden und erneut auswählen.
 
-Nachbarn und Saatgut bearbeiten nur Nutzer mit Garten-Bearbeitungsrecht sowie Administratoren. Leser können beide Bereiche ansehen. Die Daten liegen an den Pflanzen in der Garten-SQLite-Datenbank und sind in Garten-JSON/CSV-Exporten und Datenbanksicherungen enthalten. Bestehende CSV-Dateien ohne die zusätzlichen Spalten bleiben importierbar. Seit v0.1.12 wird Datenbankschema 4 verwendet; Austauschformat 1 bleibt bestehen.
+Nachbarn und Saatgut bearbeiten nur Nutzer mit Garten-Bearbeitungsrecht sowie Administratoren. Leser können beide Bereiche ansehen. Die Daten liegen an den Pflanzen in der Garten-SQLite-Datenbank und sind in Garten-JSON/CSV-Exporten und Datenbanksicherungen enthalten. Bestehende CSV-Dateien ohne die zusätzlichen Spalten bleiben importierbar. Seit v0.1.13 wird Datenbankschema 5 verwendet; Austauschformat 1 bleibt bestehen.
 
 Das Erledigen einer gemeinsamen oder persönlichen Aufgabe erfordert nun eine Bestätigung mit Titel und Datum/Zeitraum. **Abbrechen** oder **Escape** ändern nichts. Wiederöffnen erfolgt weiterhin über die Aufgabenliste.
 
@@ -201,6 +201,6 @@ Administratoren können in den Einstellungen optional eine bestehende **weather.
 Fotos können auch direkt unter **Aktuelle Kulturen → Ereignis erfassen** hochgeladen oder über die Kameraauswahl aufgenommen werden. Jedes Ereignis hat sein eigenes optionales Bild im Kulturverlauf. Beim Bearbeiten bleibt es erhalten und kann ersetzt oder entfernt werden; das Kultur-Titelbild und das Tagebuch bleiben eigenständig.
 
 
-## In Entwicklung: Beetplan (v0.1.13)
+## Beetplan (v0.1.13)
 
-[Bedienung, Datensicherung und Grenzen](../bed-planner.md). Noch nicht veröffentlicht.
+[Bedienung, Datensicherung und Grenzen](../bed-planner.md). Belegungen im Dialog vorbereiten, direkt im Beet platzieren und speichern. Vor dem Update vollständige HA-Sicherung erstellen; Schema 5 ergänzt zwei Tabellen und legt eine lokale Sicherung an.

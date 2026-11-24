@@ -4140,11 +4140,22 @@ test("bed workflow keeps canvas size, derives plant dates and shows live good an
         p.x = point[0]!;
         p.y = point[1]!;
         const c = p.matrixTransform(svg.getScreenCTM()!);
-        return { x: c.x, y: c.y };
+        const inverse = svg.getScreenCTM()!.inverse();
+        return {
+          x: c.x,
+          y: c.y,
+          resolution: Math.ceil(
+            Math.max(
+              Math.hypot(inverse.a, inverse.b),
+              Math.hypot(inverse.c, inverse.d),
+            ),
+          ),
+        };
       },
       [x, y],
     );
     await page.mouse.click(pos.x, pos.y);
+    return pos.resolution;
   }
   const feedback = plan.locator(".placement-controls .neighbor-feedback");
   await tap(55, 80);
@@ -4154,7 +4165,7 @@ test("bed workflow keeps canvas size, derives plant dates and shows live good an
     "data-neighbor-status",
     "bad",
   );
-  await tap(280, 80);
+  const placementResolution = await tap(280, 80);
   await expect(feedback).toContainText("Gute Nachbarn");
   await expect(feedback).toContainText("Plan C");
   await expect(feedback).not.toContainText("Ungünstige Nachbarn");
@@ -4179,13 +4190,18 @@ test("bed workflow keeps canvas size, derives plant dates and shows live good an
   ).toMatchObject({
     start_date: "2027-03-01",
     end_date: "2027-09-30",
-    y_cm: 80,
   });
   const saved = records.find(
     (e: { data: { notes?: string } }) => e.data.notes === "UX placement test",
   );
-  // One CSS pixel can represent more than one centimeter on a narrow WebKit canvas.
-  expect(Math.abs(saved.data.x_cm - 280)).toBeLessThanOrEqual(2);
+  // Pointer coordinates are quantized to CSS pixels. Derive the maximum
+  // centimeter error from the actual SVG transform on each browser/device.
+  expect(Math.abs(saved.data.x_cm - 280)).toBeLessThanOrEqual(
+    placementResolution,
+  );
+  expect(Math.abs(saved.data.y_cm - 80)).toBeLessThanOrEqual(
+    placementResolution,
+  );
   await plan.locator(".canvas").screenshot({
     path: testInfo.outputPath("bed-workflow.png"),
     scale: "css",
