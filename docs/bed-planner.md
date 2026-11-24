@@ -48,3 +48,16 @@ Schema 5 adds two tables without modifying existing records, with an automatic p
 
 
 Der aktive Zeichenmodus zeigt direkt über der Fläche eine Anleitung sowie **Zeichnung übernehmen**, **Letzten Punkt entfernen** und **Zeichnen abbrechen**. Nach der Übernahme ist **Beetform speichern** erforderlich; Abbrechen oder Escape lässt die bisherige Form bestehen. Drawing mode shows explicit apply/undo/cancel actions above the canvas; applying exits drawing and saving persists the shape.
+
+
+## Überarbeitete Belegungsbedienung
+
+„Belegung hinzufügen“ steht oben am Beet. Pflanze, Sorte, Menge, Pflanzen je Reihe und Zeitraum werden in einem Dialog gewählt. Die aufklappbare Pflanzenkarte enthält die gespeicherten Eigenschaften und Tätigkeitszeiträume als Jahresübersicht. Ein eindeutiger Zeitraum wird von Direktsaat/Auspflanzen bis zum Ernteende vorgeschlagen. Bei mehreren möglichen Fensterkombinationen ist eine ausdrückliche Auswahl erforderlich. Fehlende Fenster werden nicht durch geschätzte Termine ersetzt; manuelle und gespeicherte Termine bleiben erhalten. Vorschläge sind auf eine jährliche Belegung bis zu 366 Tagen begrenzt; längere Belegungen bleiben manuell möglich.
+
+Mit „Im Beet platzieren“ schließt der Dialog. Das Beet behält seine Größe; eine Leiste direkt am Beet bietet „Angaben ändern“, „Belegung speichern“ und Abbrechen. Antippen oder Ziehen positioniert die Gruppe. Gute und ungünstige Nachbarn werden im überlappenden Belegungszeitraum unmittelbar mit grün/roten Markierungen, Symbolen und Namen angezeigt – auch während des Verschiebens. Unbekannte Beziehungen bleiben ausdrücklich unbekannt.
+
+## Revised occupancy workflow
+
+The add action is above the canvas. Choose plant, variety, count, row layout and dates in one dialog, with an expandable plant profile and annual activity chart. Unique direct-sowing/transplant-to-harvest combinations are suggested; ambiguous combinations require an explicit choice. Missing periods are not invented and saved/manual dates are preserved. Annual proposals cover up to 366 days; longer occupancies can still be entered manually.
+
+Continue with “Position in bed”, place by tapping/dragging, and save from the bar directly on the unchanged canvas. Edit/cancel actions remain there. Live green/red markers, symbols and named feedback use stored relationships and overlapping occupancy dates. Unknown relationships remain unknown.

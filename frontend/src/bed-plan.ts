@@ -16,14 +16,16 @@ import {
   type Tables,
   type Language,
 } from "./types";
-import { errorText } from "./i18n";
-import { formatDate } from "./dates";
+import { errorText, label } from "./i18n";
+import { formatDate, activeInMonth, windowLabel } from "./dates";
+import { occupancySuggestions } from "./bed-periods";
 import {
   layoutData,
   plantingData,
   toData,
   preset,
   centers,
+  overlaps,
   usable,
   path,
   area,
@@ -37,6 +39,36 @@ import {
 
 const de = {
   bed: "Beet / Standort",
+  configure: "1. Pflanze & Angaben wählen",
+  closeDialog: "Schließen",
+  placeStep: "2. Im Beet platzieren",
+  placeContinue: "Im Beet platzieren",
+  changeDetails: "Angaben ändern",
+  placeHelp:
+    "Tippe auf die gewünschte Stelle oder ziehe die markierte Gruppe. Speichere anschließend direkt hier am Beet.",
+  plantReference: "Pflanzenkarte & Jahresübersicht",
+  periodProposal: "Zeitraum aus Pflanzendaten",
+  periodChoice: "Zeitraumvorschlag",
+  usePeriod: "Zeitraum übernehmen",
+  periodHint:
+    "Von Direktsaat / Auspflanzen bis zum Ende der Ernte. Vorschlag bitte prüfen; gespeicherte oder manuell geänderte Daten werden nicht automatisch überschrieben.",
+  periodMissing:
+    "Kein eindeutiger Zeitraum vorhanden. Bitte Start und Ende selbst festlegen; die Jahresübersicht hilft dabei.",
+  periodAmbiguous:
+    "Mehrere Anbaufolgen sind möglich. Bitte einen Vorschlag auswählen oder eigene Daten eintragen.",
+  advanced: "Weitere Angaben & Koordinaten",
+  knownGood: "Gute Nachbarn in der Nähe",
+  knownBad: "Ungünstige Nachbarn in der Nähe",
+  unknownNeighbors:
+    "Keine bewertete Nachbarschaft im Prüfradius. Unbekannt bedeutet nicht verträglich.",
+  neighborLegend: "Grün: gut · Rot: ungünstig · Grau: keine Angabe",
+  neighborsNow: "Nachbarschaft beim Platzieren",
+  invalidPeriod:
+    "Bitte Pflanze, gültigen Zeitraum und passende Mengen / Reihen prüfen.",
+  plantBasics: "Pflanzen-Steckbrief",
+  noPlantPeriods:
+    "Für diese Pflanze sind noch keine Tätigkeitszeiträume hinterlegt.",
+
   year: "Saisonjahr",
   month: "Monat",
   shape: "Beetform & Maße",
@@ -153,6 +185,34 @@ const de = {
 };
 const en: Record<keyof typeof de, string> = {
   bed: "Bed / location",
+  configure: "1. Choose plant & details",
+  closeDialog: "Close",
+  placeStep: "2. Position in bed",
+  placeContinue: "Position in bed",
+  changeDetails: "Edit details",
+  placeHelp:
+    "Tap a position or drag the highlighted group. Then save directly here on the bed.",
+  plantReference: "Plant profile & year overview",
+  periodProposal: "Period from plant data",
+  periodChoice: "Suggested occupancy period",
+  usePeriod: "Use this period",
+  periodHint:
+    "From direct sowing / transplanting to the end of harvest. Review suggestions; stored or manually edited dates are never overwritten automatically.",
+  periodMissing:
+    "No unambiguous period available. Set start and end yourself; the year overview can help.",
+  periodAmbiguous:
+    "Several crop sequences are possible. Choose a suggestion or enter your own dates.",
+  advanced: "More details & coordinates",
+  knownGood: "Good neighbors nearby",
+  knownBad: "Unfavorable neighbors nearby",
+  unknownNeighbors:
+    "No assessed relationship within range. Unknown does not mean compatible.",
+  neighborLegend: "Green: good · Red: unfavorable · Gray: unknown",
+  neighborsNow: "Neighbors while placing",
+  invalidPeriod: "Check the plant, valid dates, counts and row layout.",
+  plantBasics: "Plant profile",
+  noPlantPeriods: "No activity periods have been recorded for this plant.",
+
   year: "Season year",
   month: "Month",
   shape: "Bed shape & dimensions",
@@ -290,6 +350,8 @@ export class BedPlanner extends LitElement {
     showSpacing: { state: true },
     layoutDirty: { state: true },
     draftDirty: { state: true },
+    dialogOpen: { state: true },
+    periodChoice: { state: true },
   };
   declare api?: PlannerApi;
   declare tables: Tables;
@@ -302,6 +364,10 @@ export class BedPlanner extends LitElement {
   private layoutDraft?: Layout;
   private draft?: Planting;
   private selected = "";
+  private dialogOpen = false;
+  private periodChoice = 0;
+  private periodTouched = false;
+  private dialogReturn?: Planting;
   private layoutBase?: Entity;
   private editingRecord?: Entity;
   private tool: Tool = "select";
@@ -320,8 +386,93 @@ export class BedPlanner extends LitElement {
     layout: Layout;
     draft?: Planting;
     selected: string;
+    dialog: boolean;
     result: PlanWarning[];
   };
+  private get placementActive(): boolean {
+    return !!this.draft && !this.dialogOpen;
+  }
+  private get suggestions() {
+    return this.draft
+      ? occupancySuggestions(
+          this.draft.plant_id,
+          this.year,
+          this.tables.growing_windows,
+        )
+      : [];
+  }
+  private openEditor(): void {
+    this.dialogReturn = this.draft ? structuredClone(this.draft) : undefined;
+    this.dialogOpen = true;
+  }
+  private cancelEditor(): void {
+    if (this.busy) return;
+    this.dialogOpen = false;
+    if (this.dialogReturn) {
+      this.draft = this.dialogReturn;
+      this.dialogReturn = undefined;
+      this.tool = "place";
+    } else this.cancelPlacement();
+    this.error = "";
+  }
+  private cancelPlacement(): void {
+    this.dialogOpen = false;
+    this.draft = undefined;
+    this.selected = "";
+    this.editingRecord = undefined;
+    this.draftDirty = false;
+    this.dialogReturn = undefined;
+    this.tool = "select";
+    this.error = "";
+  }
+  private beginPlacement(): void {
+    const p = this.draft;
+    if (!p) return;
+    if (
+      !p.plant_id ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(p.start_date) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(p.end_date) ||
+      p.end_date < p.start_date ||
+      !Number.isInteger(p.plant_count) ||
+      p.plant_count < 1 ||
+      p.plant_count > 200 ||
+      !Number.isInteger(p.columns) ||
+      p.columns < 1 ||
+      p.columns > p.plant_count
+    ) {
+      this.error = this.t("invalidPeriod");
+      return;
+    }
+    this.dialogOpen = false;
+    this.dialogReturn = undefined;
+    this.tool = "place";
+    this.month = 0;
+    this.year = Number(p.start_date.slice(0, 4));
+    this.error = "";
+    void this.updateComplete.then(() =>
+      this.renderRoot
+        .querySelector<HTMLElement>(".viewport")
+        ?.scrollIntoView({ block: "center" }),
+    );
+  }
+  private applyPeriod(index = this.periodChoice): void {
+    const value = this.suggestions[index];
+    if (!this.draft || !value) return;
+    this.draft = {
+      ...this.draft,
+      start_date: value.start,
+      end_date: value.end,
+    };
+    this.draftDirty = true;
+    this.periodTouched = true;
+  }
+  protected updated(): void {
+    const dialog = this.renderRoot.querySelector<HTMLDialogElement>(
+      "#bed-planting-dialog",
+    );
+    if (this.dialogOpen && this.draft && !dialog?.open) dialog?.showModal();
+    else if ((!this.dialogOpen || !this.draft) && dialog?.open) dialog.close();
+  }
   private planningWarnings(): PlanWarning[] {
     const layout = this.layout;
     const memo = this.warningMemo;
@@ -330,11 +481,12 @@ export class BedPlanner extends LitElement {
       memo.tables === this.tables &&
       memo.layout === layout &&
       memo.draft === this.draft &&
-      memo.selected === this.selected
+      memo.selected === this.selected &&
+      memo.dialog === this.dialogOpen
     )
       return memo.result;
     let entries = this.entries;
-    if (this.draft)
+    if (this.placementActive && this.draft)
       entries = [
         ...entries.filter((e) => e.id !== this.selected),
         {
@@ -351,6 +503,7 @@ export class BedPlanner extends LitElement {
       layout,
       draft: this.draft,
       selected: this.selected,
+      dialog: this.dialogOpen,
       result,
     };
     return result;
@@ -417,6 +570,8 @@ export class BedPlanner extends LitElement {
       );
   }
   private get displayed(): Entity[] {
+    if (this.placementActive && this.draft)
+      return this.entries.filter((e) => overlaps(plantingData(e), this.draft!));
     return this.season.filter(
       (e) => !this.month || this.inMonth(plantingData(e), this.month),
     );
@@ -430,6 +585,7 @@ export class BedPlanner extends LitElement {
     if (changed.has("api") || (!this.editable && changed.has("editable"))) {
       this.generation++;
       this.draft = undefined;
+      this.dialogOpen = false;
       this.layoutDraft = undefined;
       this.draftDirty = this.layoutDirty = false;
       this.drawing = [];
@@ -464,6 +620,7 @@ export class BedPlanner extends LitElement {
     if (this.hasUnsavedChanges && !window.confirm(this.t("dirty")))
       return false;
     this.layoutDraft = undefined;
+    this.dialogOpen = false;
     this.draft = undefined;
     this.selected = "";
     this.layoutDirty = this.draftDirty = false;
@@ -633,7 +790,7 @@ export class BedPlanner extends LitElement {
       Math.round(Math.max(0, Math.min(this.layout.height_cm, c.y))),
     ];
   }
-  private select(e: Entity): void {
+  private select(e: Entity, showDialog = true): void {
     if (this.busy || (this.draftDirty && e.id === this.selected)) return;
     if (
       this.draftDirty &&
@@ -645,7 +802,11 @@ export class BedPlanner extends LitElement {
     this.editingRecord = structuredClone(e);
     this.draft = structuredClone(plantingData(e));
     this.draftDirty = false;
-    this.tool = "select";
+    this.periodTouched = true;
+    this.periodChoice = 0;
+    this.dialogReturn = undefined;
+    this.dialogOpen = showDialog;
+    this.tool = showDialog ? "select" : "place";
   }
   private pointerDown(e: PointerEvent): void {
     if (this.busy) return;
@@ -658,9 +819,29 @@ export class BedPlanner extends LitElement {
         ?.focus({ preventScroll: true });
     }
     const id = target.closest("[data-entry]")?.getAttribute("data-entry");
+    if (
+      this.placementActive &&
+      this.editable &&
+      this.tool !== "pan" &&
+      this.draft
+    ) {
+      if (id === (this.selected || "draft")) {
+        this.drag = {
+          kind: "plant",
+          index: 0,
+          start: p,
+          origin: [this.draft.x_cm, this.draft.y_cm],
+        };
+        (e.currentTarget as Element).setPointerCapture(e.pointerId);
+      } else {
+        this.draft = { ...this.draft, x_cm: p[0], y_cm: p[1] };
+        this.draftDirty = true;
+      }
+      return;
+    }
     if (this.tool === "select" && id) {
       const record = this.entries.find((r) => r.id === id);
-      if (record) this.select(record);
+      if (record) this.select(record, !this.editable);
       if (this.editable && this.draft) {
         this.drag = {
           kind: "plant",
@@ -739,8 +920,8 @@ export class BedPlanner extends LitElement {
     this.draft = {
       layout_id: this.record.id,
       plant_id: p.id,
-      start_date: `${this.year}-04-01`,
-      end_date: `${this.year}-09-30`,
+      start_date: "",
+      end_date: "",
       x_cm: Math.round(this.layout.width_cm / 2),
       y_cm: Math.round(this.layout.height_cm / 2),
       plant_count: 1,
@@ -750,6 +931,18 @@ export class BedPlanner extends LitElement {
       state: "planned",
       notes: "",
     };
+    this.periodChoice = 0;
+    this.periodTouched = false;
+    this.dialogReturn = undefined;
+    this.dialogOpen = true;
+    if (this.suggestions.length === 1) {
+      const value = this.suggestions[0]!;
+      this.draft = {
+        ...this.draft,
+        start_date: value.start,
+        end_date: value.end,
+      };
+    }
     this.draftDirty = true;
   }
   private field(key: keyof Planting, value: string | number): void {
@@ -758,6 +951,7 @@ export class BedPlanner extends LitElement {
       ...this.draft,
       [key]: value === "" && key.endsWith("_id") ? null : value,
     };
+    if (key === "start_date" || key === "end_date") this.periodTouched = true;
     if (key === "plant_id") {
       const plant = this.tables.plants.find((e) => e.id === value);
       this.draft.variety_id = null;
@@ -765,6 +959,15 @@ export class BedPlanner extends LitElement {
       delete this.draft.family_snapshot;
       this.draft.spacing_cm = Number(plant?.data.spacing_cm) || 30;
       this.draft.row_spacing_cm = Number(plant?.data.row_spacing_cm) || 40;
+      this.periodChoice = 0;
+      if (!this.periodTouched) {
+        const options = this.suggestions;
+        this.draft = {
+          ...this.draft,
+          start_date: options.length === 1 ? options[0]!.start : "",
+          end_date: options.length === 1 ? options[0]!.end : "",
+        };
+      }
     }
     if (key === "variety_id") this.draft.cultivation_id = null;
     if (key === "plant_count")
@@ -803,6 +1006,7 @@ export class BedPlanner extends LitElement {
         this.layoutDirty = false;
       } else {
         this.draft = undefined;
+        this.dialogOpen = false;
         this.selected = "";
         this.draftDirty = false;
       }
@@ -852,6 +1056,7 @@ export class BedPlanner extends LitElement {
         ),
       };
       this.draft = undefined;
+      this.dialogOpen = false;
       this.selected = "";
       this.draftDirty = false;
       this.dispatchEvent(
@@ -903,9 +1108,13 @@ export class BedPlanner extends LitElement {
   }
   private drawEntries(): Entity[] {
     const entries = this.displayed.filter(
-      (e) => e.id !== this.selected || !this.draft,
+      (e) => e.id !== this.selected || !this.placementActive,
     );
-    if (this.draft && (!this.month || this.inMonth(this.draft, this.month)))
+    if (
+      this.placementActive &&
+      this.draft &&
+      (!this.month || this.inMonth(this.draft, this.month))
+    )
       entries.push({
         id: this.selected || "draft",
         revision: 1,
@@ -919,13 +1128,12 @@ export class BedPlanner extends LitElement {
     const l = this.layout;
     const entries = this.drawEntries();
     const shown = new Set(entries.map((e) => e.id));
-    const relations = this.drag
-      ? []
-      : this.planningWarnings().filter(
-          (w) =>
-            (w.kind === "good" || w.kind === "bad") &&
-            w.ids.every((id) => shown.has(id)),
-        );
+    const relations = this.planningWarnings().filter(
+      (w) =>
+        (w.kind === "good" || w.kind === "bad") &&
+        w.ids.every((id) => shown.has(id)) &&
+        (!this.placementActive || w.ids.includes(this.selected || "draft")),
+    );
     const pad = Math.max(l.width_cm, l.height_cm) * 0.055;
     const radius = Math.max(l.width_cm, l.height_cm) / 65;
     const ticks = Array.from({ length: 7 }, (_, i) => i / 6);
@@ -980,7 +1188,19 @@ export class BedPlanner extends LitElement {
         ${entries.map((e) => {
           const p = plantingData(e),
             color = `hsl(${(this.tables.plants.findIndex((x) => x.id === p.plant_id) * 47) % 360} 45% 42%)`;
-          return svg`<g data-entry=${e.id} tabindex="0" role="button" aria-label=${`${this.name(p.plant_id)} · ${p.plant_count} · ${this.date(p.start_date)} – ${this.date(p.end_date)}`} @keydown=${(
+          const related = relations.filter((w) => w.ids.includes(e.id));
+          const status = related.some((w) => w.kind === "bad")
+            ? "bad"
+            : related.some((w) => w.kind === "good")
+              ? "good"
+              : "unknown";
+          const neighborColor =
+            status === "bad"
+              ? "#c04437"
+              : status === "good"
+                ? "#32834b"
+                : color;
+          return svg`<g data-neighbor-status=${status} data-entry=${e.id} tabindex="0" role="button" aria-label=${`${this.name(p.plant_id)} · ${p.plant_count} · ${this.date(p.start_date)} – ${this.date(p.end_date)}`} @keydown=${(
             ev: KeyboardEvent,
           ) => {
             if (ev.key === "Enter" || ev.key === " ") {
@@ -988,9 +1208,9 @@ export class BedPlanner extends LitElement {
               const original = this.entries.find((x) => x.id === e.id);
               if (original) this.select(original);
             }
-          }} style="cursor:grab"><title>${this.name(p.plant_id)} · ${this.date(p.start_date)} – ${this.date(p.end_date)} · ${p.notes ?? ""}</title><rect x=${p.x_cm - radius * 3} y=${p.y_cm - radius * 3} width=${(Math.min(p.columns, p.plant_count) - 1) * p.spacing_cm + radius * 6} height=${(Math.ceil(p.plant_count / p.columns) - 1) * p.row_spacing_cm + radius * 6} fill="transparent"/>${centers(p).map(([x, y]) => svg`${this.showSpacing ? svg`<ellipse cx=${x} cy=${y} rx=${p.spacing_cm / 2} ry=${p.row_spacing_cm / 2} fill=${color} fill-opacity=".12" stroke=${color} stroke-opacity=".45" stroke-dasharray=${p.state === "planned" ? "3 3" : "none"} stroke-width="1" vector-effect="non-scaling-stroke"/>` : nothing}<circle cx=${x} cy=${y} r=${radius * 0.65} fill=${color} stroke=${e.id === this.selected ? "var(--primary-text-color,#111)" : "white"} stroke-width="2" vector-effect="non-scaling-stroke"/>`)}<text x=${p.x_cm} y=${p.y_cm - radius * 1.5} font-size=${radius * 1.2} fill="var(--primary-text-color,#222)">${this.name(p.plant_id)} (${p.plant_count})</text></g>`;
+          }} style="cursor:grab"><title>${this.name(p.plant_id)} · ${this.date(p.start_date)} – ${this.date(p.end_date)} · ${p.notes ?? ""}</title><rect x=${p.x_cm - radius * 3} y=${p.y_cm - radius * 3} width=${(Math.min(p.columns, p.plant_count) - 1) * p.spacing_cm + radius * 6} height=${(Math.ceil(p.plant_count / p.columns) - 1) * p.row_spacing_cm + radius * 6} fill="transparent"/>${centers(p).map(([x, y]) => svg`${this.showSpacing ? svg`<ellipse cx=${x} cy=${y} rx=${p.spacing_cm / 2} ry=${p.row_spacing_cm / 2} fill=${color} fill-opacity=".12" stroke=${neighborColor} stroke-opacity=${status === "unknown" ? ".45" : "1"} stroke-dasharray=${p.state === "planned" ? "3 3" : "none"} stroke-width="1" vector-effect="non-scaling-stroke"/>` : nothing}<circle cx=${x} cy=${y} r=${radius * 0.65} fill=${neighborColor} stroke=${neighborColor} stroke-width="2" vector-effect="non-scaling-stroke"/>`)}<text x=${p.x_cm} y=${p.y_cm - radius * 1.5} font-size=${radius * 1.2} fill="var(--primary-text-color,#222)">${this.name(p.plant_id)} (${p.plant_count})${status === "bad" ? " ✕" : status === "good" ? " ✓" : ""}</text></g>`;
         })}
-        ${this.editable && this.tool === "select" ? l.outline.map(([x, y], i) => svg`<circle data-vertex=${i} cx=${x} cy=${y} r=${radius * 0.65} fill=${i === this.corner ? "#efaa30" : "white"} stroke="#3e8254" stroke-width="2" vector-effect="non-scaling-stroke"><title>${this.t("selectedCorner")} ${i + 1}</title></circle>`) : nothing}
+        ${this.editable && this.tool === "select" && !this.placementActive ? l.outline.map(([x, y], i) => svg`<circle data-vertex=${i} cx=${x} cy=${y} r=${radius * 0.65} fill=${i === this.corner ? "#efaa30" : "white"} stroke="#3e8254" stroke-width="2" vector-effect="non-scaling-stroke"><title>${this.t("selectedCorner")} ${i + 1}</title></circle>`) : nothing}
         ${this.drawing.length ? svg`<polyline points=${this.drawing.map((p) => p.join(",")).join(" ")} fill="none" stroke="#cf792b" stroke-width="3" vector-effect="non-scaling-stroke"/>${this.drawing.map(([x, y]) => svg`<circle cx=${x} cy=${y} r=${radius / 2} fill="#cf792b"/>`)}` : nothing}
       </svg>
     </div>`;
@@ -1019,110 +1239,284 @@ export class BedPlanner extends LitElement {
         }}
     /></label>`;
   }
-  private editor(): TemplateResult | typeof nothing {
+  private plantReference(): TemplateResult | typeof nothing {
     const p = this.draft;
     if (!p) return nothing;
-    return html`<section class="box editor" aria-label=${this.t("save")}>
-      <h3>${this.selected ? this.t("edit") : this.t("add")}</h3>
-      <div class="fields">
-        <label
-          >${this.t("plant")}<select
-            aria-label=${this.t("plant")}
-            .value=${p.plant_id}
-            ?disabled=${!this.editable || this.busy || this.isDrawing}
-            @change=${(e: Event) => this.field("plant_id", (e.target as HTMLSelectElement).value)}
-          >
-            ${this.tables.plants.filter((e) => !e.data.archived || e.id === p.plant_id).map((e) => html`<option value=${e.id}>${text(e, "name")}</option>`)}
-          </select></label
-        >
-        <label
-          >${this.t("variety")}<select
-            aria-label=${this.t("variety")}
-            .value=${p.variety_id ?? ""}
-            ?disabled=${!this.editable || this.busy || this.isDrawing}
-            @change=${(e: Event) => this.field("variety_id", (e.target as HTMLSelectElement).value)}
-          >
-            <option value="">${this.t("none")}</option>
-            ${this.tables.varieties.filter((e) => e.data.plant_id === p.plant_id).map((e) => html`<option value=${e.id}>${text(e, "name")}</option>`)}
-          </select></label
-        >
-        ${(
-          [
-            ["start", "start_date"],
-            ["end", "end_date"],
-          ] as const
-        ).map(
-          ([label, key]) =>
-            html`<label
-              >${this.t(label)}<input
-                type="date"
-                .value=${p[key]}
-                ?disabled=${!this.editable || this.busy || this.isDrawing}
-                @change=${(e: Event) => this.field(key, (e.target as HTMLInputElement).value)}
-            /></label>`,
-        )}
-        ${this.number("count", p.plant_count, (n) => this.field("plant_count", n), 1, 200)}${this.number("columns", p.columns, (n) => this.field("columns", n), 1, p.plant_count)}${this.number("x", p.x_cm, (n) => this.field("x_cm", n))}${this.number("y", p.y_cm, (n) => this.field("y_cm", n))}${this.number("spacing", p.spacing_cm, (n) => this.field("spacing_cm", n), 1, 1000)}${this.number("rows", p.row_spacing_cm, (n) => this.field("row_spacing_cm", n), 1, 1000)}
-        <label
-          >${this.t("state")}<select
-            aria-label=${this.t("state")}
-            .value=${p.state}
-            ?disabled=${!this.editable || this.busy || this.isDrawing}
-            @change=${(e: Event) => this.field("state", (e.target as HTMLSelectElement).value)}
-          >
-            ${(["planned", "planted", "completed"] as const).map((s) => html`<option value=${s}>${this.t(s)}</option>`)}
-          </select></label
-        >
-        <label
-          >${this.t("cultivation")}<select
-            aria-label=${this.t("cultivation")}
-            .value=${p.cultivation_id ?? ""}
-            ?disabled=${!this.editable || this.busy || this.isDrawing}
-            @change=${(e: Event) => this.field("cultivation_id", (e.target as HTMLSelectElement).value)}
-          >
-            <option value="">${this.t("none")}</option>
-            ${this.tables.cultivations.filter((e) => e.data.plant_id === p.plant_id && (e.data.variety_id ?? "") === (p.variety_id ?? "") && e.data.location_id === this.bed).map((e) => html`<option value=${e.id}>${text(e, "date")} · ${this.name(p.plant_id)}</option>`)}
-          </select></label
-        >
-        <label class="wide"
-          >${this.t("notes")}<textarea
-            .value=${p.notes ?? ""}
-            ?disabled=${!this.editable || this.busy || this.isDrawing}
-            @input=${(e: Event) => this.field("notes", (e.target as HTMLTextAreaElement).value)}
-          ></textarea>
-        </label>
-      </div>
-      <div class="buttons">
-        ${
-          this.editable
-            ? html`<button
-                  @click=${() => {
-                    this.tool = "place";
+    const plant = this.tables.plants.find((e) => e.id === p.plant_id);
+    if (!plant) return nothing;
+    const windows = this.tables.growing_windows.filter(
+      (e) => e.data.plant_id === p.plant_id,
+    );
+    const months = Array.from({ length: 12 }, (_, i) =>
+      new Intl.DateTimeFormat(this.language, {
+        month: "short",
+        timeZone: "UTC",
+      }).format(new Date(Date.UTC(this.year, i, 1))),
+    );
+    return html`<details class="plant-reference">
+      <summary>${this.t("plantReference")}</summary>
+      ${text(plant, "image_data") ? html`<img src=${text(plant, "image_data")} alt=${text(plant, "name")} />` : nothing}
+      <h4>${text(plant, "name")}</h4>
+      <p class="muted">
+        ${text(plant, "botanical_name")} ·
+        ${text(plant, "family") || this.t("unknown")}
+      </p>
+      <p>
+        ${this.t("spacing")}: ${plant.data.spacing_cm ?? "—"} ·
+        ${this.t("rows")}: ${plant.data.row_spacing_cm ?? "—"}
+      </p>
+      ${text(plant, "description") ? html`<p>${text(plant, "description")}</p>` : nothing}
+      <dl class="plant-facts">
+        ${[
+          "germination_optimal_min_c",
+          "germination_optimal_max_c",
+          "germination_days_min",
+          "germination_days_max",
+          "depth_cm",
+          "duration_days_min",
+          "duration_days_max",
+          "light",
+          "water",
+          "frost",
+          "care",
+        ]
+          .filter((key) => text(plant, key))
+          .map(
+            (key) =>
+              html`<div>
+                <dt>${label(this.language, key)}</dt>
+                <dd>${text(plant, key)}</dd>
+              </div>`,
+          )}
+      </dl>
+      <div class="mini-year">${months.map((m) => html`<span>${m}</span>`)}</div>
+      ${
+        windows.length
+          ? windows.map(
+              (w) =>
+                html`<div class="plant-period">
+                  <strong>${label(this.language, text(w, "activity"))}</strong>
+                  · ${windowLabel(w, this.language)}
+                  <div class="mini-year">
+                    ${months.map((m, i) => html`<span class=${activeInMonth(w, this.year, i + 1) ? "active" : ""} title=${`${m} · ${windowLabel(w, this.language)}`}></span>`)}
+                  </div>
+                  ${text(w, "notes") ? html`<small>${text(w, "notes")}</small>` : nothing}
+                </div>`,
+            )
+          : html`<p>${this.t("noPlantPeriods")}</p>`
+      }
+    </details>`;
+  }
+  private periodSuggestions(): TemplateResult {
+    const choices = this.suggestions;
+    return html`<section class="period-suggestions">
+      <strong>${this.t("periodProposal")}</strong>
+      <p>
+        ${this.t(choices.length === 0 ? "periodMissing" : choices.length > 1 ? "periodAmbiguous" : "periodHint")}
+      </p>
+      ${
+        choices.length
+          ? html`<label
+                >${this.t("periodChoice")}<select
+                  aria-label=${this.t("periodChoice")}
+                  .value=${String(this.periodChoice)}
+                  ?disabled=${!this.editable || this.busy}
+                  @change=${(e: Event) => {
+                    this.periodChoice = Number(
+                      (e.target as HTMLSelectElement).value,
+                    );
                   }}
+                >
+                  ${choices.map((c, i) => html`<option value=${i}>${c.activities.map((a) => label(this.language, a)).join(" / ")} · ${this.date(c.start)} – ${this.date(c.end)}</option>`)}
+                </select></label
+              ><button
+                type="button"
+                @click=${() => this.applyPeriod()}
+                ?disabled=${!this.editable || this.busy}
+              >
+                ${this.t("usePeriod")}
+              </button>`
+          : nothing
+      }
+    </section>`;
+  }
+  private editor(): TemplateResult {
+    const p = this.draft;
+    return html`<dialog
+      id="bed-planting-dialog"
+      aria-labelledby="bed-planting-title"
+      @cancel=${(e: Event) => {
+        e.preventDefault();
+        this.cancelEditor();
+      }}
+    >
+      ${
+        this.dialogOpen && p
+          ? html`<section class="editor">
+              <header class="editor-header">
+                <h3 id="bed-planting-title">${this.t("configure")}</h3>
+                <button
+                  aria-label=${this.t("closeDialog")}
+                  @click=${this.cancelEditor}
                   ?disabled=${this.busy}
                 >
-                  ${this.t("position")}</button
-                ><button
-                  class="primary"
-                  @click=${this.savePlanting}
-                  ?disabled=${this.busy || this.layoutDirty}
+                  ×
+                </button>
+              </header>
+              <div class="editor-body">
+                ${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}
+                <div class="fields">
+                  <label
+                    >${this.t("plant")}<select
+                      aria-label=${this.t("plant")}
+                      .value=${live(p.plant_id)}
+                      ?disabled=${!this.editable || this.busy}
+                      @change=${(e: Event) => this.field("plant_id", (e.target as HTMLSelectElement).value)}
+                    >
+                      ${this.tables.plants.filter((e) => !e.data.archived || e.id === p.plant_id).map((e) => html`<option value=${e.id}>${text(e, "name")}</option>`)}
+                    </select></label
+                  >
+                  <label
+                    >${this.t("variety")}<select
+                      aria-label=${this.t("variety")}
+                      .value=${live(p.variety_id ?? "")}
+                      ?disabled=${!this.editable || this.busy}
+                      @change=${(e: Event) => this.field("variety_id", (e.target as HTMLSelectElement).value)}
+                    >
+                      <option value="">${this.t("none")}</option>
+                      ${this.tables.varieties.filter((e) => e.data.plant_id === p.plant_id).map((e) => html`<option value=${e.id}>${text(e, "name")}</option>`)}
+                    </select></label
+                  >
+                  ${this.number("count", p.plant_count, (n) => this.field("plant_count", n), 1, 200)}${this.number("columns", p.columns, (n) => this.field("columns", n), 1, p.plant_count)}
+                </div>
+                ${this.periodSuggestions()}
+                <div class="fields">
+                  ${(
+                    [
+                      ["start", "start_date"],
+                      ["end", "end_date"],
+                    ] as const
+                  ).map(
+                    ([name, key]) =>
+                      html`<label
+                        >${this.t(name)}<input
+                          type="date"
+                          required
+                          .value=${live(p[key])}
+                          ?disabled=${!this.editable || this.busy}
+                          @change=${(e: Event) => this.field(key, (e.target as HTMLInputElement).value)}
+                      /></label>`,
+                  )}
+                </div>
+                ${this.plantReference()}
+                <details class="advanced-fields">
+                  <summary>${this.t("advanced")}</summary>
+                  <div class="fields">
+                    ${this.number("spacing", p.spacing_cm, (n) => this.field("spacing_cm", n), 1, 1000)}${this.number("rows", p.row_spacing_cm, (n) => this.field("row_spacing_cm", n), 1, 1000)}${this.number("x", p.x_cm, (n) => this.field("x_cm", n))}${this.number("y", p.y_cm, (n) => this.field("y_cm", n))}
+                    <label
+                      >${this.t("state")}<select
+                        aria-label=${this.t("state")}
+                        .value=${live(p.state)}
+                        ?disabled=${!this.editable || this.busy}
+                        @change=${(e: Event) => this.field("state", (e.target as HTMLSelectElement).value)}
+                      >
+                        ${(["planned", "planted", "completed"] as const).map((v) => html`<option value=${v}>${this.t(v)}</option>`)}
+                      </select></label
+                    >
+                    <label
+                      >${this.t("cultivation")}<select
+                        aria-label=${this.t("cultivation")}
+                        .value=${live(p.cultivation_id ?? "")}
+                        ?disabled=${!this.editable || this.busy}
+                        @change=${(e: Event) => this.field("cultivation_id", (e.target as HTMLSelectElement).value)}
+                      >
+                        <option value="">${this.t("none")}</option>
+                        ${this.tables.cultivations.filter((e) => e.data.plant_id === p.plant_id && (e.data.variety_id ?? "") === (p.variety_id ?? "") && e.data.location_id === this.bed).map((e) => html`<option value=${e.id}>${text(e, "date")} · ${this.name(p.plant_id)}</option>`)}
+                      </select></label
+                    >
+                  </div>
+                </details>
+                <label
+                  >${this.t("notes")}<textarea
+                    maxlength="20000"
+                    .value=${p.notes ?? ""}
+                    ?disabled=${!this.editable || this.busy}
+                    @input=${(e: Event) => this.field("notes", (e.target as HTMLTextAreaElement).value)}
+                  ></textarea>
+                </label>
+              </div>
+              <footer class="editor-footer">
+                ${this.selected && this.editable ? html`<button class="danger" @click=${this.removePlanting} ?disabled=${this.busy}>${this.t("remove")}</button>` : nothing}<button
+                  @click=${this.cancelEditor}
+                  ?disabled=${this.busy}
                 >
-                  ${this.t("save")}
-                </button>`
-            : nothing
-        }<button
-          @click=${() => {
-            this.draft = undefined;
-            this.selected = "";
-            this.draftDirty = false;
-            this.tool = "select";
-          }}
+                  ${this.t("cancel")}</button
+                >${this.editable ? html`<button class="primary" @click=${this.beginPlacement} ?disabled=${this.busy}>${this.t("placeContinue")} →</button>` : nothing}
+              </footer>
+            </section>`
+          : nothing
+      }
+    </dialog>`;
+  }
+  private neighborFeedback(): TemplateResult {
+    const shown = new Set(this.drawEntries().map((e) => e.id));
+    const id = this.selected || "draft";
+    const relevant = this.planningWarnings().filter(
+      (w) =>
+        (w.kind === "good" || w.kind === "bad") &&
+        w.ids.every((v) => shown.has(v)) &&
+        (!this.placementActive || w.ids.includes(id)),
+    );
+    const good = relevant.filter((w) => w.kind === "good"),
+      bad = relevant.filter((w) => w.kind === "bad");
+    return html`<div
+      class=${`neighbor-feedback ${bad.length ? "has-bad" : good.length ? "has-good" : ""}`}
+      role="status"
+      aria-label=${this.t("neighborsNow")}
+    >
+      ${bad.length ? html`<p class="warning"><strong>✕ ${this.t("knownBad")}:</strong> ${bad.map((w) => w.detail).join("; ")}</p>` : nothing}
+      ${good.length ? html`<p class="good"><strong>✓ ${this.t("knownGood")}:</strong> ${good.map((w) => w.detail).join("; ")}</p>` : nothing}
+      ${!bad.length && !good.length ? html`<p class="muted">${this.t("unknownNeighbors")}</p>` : nothing}
+    </div>`;
+  }
+  private placementControls(): TemplateResult | typeof nothing {
+    const p = this.draft;
+    if (!this.placementActive || !p) return nothing;
+    return html`<section
+      class="placement-controls"
+      aria-label=${this.t("placeStep")}
+    >
+      <strong
+        >${this.name(p.plant_id)} · ${p.plant_count} ·
+        ${this.date(p.start_date)} – ${this.date(p.end_date)}</strong
+      ><small>${this.t("placeHelp")}</small
+      >${this.neighborFeedback()}${!centers(p).every((point) => usable(point, this.layout)) ? html`<p class="warning">${this.t("outside")}</p>` : nothing}
+      <div class="buttons">
+        <button
+          aria-label=${this.t("changeDetails")}
+          title=${this.t("changeDetails")}
+          @click=${this.openEditor}
           ?disabled=${this.busy}
         >
-          ${this.t("cancel")}</button
-        >${this.selected && this.editable ? html`<button class="danger" @click=${this.removePlanting} ?disabled=${this.busy}>${this.t("remove")}</button>` : nothing}
+          ✎</button
+        ><button
+          class="primary"
+          @click=${this.savePlanting}
+          ?disabled=${this.busy || this.layoutDirty}
+        >
+          ${this.t("save")}</button
+        ><button
+          aria-label=${this.t("cancel")}
+          title=${this.t("cancel")}
+          @click=${this.cancelPlacement}
+          ?disabled=${this.busy}
+        >
+          ×
+        </button>
       </div>
     </section>`;
   }
+
   private warningList(): TemplateResult {
     let entries = this.entries;
     if (this.draft)
@@ -1277,10 +1671,11 @@ export class BedPlanner extends LitElement {
         >
       </div>
       <p class="muted">${this.t("shortHelp")}</p>
-      ${!this.editable ? html`<p class="box">${this.t("readOnly")}</p>` : nothing}${this.error ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.message || this.busy ? html`<p role="status">${this.busy ? this.t("saving") : this.message}</p>` : nothing}
+      ${!this.editable ? html`<p class="box">${this.t("readOnly")}</p>` : nothing}${this.error && !this.dialogOpen ? html`<p class="error" role="alert">${this.error}</p>` : nothing}${this.message || this.busy ? html`<p role="status">${this.busy ? this.t("saving") : this.message}</p>` : nothing}
       <div class="workspace">
         <section class="box canvas">
           <div class="toolbar">
+            ${this.editable && !this.placementActive ? html`<button class="primary" @click=${this.newPlanting} ?disabled=${!this.record || this.busy || this.layoutDirty || this.isDrawing}>＋ ${this.t("add")}</button>` : nothing}
             <strong>${this.name(this.bed, "locations")}</strong
             ><span
               >${this.t("area")}:
@@ -1313,7 +1708,9 @@ export class BedPlanner extends LitElement {
               : nothing
           }${this.drawingGuidance()}
           ${this.editable && !this.isDrawing ? html`<div class="shape-save"><button class="primary" @click=${() => this.save("bed_layouts", l, this.layoutDraft ? this.layoutBase : this.record)} ?disabled=${this.busy || this.draftDirty || (!this.layoutDirty && !!this.record)}>${this.t("saveShape")}</button>${this.layoutDirty ? html`<span role="status">${this.t("unsavedShape")}</span>` : nothing}</div>` : nothing}
-          ${this.map()}
+          ${this.map()} ${this.placementControls()}
+          <p class="neighbor-legend">${this.t("neighborLegend")}</p>
+          ${!this.placementActive ? this.neighborFeedback() : nothing}
           <p class="muted">
             ${this.t(this.tool === "select" ? "moveHint" : "drawHint")}
           </p>
@@ -1329,85 +1726,77 @@ export class BedPlanner extends LitElement {
           ${
             this.editable
               ? html`<details>
-                    <summary>${this.t("shape")}</summary>
-                    <div class="fields">
-                      ${this.number("width", l.width_cm, (n) => this.shapeChange("width_cm", n), 20)}${this.number("height", l.height_cm, (n) => this.shapeChange("height_cm", n), 20)}${this.number("years", l.rotation_years, (n) => this.shapeChange("rotation_years", n), 1, 10)}${this.number("distance", l.neighbor_distance_cm, (n) => this.shapeChange("neighbor_distance_cm", n), 10, 1000)}
-                    </div>
-                    <div class="buttons">
-                      ${(["rectangle", "circle", "triangle", "u"] as const).map((kind) => html`<button @click=${() => this.usePreset(kind)} ?disabled=${this.busy || this.isDrawing}>${this.t(kind)}</button>`)}<button
-                        @click=${() => this.startDraw("outline")}
-                        aria-pressed=${this.tool === "outline"}
-                        ?disabled=${this.busy}
-                      >
-                        ${this.t("draw")}</button
-                      ><button
-                        @click=${() => this.startDraw("freehand")}
-                        aria-pressed=${this.tool === "freehand"}
-                        ?disabled=${this.busy}
-                      >
-                        ${this.t("freehand")}</button
-                      ><button
-                        @click=${() => this.startDraw("hole")}
-                        aria-pressed=${this.tool === "hole"}
-                        ?disabled=${this.busy}
-                      >
-                        ${this.t("hole")}</button
-                      ><button
-                        @click=${() => {
-                          this.markLayout({ ...structuredClone(l), holes: [] });
-                        }}
-                        ?disabled=${!l.holes.length || this.busy}
-                      >
-                        ${this.t("clearHoles")}
-                      </button>
-                    </div>
-                    ${
-                      this.corner >= 0 && l.outline[this.corner]
-                        ? html`<div class="fields">
-                              ${this.number(
-                                "cornerX",
-                                l.outline[this.corner]![0],
-                                (n) => {
-                                  const d = structuredClone(l);
-                                  d.outline[this.corner]![0] = n;
-                                  this.markLayout(d);
-                                },
-                              )}${this.number(
-                                "cornerY",
-                                l.outline[this.corner]![1],
-                                (n) => {
-                                  const d = structuredClone(l);
-                                  d.outline[this.corner]![1] = n;
-                                  this.markLayout(d);
-                                },
-                              )}
-                            </div>
-                            <button
-                              ?disabled=${l.outline.length <= 3 || this.busy}
-                              @click=${() => {
+                  <summary>${this.t("shape")}</summary>
+                  <div class="fields">
+                    ${this.number("width", l.width_cm, (n) => this.shapeChange("width_cm", n), 20)}${this.number("height", l.height_cm, (n) => this.shapeChange("height_cm", n), 20)}${this.number("years", l.rotation_years, (n) => this.shapeChange("rotation_years", n), 1, 10)}${this.number("distance", l.neighbor_distance_cm, (n) => this.shapeChange("neighbor_distance_cm", n), 10, 1000)}
+                  </div>
+                  <div class="buttons">
+                    ${(["rectangle", "circle", "triangle", "u"] as const).map((kind) => html`<button @click=${() => this.usePreset(kind)} ?disabled=${this.busy || this.isDrawing}>${this.t(kind)}</button>`)}<button
+                      @click=${() => this.startDraw("outline")}
+                      aria-pressed=${this.tool === "outline"}
+                      ?disabled=${this.busy}
+                    >
+                      ${this.t("draw")}</button
+                    ><button
+                      @click=${() => this.startDraw("freehand")}
+                      aria-pressed=${this.tool === "freehand"}
+                      ?disabled=${this.busy}
+                    >
+                      ${this.t("freehand")}</button
+                    ><button
+                      @click=${() => this.startDraw("hole")}
+                      aria-pressed=${this.tool === "hole"}
+                      ?disabled=${this.busy}
+                    >
+                      ${this.t("hole")}</button
+                    ><button
+                      @click=${() => {
+                        this.markLayout({ ...structuredClone(l), holes: [] });
+                      }}
+                      ?disabled=${!l.holes.length || this.busy}
+                    >
+                      ${this.t("clearHoles")}
+                    </button>
+                  </div>
+                  ${
+                    this.corner >= 0 && l.outline[this.corner]
+                      ? html`<div class="fields">
+                            ${this.number(
+                              "cornerX",
+                              l.outline[this.corner]![0],
+                              (n) => {
                                 const d = structuredClone(l);
-                                d.outline.splice(this.corner, 1);
+                                d.outline[this.corner]![0] = n;
                                 this.markLayout(d);
-                                this.corner = -1;
-                              }}
-                            >
-                              ${this.t("deleteCorner")}
-                            </button>`
-                        : nothing
-                    }
-                    ${this.record && !this.entries.length ? html`<button class="danger" @click=${this.deleteLayout} ?disabled=${this.busy}>${this.t("deleteLayout")}</button>` : nothing}
-                  </details>
-                  <button
-                    class="primary"
-                    @click=${this.newPlanting}
-                    ?disabled=${!this.record || this.busy || this.layoutDirty || this.isDrawing}
-                  >
-                    ＋ ${this.t("add")}
-                  </button>`
+                              },
+                            )}${this.number(
+                              "cornerY",
+                              l.outline[this.corner]![1],
+                              (n) => {
+                                const d = structuredClone(l);
+                                d.outline[this.corner]![1] = n;
+                                this.markLayout(d);
+                              },
+                            )}
+                          </div>
+                          <button
+                            ?disabled=${l.outline.length <= 3 || this.busy}
+                            @click=${() => {
+                              const d = structuredClone(l);
+                              d.outline.splice(this.corner, 1);
+                              this.markLayout(d);
+                              this.corner = -1;
+                            }}
+                          >
+                            ${this.t("deleteCorner")}
+                          </button>`
+                      : nothing
+                  }
+                  ${this.record && !this.entries.length ? html`<button class="danger" @click=${this.deleteLayout} ?disabled=${this.busy}>${this.t("deleteLayout")}</button>` : nothing}
+                </details> `
               : nothing
           }${!this.record ? html`<p class="muted">${this.t("newPlan")}</p>` : nothing}
         </section>
-        ${this.editor()}
       </div>
       <section class="box">
         <h3>${this.t("timeline")} · ${this.year}</h3>
@@ -1485,7 +1874,8 @@ export class BedPlanner extends LitElement {
             </tbody>
           </table>
         </div>
-      </section>`;
+      </section>
+      ${this.editor()}`;
   }
   static styles = css`
     :host {
@@ -1573,6 +1963,151 @@ export class BedPlanner extends LitElement {
           1fr
         );
       gap: 12px;
+    }
+    dialog {
+      width: min(720px, calc(100vw - 24px));
+      max-width: calc(100vw - 24px);
+      max-height: calc(100dvh - 24px);
+      padding: 0;
+      border: 1px solid var(--bed-line);
+      border-radius: 20px;
+      background: var(--card-background-color, #fff);
+      color: inherit;
+    }
+    dialog::backdrop {
+      background: rgb(0 0 0 / 0.45);
+    }
+    .editor {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100dvh - 30px);
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+    .editor-header,
+    .editor-footer {
+      flex: 0 0 auto;
+      padding: 14px 18px;
+      background: var(--card-background-color, #fff);
+    }
+    .editor-header {
+      border-bottom: 1px solid var(--bed-line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .editor-header h3 {
+      margin: 0;
+    }
+    .editor-body {
+      overflow: auto;
+      overflow-wrap: anywhere;
+      padding: 0 18px 14px;
+      min-height: 0;
+    }
+    .editor-footer {
+      border-top: 1px solid var(--bed-line);
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .plant-facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 13px;
+    }
+    .plant-facts dt {
+      color: var(--secondary-text-color, #68776a);
+    }
+    .plant-facts dd {
+      margin: 2px 0;
+    }
+    .plant-reference {
+      border: 1px solid var(--bed-line);
+      padding: 10px;
+      border-radius: 12px;
+    }
+    .plant-reference img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 12px;
+      float: left;
+      margin-right: 12px;
+    }
+    .mini-year {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 2px;
+      margin: 6px 0;
+    }
+    .mini-year span {
+      text-align: center;
+      font-size: 11px;
+      min-height: 16px;
+    }
+    .mini-year .active {
+      background: var(--gp-accent, #326c49);
+      border-radius: 3px;
+    }
+    .period-suggestions {
+      background: var(
+        --secondary-background-color,
+        var(--card-background-color, #f5f8f2)
+      );
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    .period-suggestions p {
+      margin: 6px 0;
+      font-size: 13px;
+    }
+    .canvas:has(.placement-controls) .viewport {
+      max-height: 48dvh;
+    }
+    .placement-controls {
+      position: sticky;
+      bottom: 8px;
+      z-index: 8;
+      border: 2px solid var(--gp-accent, #326c49);
+      background: var(--card-background-color, #fff);
+      border-radius: 14px;
+      padding: 10px;
+      margin: 12px 0;
+      box-shadow: 0 4px 18px rgb(0 0 0 / 0.12);
+    }
+    .placement-controls .buttons {
+      flex-wrap: nowrap;
+      margin: 8px 0 0;
+    }
+    .placement-controls .primary {
+      flex: 1;
+    }
+    .placement-controls small {
+      line-height: 1.3;
+    }
+    .neighbor-feedback {
+      border-left: 4px solid var(--bed-line);
+      padding: 8px 12px;
+      margin: 8px 0;
+    }
+    .neighbor-feedback p {
+      margin: 4px 0;
+    }
+    .neighbor-feedback.has-bad {
+      border-color: #c04437;
+      background: rgb(192 68 55 / 0.08);
+    }
+    .neighbor-feedback.has-good {
+      border-color: #32834b;
+    }
+    .neighbor-legend {
+      font-size: 13px;
+      color: var(--secondary-text-color, #68776a);
     }
     .workspace {
       display: grid;
@@ -1757,11 +2292,7 @@ export class BedPlanner extends LitElement {
       outline: 3px solid var(--primary-color, #39845a);
       outline-offset: 2px;
     }
-    @media (min-width: 1100px) {
-      .workspace:has(.editor) {
-        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
-      }
-    }
+
     @media (max-width: 550px) {
       .controls {
         grid-template-columns: repeat(2, minmax(0, 1fr));

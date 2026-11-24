@@ -2,6 +2,9 @@
 
 ## 0.1.13 — Unreleased
 
+- Replace the resizing side-column editor with a modal-to-canvas workflow, direct save controls and live named neighbor feedback.
+- Suggest occupancy dates from stored direct sowing/transplant/harvest windows, preserving manual dates and exposing the plant profile/year chart.
+
 - Add scaled bed layouts with free polygons/freehand, cut-outs and rectangle, ellipse, triangle and U presets.
 - Add shared date-based seasonal plantings, row groups, succession, spacing/neighbor warnings, frozen-family rotation hints and season seed requirements.
 - Add schema 5 with two tables, automatic backup, preserved existing records and legacy schema 1–4 exchange compatibility.

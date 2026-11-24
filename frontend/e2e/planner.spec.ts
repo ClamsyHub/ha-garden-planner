@@ -1,5 +1,5 @@
 import type { Hass } from "../src/types";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Locator } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 // Release each test's temporary SQLite worker rather than retaining the whole matrix.
@@ -3539,6 +3539,16 @@ test("cultivation event photos upload, survive editing and reload, and can be re
   await expect(event.locator("garden-journal-photo")).toHaveCount(0);
 });
 
+async function saveBedPlacement(plan: Locator): Promise<void> {
+  const next = plan.getByRole("button", {
+    name: "Im Beet platzieren",
+    exact: false,
+  });
+  if (await next.isVisible()) await next.click();
+  await plan
+    .getByRole("button", { name: "Belegung speichern", exact: true })
+    .click();
+}
 test("bed planner saves a scaled U bed, crop rows and succession without losing history", async ({
   page,
 }, testInfo) => {
@@ -3581,6 +3591,7 @@ test("bed planner saves a scaled U bed, crop rows and succession without losing 
   await plan
     .getByRole("button", { name: "Belegung hinzufügen", exact: false })
     .click();
+  await plan.locator(".advanced-fields > summary").click();
   await plan.getByLabel("Pflanze", { exact: true }).selectOption(plant.id);
   await plan.getByLabel("Pflanzenanzahl", { exact: true }).fill("6");
   await plan.getByLabel("Pflanzenanzahl", { exact: true }).press("Tab");
@@ -3595,9 +3606,7 @@ test("bed planner saves a scaled U bed, crop rows and succession without losing 
     await plan.getByLabel(label!, { exact: true }).fill(value!);
     await plan.getByLabel(label!, { exact: true }).press("Tab");
   }
-  await plan
-    .getByRole("button", { name: "Belegung speichern", exact: true })
-    .click();
+  await saveBedPlacement(plan);
   await expect(plan.locator(".editor")).toHaveCount(0);
   await expect(plan.locator(".map [data-entry] circle")).toHaveCount(6);
   await page.reload();
@@ -3609,6 +3618,7 @@ test("bed planner saves a scaled U bed, crop rows and succession without losing 
   await plan
     .getByRole("button", { name: "Belegung hinzufügen", exact: false })
     .click();
+  await plan.locator(".advanced-fields > summary").click();
   for (const [label, value] of [
     ["X (cm)", "20"],
     ["Y (cm)", "20"],
@@ -3618,9 +3628,7 @@ test("bed planner saves a scaled U bed, crop rows and succession without losing 
     await plan.getByLabel(label!, { exact: true }).fill(value!);
     await plan.getByLabel(label!, { exact: true }).press("Tab");
   }
-  await plan
-    .getByRole("button", { name: "Belegung speichern", exact: true })
-    .click();
+  await saveBedPlacement(plan);
   await expect(plan.locator(".editor")).toHaveCount(0);
   await expect(
     plan.getByText("Räumliche und zeitliche Überschneidung", { exact: true }),
@@ -3763,12 +3771,13 @@ test("bed plan shows stored neighbors and rotation and rejects stale editor save
     revision: next.revision,
     data: { notes: "Saved by another editor" },
   });
+  await plan
+    .getByRole("button", { name: "Im Beet platzieren", exact: false })
+    .click();
   await page
     .getByRole("button", { name: "Aktualisieren", exact: true })
     .click();
-  await plan
-    .getByRole("button", { name: "Belegung speichern", exact: true })
-    .click();
+  await saveBedPlacement(plan);
   await expect(plan.getByRole("alert")).toContainText("inzwischen geändert");
   expect(
     (await api("get", { table: "bed_plantings", id: next.id })).data.notes,
@@ -3874,6 +3883,9 @@ test("bed plan free polygons and cut-outs are drawn with metric pointer input", 
   await plan
     .getByRole("button", { name: "Belegung hinzufügen", exact: false })
     .click();
+  await plan.locator(".advanced-fields > summary").click();
+  await plan.getByLabel("Belegung von", { exact: true }).fill("2027-04-01");
+  await plan.getByLabel("Belegung bis", { exact: true }).fill("2027-09-30");
   for (const [label, value] of [
     ["X (cm)", "240"],
     ["Y (cm)", "40"],
@@ -3881,9 +3893,7 @@ test("bed plan free polygons and cut-outs are drawn with metric pointer input", 
     await plan.getByLabel(label!, { exact: true }).fill(value!);
     await plan.getByLabel(label!, { exact: true }).press("Tab");
   }
-  await plan
-    .getByRole("button", { name: "Belegung speichern", exact: true })
-    .click();
+  await saveBedPlacement(plan);
   await expect(plan.getByRole("alert")).toContainText("außerhalb");
   await plan.getByRole("button", { name: "Abbrechen", exact: true }).click();
 });
@@ -3899,6 +3909,7 @@ test("read-only users inspect bed plans without changing geometry or plantings",
     plan.getByRole("button", { name: "Beetform speichern", exact: true }),
   ).toHaveCount(0);
   await plan.locator(`[data-entry="${next.id}"]`).press("Enter");
+  await plan.locator(".advanced-fields > summary").click();
   await expect(plan.getByLabel("X (cm)", { exact: true })).toBeDisabled();
   await expect(
     plan.getByRole("button", { name: "Belegung speichern", exact: true }),
@@ -3998,4 +4009,185 @@ test("drawing guidance explains apply and save and every drawing tool can be can
     .getByRole("button", { name: "Umriss zeichnen", exact: true })
     .click();
   await expect(guide).toHaveCount(0);
+});
+
+test("bed workflow keeps canvas size, derives plant dates and shows live good and bad neighbors", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  const { api, plan, a, b, layout } = await bedScenario(page);
+  const c = await api("create", {
+    table: "plants",
+    data: {
+      name: "Plan C",
+      family: "Other",
+      spacing_cm: 30,
+      row_spacing_cm: 40,
+    },
+  });
+  const current = await api("get", { table: "plants", id: a.id });
+  await api("set_neighbors", {
+    plant_id: a.id,
+    revision: current.revision,
+    neighbors: {
+      neighbor_good_ids: [c.id],
+      neighbor_bad_ids: [b.id],
+      neighbor_good_names: [],
+      neighbor_bad_names: [],
+    },
+  });
+  await api("create", {
+    table: "bed_plantings",
+    data: {
+      layout_id: layout.id,
+      plant_id: c.id,
+      start_date: "2027-03-01",
+      end_date: "2027-09-30",
+      x_cm: 250,
+      y_cm: 80,
+      plant_count: 1,
+      columns: 1,
+      spacing_cm: 30,
+      row_spacing_cm: 40,
+      state: "planned",
+    },
+  });
+  for (const data of [
+    {
+      activity: "direct",
+      start_month: 3,
+      start_day: 1,
+      end_month: 4,
+      end_day: 30,
+    },
+    {
+      activity: "harvest",
+      start_month: 7,
+      start_day: 1,
+      end_month: 9,
+      end_day: 30,
+    },
+  ])
+    await api("create", {
+      table: "growing_windows",
+      data: { plant_id: a.id, environment: "outdoors", ...data },
+    });
+  await page
+    .getByRole("button", { name: "Aktualisieren", exact: true })
+    .click();
+  const before = await plan.locator(".map").boundingBox();
+  expect(before).toBeTruthy();
+  await plan
+    .getByRole("button", { name: "Belegung hinzufügen", exact: false })
+    .click();
+  const dialog = plan.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Pflanze", { exact: true }).selectOption(a.id);
+  await expect(dialog.getByLabel("Belegung von", { exact: true })).toHaveValue(
+    "2027-03-01",
+  );
+  await expect(dialog.getByLabel("Belegung bis", { exact: true })).toHaveValue(
+    "2027-09-30",
+  );
+  const during = await plan.locator(".map").boundingBox();
+  expect(Math.abs(during!.width - before!.width)).toBeLessThan(1);
+  expect(Math.abs(during!.height - before!.height)).toBeLessThan(1);
+  await dialog.getByLabel("Belegung bis", { exact: true }).fill("2027-10-31");
+  await dialog.getByLabel("Belegung bis", { exact: true }).press("Tab");
+  await dialog.getByLabel("Pflanze", { exact: true }).selectOption(c.id);
+  await expect(dialog.getByLabel("Belegung bis", { exact: true })).toHaveValue(
+    "2027-10-31",
+  );
+  await dialog.getByLabel("Pflanze", { exact: true }).selectOption(a.id);
+  await expect(dialog.getByLabel("Belegung bis", { exact: true })).toHaveValue(
+    "2027-10-31",
+  );
+  await dialog
+    .getByRole("button", { name: "Zeitraum übernehmen", exact: true })
+    .click();
+  await expect(dialog.getByLabel("Belegung bis", { exact: true })).toHaveValue(
+    "2027-09-30",
+  );
+  await dialog
+    .getByText("Pflanzenkarte & Jahresübersicht", { exact: true })
+    .click();
+  await expect(
+    dialog.locator(".plant-reference .mini-year .active"),
+  ).not.toHaveCount(0);
+  await expect(dialog.locator(".plant-reference")).toContainText("Direktsaat");
+  await dialog.getByLabel("Notizen", { exact: true }).fill("UX placement test");
+  await page.screenshot({
+    path: testInfo.outputPath("bed-plant-dialog.png"),
+    scale: "css",
+  });
+  await dialog
+    .getByRole("button", { name: "Im Beet platzieren", exact: false })
+    .click();
+  await expect(dialog).not.toBeVisible();
+  const after = await plan.locator(".map").boundingBox();
+  expect(Math.abs(after!.width - before!.width)).toBeLessThan(1);
+  expect(Math.abs(after!.height - before!.height)).toBeLessThan(1);
+  async function tap(x: number, y: number) {
+    await plan
+      .locator(".map")
+      .evaluate((el) =>
+        el.scrollIntoView({ block: "center", inline: "center" }),
+      );
+    const pos = await plan.locator(".map").evaluate(
+      (el, point) => {
+        const svg = el as SVGSVGElement;
+        const p = svg.createSVGPoint();
+        p.x = point[0]!;
+        p.y = point[1]!;
+        const c = p.matrixTransform(svg.getScreenCTM()!);
+        return { x: c.x, y: c.y };
+      },
+      [x, y],
+    );
+    await page.mouse.click(pos.x, pos.y);
+  }
+  const feedback = plan.locator(".placement-controls .neighbor-feedback");
+  await tap(55, 80);
+  await expect(feedback).toContainText("Ungünstige Nachbarn");
+  await expect(feedback).toContainText("Plan B");
+  await expect(plan.locator('[data-entry="draft"]')).toHaveAttribute(
+    "data-neighbor-status",
+    "bad",
+  );
+  await tap(280, 80);
+  await expect(feedback).toContainText("Gute Nachbarn");
+  await expect(feedback).toContainText("Plan C");
+  await expect(feedback).not.toContainText("Ungünstige Nachbarn");
+  await expect(plan.locator('[data-entry="draft"]')).toHaveAttribute(
+    "data-neighbor-status",
+    "good",
+  );
+  await expect(plan.locator(".placement-controls .primary")).toBeInViewport();
+  await page.screenshot({
+    path: testInfo.outputPath("bed-live-neighbors.png"),
+    scale: "css",
+  });
+  await plan
+    .getByRole("button", { name: "Belegung speichern", exact: true })
+    .click();
+  await expect(plan.locator(".placement-controls")).toHaveCount(0);
+  const records = await api("list", { table: "bed_plantings" });
+  expect(
+    records.find(
+      (e: { data: { notes?: string } }) => e.data.notes === "UX placement test",
+    ).data,
+  ).toMatchObject({
+    start_date: "2027-03-01",
+    end_date: "2027-09-30",
+    y_cm: 80,
+  });
+  const saved = records.find(
+    (e: { data: { notes?: string } }) => e.data.notes === "UX placement test",
+  );
+  // One CSS pixel can represent more than one centimeter on a narrow WebKit canvas.
+  expect(Math.abs(saved.data.x_cm - 280)).toBeLessThanOrEqual(2);
+  await plan.locator(".canvas").screenshot({
+    path: testInfo.outputPath("bed-workflow.png"),
+    scale: "css",
+  });
 });
