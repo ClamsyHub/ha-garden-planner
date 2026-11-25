@@ -10,7 +10,7 @@ release. Available in the official HACS community catalog. [Publication evidence
 
 ## Interface and features
 
-German/English views: overview, year/month/week calendar, interactive bed planner, plants, current
+Views available in 24 languages: overview, year/month/week calendar, interactive bed planner, plants, current
 crops, multi-year history, beds/locations, personal generated tasks/reminders, neighbors, seeds/shopping and settings. Responsive light/dark
 layouts, keyboard dialogs, multiple seasonal windows and dated cultivation events.
 Historical snapshots retain context after master-data edits. Outcomes are explicit

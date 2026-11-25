@@ -16,8 +16,8 @@ Garden Planner ist im offiziellen HACS-Community-Katalog verfügbar. Live-Verzei
 
 [![In HACS / Marketplace öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ClamsyHub&repository=ha-garden-planner&category=integration)
 
-**Änderungen v0.1.13:** Interaktiver **Beetplan** mit freien Beetformen, maßstäblicher Pflanzenplatzierung, Saison-/Nachkulturplanung und Fruchtfolgehinweisen. Dialog für Pflanze, Menge und Zeitraum; Platzieren und Speichern direkt am Beet mit unmittelbaren Nachbarschaftshinweisen und Zeitraumvorschlägen aus den Pflanzendaten.
-[Updatehinweise und Datensicherung](docs/releases/v0.1.13.md). Die neue Version migriert die Datenbank auf Schema 5 mit automatischer vorheriger Sicherung. [Bedienung und Grenzen](docs/bed-planner.md).
+**Änderungen v0.1.14:** 22 zusätzliche Sprachen – insgesamt 24 – für die Oberfläche einschließlich Beetplan, Home-Assistant-Einrichtung und erzeugte Aufgaben/Kalenderereignisse. Lokale Sprachdateien, regionale Spracherkennung und eine einheitliche Menüausrichtung auch bei mehrzeiligen Beschriftungen.
+[Updatehinweise und Datensicherung](docs/releases/v0.1.14.md). Datenbankschema 5 bleibt unverändert. [Sprachen und Übersetzungshinweise](docs/languages.md).
 
 ## Oberfläche
 

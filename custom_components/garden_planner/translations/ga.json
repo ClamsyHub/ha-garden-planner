@@ -2,26 +2,26 @@
   "config": {
     "step": {
       "user": {
-        "title": "GPTRM000X",
+        "title": "Garden Planner",
         "description": "Cruthaigh gairdín áitiúil. Tá an feidhmchlár le feiceáil go huathoibríoch sa bharra taoibh. Meabhrúcháin réamhshocraithe le múchadh."
       }
     },
     "abort": {
-      "already_configured": "Tá GPTRM000X cumraithe cheana féin."
+      "already_configured": "Tá Garden Planner cumraithe cheana féin."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "GPTRM000X",
-        "description": "Ní sheoltar aon teachtaireacht gan gníomhachtaithe. Bainistigh róil úsáideora agus faighteoirí aonair brú/ríomhphoist i GPTRM000X → Socruithe. Ní seoladh ríomhphoist é eintiteas fógra.",
+        "title": "Garden Planner",
+        "description": "Ní sheoltar aon teachtaireacht gan gníomhachtaithe. Bainistigh róil úsáideora agus faighteoirí aonair brú/ríomhphoist i Garden Planner → Socruithe. Ní seoladh ríomhphoist é eintiteas fógra.",
         "data": {
           "writers": "Deontais eagarthóireachta",
           "reminders_enabled": "Cumasaigh meabhrúcháin go sainráite",
           "lead_days": "Am luaidhe (laethanta)",
           "reminder_hour": "Seol ón uair (crios ama HA)",
           "notify_service": "Cainéal fógra",
-          "notify_entity": "Aonán fógra (riachtanach le haghaidh GPTRM002X)",
+          "notify_entity": "Aonán fógra (riachtanach le haghaidh notify.send_message)",
           "language": "Teanga meabhrúcháin",
           "shared_channel_enabled": "Úsáid cainéal comhroinnte atá ann cheana"
         }

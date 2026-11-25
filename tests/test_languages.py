@@ -1,6 +1,7 @@
 """Language completeness and localized task/event captions stay in sync."""
 
 import json
+import re
 import unittest
 from datetime import date
 from pathlib import Path
@@ -57,6 +58,12 @@ class LanguageTests(unittest.TestCase):
             values = flatten(json.loads((folder / f"{language}.json").read_text()))
             self.assertEqual(set(values), set(reference), language)
             self.assertTrue(all(value.strip() for value in values.values()), language)
+            self.assertFalse(
+                any(
+                    re.search(r"GP[A-Z]*\d{3}X|ZXQ", value) for value in values.values()
+                ),
+                language,
+            )
 
     def test_generated_tasks_use_the_chosen_language_and_keep_user_text(self) -> None:
         plants: list[dict[str, Any]] = [

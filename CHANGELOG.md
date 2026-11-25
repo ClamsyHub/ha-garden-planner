@@ -1,7 +1,8 @@
 # Changelog
 
-## 0.1.14 — Unreleased
+## 0.1.14 — 2026-11-25
 
+- Align multiline navigation labels and preserve technical identifiers in translated text.
 - Add 22 bundled offline languages, native-name selection, regional locale resolution and localized dates.
 - Localize HA forms, generated task/calendar captions and the full bed planner; retain separate reminder language and user-entered text.
 

@@ -15,7 +15,7 @@ describe("bundled language catalogs", () => {
         );
         for (const value of Object.values(entries)) {
           expect(value.trim()).not.toBe("");
-          expect(value).not.toMatch(/ZXQ|GPTERM/);
+          expect(value).not.toMatch(/ZXQ|GP[A-Z]*\d{3}X/);
         }
       }
       expect(t(lang, "calendar")).toBe(catalogs[lang].ui.calendar);

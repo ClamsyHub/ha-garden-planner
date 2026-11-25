@@ -2,7 +2,7 @@
 
 [Projektübersicht](../../README.md) · [English](../en/README.md)
 
-## Stand dieser Dokumentation: v0.1.13
+## Stand dieser Dokumentation: v0.1.14
 
 Backend, Oberfläche und native HA-Anbindung sind implementiert. Die Integration
 registriert ihr Seitenleisten-Panel automatisch und stellt fünf Zählsensoren
