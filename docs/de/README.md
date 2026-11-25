@@ -204,3 +204,8 @@ Fotos können auch direkt unter **Aktuelle Kulturen → Ereignis erfassen** hoch
 ## Beetplan (v0.1.13)
 
 [Bedienung, Datensicherung und Grenzen](../bed-planner.md). Belegungen im Dialog vorbereiten, direkt im Beet platzieren und speichern. Vor dem Update vollständige HA-Sicherung erstellen; Schema 5 ergänzt zwei Tabellen und legt eine lokale Sicherung an.
+
+
+## Languages / Sprachen
+
+24 lokal mitgelieferte Sprachen; Auswahl in den Einstellungen oder automatisch über Home Assistant. [Sprachen, Auswahl und Übersetzungshinweise](../languages.md).

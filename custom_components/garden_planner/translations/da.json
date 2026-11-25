@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Skab en lokal have. Applikationen vises automatisk i sidebjælken. Påmindelser er som standard slået fra."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner er allerede konfigureret."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Ingen beskeder sendes uden aktivering. Administrer brugerroller og individuelle push/e-mail-modtagere i Garden Planner → Indstillinger. En underretningsenhed er ikke en e-mailadresse.",
+        "data": {
+          "writers": "Redigering af bevillinger",
+          "reminders_enabled": "Aktiver eksplicit påmindelser",
+          "lead_days": "Leveringstid (dage)",
+          "reminder_hour": "Send fra time (HA tidszone)",
+          "notify_service": "Notifikationskanal",
+          "notify_entity": "Underretningsenhed (påkrævet for notify.send_message)",
+          "language": "Påmindelsessprog",
+          "shared_channel_enabled": "Brug eksisterende delt kanal"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Tjek aktive brugere, den tilgængelige notifikationskanal og notifikationsenhed."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Planter"
+      },
+      "planned": {
+        "name": "Planlagte såninger"
+      },
+      "active": {
+        "name": "Aktive afgrøder"
+      },
+      "successful": {
+        "name": "Vellykkede såninger"
+      },
+      "open_tasks": {
+        "name": "Åbne haveopgaver"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Havearbejde"
+      }
+    }
+  }
+}

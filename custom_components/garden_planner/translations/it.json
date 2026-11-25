@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Crea un giardino locale. L'applicazione appare automaticamente nella barra laterale. I promemoria sono disattivati ​​per impostazione predefinita."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner è già configurato."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Nessun messaggio viene inviato senza attivazione. Gestisci i ruoli utente e i singoli destinatari push/e-mail in Garden Planner → Impostazioni. Un'entità di notifica non è un indirizzo email.",
+        "data": {
+          "writers": "Modifica delle sovvenzioni",
+          "reminders_enabled": "Abilita esplicitamente i promemoria",
+          "lead_days": "Tempi di consegna (giorni)",
+          "reminder_hour": "Invio da ora (fuso orario HA)",
+          "notify_service": "Canale di notifica",
+          "notify_entity": "Entità di notifica (richiesto per notify.send_message)",
+          "language": "Linguaggio dei promemoria",
+          "shared_channel_enabled": "Utilizza il canale condiviso esistente"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Controlla gli utenti attivi, il canale di notifica disponibile e l'entità di notifica."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Piante"
+      },
+      "planned": {
+        "name": "Semine programmate"
+      },
+      "active": {
+        "name": "Colture attive"
+      },
+      "successful": {
+        "name": "Semine riuscite"
+      },
+      "open_tasks": {
+        "name": "Attività di giardinaggio aperte"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Lavori in giardino"
+      }
+    }
+  }
+}

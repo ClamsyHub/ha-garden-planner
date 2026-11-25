@@ -36,7 +36,8 @@ export type Page =
   | "neighbors"
   | "seeds"
   | "settings";
-export type Language = "de" | "en";
+import type { Language } from "./languages";
+export type { Language } from "./languages";
 export interface Hass {
   fetchWithAuth?(path: string, init?: RequestInit): Promise<Response>;
   callWS<T>(message: Record<string, unknown>): Promise<T>;

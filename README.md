@@ -142,3 +142,8 @@ zusammen mit dem JavaScript-Paket ausgeliefert.
 [Rollen und Benachrichtigungen](docs/notifications.md)
 
 [Neue kompakte Smartphone-Pflanzendetails (synthetisches Beispiel)](docs/screenshots/plant-summary-mobile.png)
+
+
+## Languages / Sprachen
+
+24 lokal mitgelieferte Sprachen; Auswahl in den Einstellungen oder automatisch über Home Assistant. [Sprachen, Auswahl und Übersetzungshinweise](docs/languages.md).

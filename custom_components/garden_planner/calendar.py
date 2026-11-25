@@ -12,18 +12,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .coordinator import GardenCoordinator
-
-EVENT_LABELS = {
-    "planned": ("Geplant", "Planned"),
-    "sown": ("Ausgesät", "Sown"),
-    "germinated": ("Gekeimt", "Germinated"),
-    "pricked_out": ("Pikiert", "Pricked out"),
-    "planted_out": ("Ausgepflanzt", "Planted out"),
-    "growing": ("Wachstumsphase", "Growing"),
-    "harvesting": ("Ernte begonnen", "Harvest started"),
-    "completed": ("Abgeschlossen", "Completed"),
-    "failed": ("Fehlgeschlagen", "Failed"),
-}
+from .language_data import event_label
 
 
 def calendar_events(data: dict[str, Any], language: str = "de") -> list[CalendarEvent]:
@@ -52,9 +41,7 @@ def calendar_events(data: dict[str, Any], language: str = "de") -> list[Calendar
         plant = (
             culture.get("snapshot", {}).get("plant", {}).get("name", "Garden Planner")
         )
-        status = EVENT_LABELS.get(item["status"], (item["status"], item["status"]))[
-            language == "en"
-        ]
+        status = event_label(language, item["status"])
         start = date.fromisoformat(item["date"])
         result.append(
             CalendarEvent(

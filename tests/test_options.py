@@ -33,7 +33,7 @@ class OptionTests(unittest.TestCase):
             {"lead_days": True},
             {"lead_days": 31},
             {"reminder_hour": -1},
-            {"language": "fr"},
+            {"language": "xx"},
             {"writers": "admin"},
             {"writers": ["../admin"]},
             {"notify_entity": "sensor.temperature"},

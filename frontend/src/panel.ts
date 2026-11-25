@@ -1,4 +1,10 @@
 import {
+  languageNames,
+  languages,
+  resolveLanguage,
+  dateLocale,
+} from "./languages";
+import {
   recommendedRange,
   temperatureReading,
   temperatureSensors,
@@ -300,14 +306,12 @@ export class GardenPlannerPanel extends LitElement {
   };
 
   private get language(): Language {
-    return (
+    return resolveLanguage(
       this.languagePreference ||
-      this.hass?.locale?.language ||
-      this.hass?.language ||
-      "de"
-    ).startsWith("de")
-      ? "de"
-      : "en";
+        this.hass?.locale?.language ||
+        this.hass?.language ||
+        "de",
+    );
   }
   private tr(key: string): string {
     return t(this.language, key);
@@ -1502,7 +1506,7 @@ export class GardenPlannerPanel extends LitElement {
       : "—";
   }
   private renderPlantCard(plant: Entity): TemplateResult {
-    const days = this.language === "de" ? "Tage" : "days";
+    const days = this.tr("days");
     const facts = [
       [
         "temperature",
@@ -3260,7 +3264,7 @@ export class GardenPlannerPanel extends LitElement {
               class=${`week-day ${day === this.today ? "today" : ""}`}
             >
               <h3>
-                ${new Intl.DateTimeFormat(this.language === "de" ? "de-DE" : "en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}<br />${formatDate(day, this.language)}
+                ${new Intl.DateTimeFormat(dateLocale(this.language), { weekday: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}<br />${formatDate(day, this.language)}
               </h3>
               ${!tasks.length && !events.length ? html`<p class="muted week-empty">${this.tr("noAppointments")}</p>` : nothing}
               ${appointments.map((item) => {
@@ -4049,7 +4053,7 @@ export class GardenPlannerPanel extends LitElement {
       typeof data[low] === "number" || typeof data[high] === "number"
         ? `${number(low)} – ${number(high)} ${unit}`
         : "";
-    const days = this.language === "de" ? "Tage" : "days";
+    const days = this.tr("days");
     const optimal = range(
       "germination_optimal_min_c",
       "germination_optimal_max_c",
@@ -4098,7 +4102,7 @@ export class GardenPlannerPanel extends LitElement {
       </dl>`;
   }
   private renderPlantProfile(plant: Entity): TemplateResult {
-    const days = this.language === "de" ? "Tage" : "days";
+    const days = this.tr("days");
     const facts = [
       [
         "optimalGermination",
@@ -5063,12 +5067,7 @@ export class GardenPlannerPanel extends LitElement {
               aria-label=${this.tr("reminderLanguage")}
               @change=${(e: Event) => set("language", (e.target as HTMLSelectElement).value)}
             >
-              <option value="de" .selected=${draft.language === "de"}>
-                Deutsch
-              </option>
-              <option value="en" .selected=${draft.language === "en"}>
-                English
-              </option>
+              ${languages.map((code) => html`<option value=${code} .selected=${draft.language === code}>${languageNames[code]}</option>`)}
             </select></label
           >
         </div>
@@ -5111,12 +5110,7 @@ export class GardenPlannerPanel extends LitElement {
             <option value="" .selected=${this.languagePreference === ""}>
               ${this.tr("automatic")}
             </option>
-            <option value="de" .selected=${this.languagePreference === "de"}>
-              Deutsch
-            </option>
-            <option value="en" .selected=${this.languagePreference === "en"}>
-              English
-            </option>
+            ${languages.map((code) => html`<option value=${code} .selected=${this.languagePreference === code}>${languageNames[code]}</option>`)}
           </select></label
         >
         <dl>
@@ -5212,9 +5206,7 @@ export class GardenPlannerPanel extends LitElement {
             <span class="brand-icon">${icon("plants")}</span>
             <div>
               <strong>Garden Planner</strong
-              ><small
-                >${this.language === "de" ? "WACHSEN & ERINNERN" : "GROW & REMEMBER"}</small
-              >
+              ><small>${this.tr("growRemember")}</small>
             </div>
           </div>
           <nav aria-label="Garden Planner">

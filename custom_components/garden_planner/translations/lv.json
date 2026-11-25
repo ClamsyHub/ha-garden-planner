@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Izveidojiet vietējo dārzu. Lietojumprogramma automātiski tiek parādīta sānjoslā. Atgādinājumi pēc noklusējuma ir izslēgti."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner jau ir konfigurēts."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Neviena ziņa netiek nosūtīta bez aktivizēšanas. Pārvaldiet lietotāju lomas un atsevišķus push/e-pasta adresātus sadaļā Garden Planner → Iestatījumi. Paziņojumu entītija nav e-pasta adrese.",
+        "data": {
+          "writers": "Dotāciju rediģēšana",
+          "reminders_enabled": "Skaidri iespējojiet atgādinājumus",
+          "lead_days": "Izpildes laiks (dienas)",
+          "reminder_hour": "Sūtīt no stundas (HA laika josla)",
+          "notify_service": "Paziņojumu kanāls",
+          "notify_entity": "Paziņojuma entītija (nepieciešama notify.send_message)",
+          "language": "Atgādinājuma valoda",
+          "shared_channel_enabled": "Izmantojiet esošo koplietoto kanālu"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Pārbaudiet aktīvos lietotājus, pieejamo paziņojumu kanālu un paziņojumu entītiju."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Augi"
+      },
+      "planned": {
+        "name": "Plānotie sējumi"
+      },
+      "active": {
+        "name": "Aktīvās kultūras"
+      },
+      "successful": {
+        "name": "Veiksmīgi sējumi"
+      },
+      "open_tasks": {
+        "name": "Atvērtie dārza uzdevumi"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Dārza darbi"
+      }
+    }
+  }
+}

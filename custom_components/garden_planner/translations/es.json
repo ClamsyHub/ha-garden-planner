@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Crea un jardín local. La aplicación aparece automáticamente en la barra lateral. Los recordatorios están desactivados de forma predeterminada."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "No se envían mensajes sin activación. Administre roles de usuario y destinatarios individuales de correo electrónico/push en Garden Planner → Configuración. Una entidad de notificación no es una dirección de correo electrónico.",
+        "data": {
+          "writers": "Subvenciones de edición",
+          "reminders_enabled": "Habilitar explícitamente recordatorios",
+          "lead_days": "Plazo de entrega (días)",
+          "reminder_hour": "Enviar desde hora (zona horaria HA)",
+          "notify_service": "Canal de notificación",
+          "notify_entity": "Entidad de notificación (obligatoria para notify.send_message)",
+          "language": "Idioma del recordatorio",
+          "shared_channel_enabled": "Usar canal compartido existente"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Verifique los usuarios activos, el canal de notificación disponible y la entidad de notificación."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "plantas"
+      },
+      "planned": {
+        "name": "Siembras planificadas"
+      },
+      "active": {
+        "name": "Cultivos activos"
+      },
+      "successful": {
+        "name": "Siembras exitosas"
+      },
+      "open_tasks": {
+        "name": "Tareas de jardín abierto"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "trabajo de jardineria"
+      }
+    }
+  }
+}

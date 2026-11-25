@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Sukurkite vietinį sodą. Programa automatiškai pasirodo šoninėje juostoje. Priminimai pagal numatytuosius nustatymus išjungti."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner jau sukonfigūruotas."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Jokie pranešimai nesiunčiami be aktyvinimo. Tvarkykite vartotojų vaidmenis ir atskirus tiesioginio pašto / el. pašto gavėjus Garden Planner → Nustatymai. Pranešimo subjektas nėra el. pašto adresas.",
+        "data": {
+          "writers": "Dotacijų redagavimas",
+          "reminders_enabled": "Aiškiai įgalinkite priminimus",
+          "lead_days": "Pristatymo laikas (dienomis)",
+          "reminder_hour": "Siųsti nuo valandos (HA laiko juosta)",
+          "notify_service": "Pranešimų kanalas",
+          "notify_entity": "Pranešimo subjektas (būtinas notify.send_message)",
+          "language": "Priminimo kalba",
+          "shared_channel_enabled": "Naudokite esamą bendrinamą kanalą"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Patikrinkite aktyvius vartotojus, galimą pranešimų kanalą ir pranešimų objektą."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Augalai"
+      },
+      "planned": {
+        "name": "Planuojamos sėjos"
+      },
+      "active": {
+        "name": "Aktyvūs pasėliai"
+      },
+      "successful": {
+        "name": "Sėkmingos sėjos"
+      },
+      "open_tasks": {
+        "name": "Atviros sodo užduotys"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Sodo darbai"
+      }
+    }
+  }
+}

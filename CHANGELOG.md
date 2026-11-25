@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.14 — Unreleased
+
+- Add 22 bundled offline languages, native-name selection, regional locale resolution and localized dates.
+- Localize HA forms, generated task/calendar captions and the full bed planner; retain separate reminder language and user-entered text.
+
+
 ## 0.1.13 — 2026-11-24
 
 - Replace the resizing side-column editor with a modal-to-canvas workflow, direct save controls and live named neighbor feedback.

@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Vytvořte místní zahradu. Aplikace se automaticky zobrazí na postranním panelu. Připomenutí jsou ve výchozím nastavení vypnuta."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner je již nakonfigurován."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Bez aktivace nejsou odesílány žádné zprávy. Spravujte uživatelské role a jednotlivé příjemce push/e-mailu v Garden Planner → Nastavení. Entita pro oznámení není e-mailová adresa.",
+        "data": {
+          "writers": "Úprava grantů",
+          "reminders_enabled": "Explicitně povolte připomenutí",
+          "lead_days": "Dodací lhůta (dny)",
+          "reminder_hour": "Odeslat od hodiny (časové pásmo HA)",
+          "notify_service": "Oznamovací kanál",
+          "notify_entity": "Entita oznámení (vyžadováno pro notify.send_message)",
+          "language": "Jazyk připomenutí",
+          "shared_channel_enabled": "Použít existující sdílený kanál"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Zkontrolujte aktivní uživatele, dostupný kanál oznámení a entitu oznámení."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Rostliny"
+      },
+      "planned": {
+        "name": "Plánované výsevy"
+      },
+      "active": {
+        "name": "Aktivní plodiny"
+      },
+      "successful": {
+        "name": "Úspěšné výsevy"
+      },
+      "open_tasks": {
+        "name": "Otevřené zahradní úkoly"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Zahradní práce"
+      }
+    }
+  }
+}

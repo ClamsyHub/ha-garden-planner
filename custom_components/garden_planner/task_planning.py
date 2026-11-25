@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
+from .language_data import activity_label
 from .models import (
     MAX_RECORDS,
     ConflictError,
@@ -17,17 +18,6 @@ from .models import (
 )
 
 PREFIX = "personal-"
-LABELS = {
-    "indoors": ("Vorziehen", "Start indoors"),
-    "direct": ("Direktsaat", "Direct sowing"),
-    "prick_out": ("Pikieren", "Prick out"),
-    "transplant": ("Auspflanzen", "Plant out"),
-    "care": ("Pflege", "Care"),
-    "fertilize": ("Düngen", "Fertilize"),
-    "prune": ("Rückschnitt", "Prune"),
-    "harvest": ("Ernte", "Harvest"),
-    "other": ("Sonstige Gartenarbeit", "Other garden work"),
-}
 
 
 def period_end(data: dict[str, Any], start: date) -> str:
@@ -75,7 +65,7 @@ def reconcile(
                     f"garden_planner:{user_id}:{window_id}:{start.isoformat()}",
                 ).hex
             )
-            caption = LABELS[data["activity"]][language == "en"]
+            caption = activity_label(language, data["activity"])
             wanted[task_id] = {
                 "title": f"{names[data['plant_id']]}: {caption}",
                 "date": start.isoformat(),
@@ -96,7 +86,7 @@ def reconcile(
         if source and cells.get(source["plant_id"], {}).get(source["activity"], False):
             due = date.fromisoformat(item["date"])
             if (due.month, due.day) == (source["start_month"], source["start_day"]):
-                caption = LABELS[source["activity"]][language == "en"]
+                caption = activity_label(language, source["activity"])
                 wanted.setdefault(
                     task_id,
                     {

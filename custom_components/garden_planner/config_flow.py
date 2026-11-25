@@ -9,6 +9,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .const import DOMAIN, NAME
+from .language_data import SUPPORTED_LANGUAGES
 from .models import ValidationError
 from .options import validate_options
 from .runtime import validate_host_options
@@ -98,7 +99,7 @@ class GardenOptionsFlow(config_entries.OptionsFlow):
                 ),
                 vol.Optional("notify_entity", default=settings["notify_entity"]): str,
                 vol.Required("language", default=settings["language"]): vol.In(
-                    ["de", "en"]
+                    list(SUPPORTED_LANGUAGES)
                 ),
             }
         )

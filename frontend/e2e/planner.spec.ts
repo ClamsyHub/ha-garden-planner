@@ -1,3 +1,5 @@
+import { languages } from "../src/languages";
+import { catalogs } from "../src/locale-catalog";
 import type { Hass } from "../src/types";
 import { expect, test, type Page, type Locator } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
@@ -4204,6 +4206,55 @@ test("bed workflow keeps canvas size, derives plant dates and shows live good an
   );
   await plan.locator(".canvas").screenshot({
     path: testInfo.outputPath("bed-workflow.png"),
+    scale: "css",
+  });
+});
+
+test("all bundled languages switch offline, persist and localize the bed planner", async ({
+  page,
+}) => {
+  const externalRequests: string[] = [];
+  await page.route("**/*", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname === "127.0.0.1" || url.hostname === "localhost")
+      await route.continue();
+    else {
+      externalRequests.push(url.origin);
+      await route.abort();
+    }
+  });
+  await open(page);
+  await navigate(page, "Einstellungen");
+  const panel = page.locator("garden-planner-panel");
+  const selector = page
+    .locator("select")
+    .filter({ has: page.locator('option[value="ga"]') })
+    .last();
+  for (const lang of languages) {
+    await selector.selectOption(lang);
+    await expect(panel).toHaveAttribute("lang", lang);
+    await expect(
+      page.getByRole("heading", {
+        name: catalogs[lang].ui.settings,
+        exact: true,
+      }),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        localStorage.getItem("garden-planner-language"),
+      ),
+    ).toBe(lang);
+  }
+  await selector.selectOption("fr");
+  await page.reload();
+  await expect(panel).toHaveAttribute("lang", "fr");
+  await navigate(page, catalogs.fr.ui.bedplan!);
+  await expect(
+    page.getByRole("heading", { name: catalogs.fr.ui.bedplan, exact: true }),
+  ).toBeVisible();
+  expect(externalRequests).toEqual([]);
+  await page.screenshot({
+    path: test.info().outputPath("languages-french.png"),
     scale: "css",
   });
 });

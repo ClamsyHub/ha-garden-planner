@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Crie um jardim local. O aplicativo aparece automaticamente na barra lateral. Os lembretes estão desativados por padrão."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner já está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Nenhuma mensagem é enviada sem ativação. Gerencie funções de usuário e destinatários individuais de push/e-mail em Garden Planner → Configurações. Uma entidade de notificação não é um endereço de e-mail.",
+        "data": {
+          "writers": "Editando concessões",
+          "reminders_enabled": "Habilitar lembretes explicitamente",
+          "lead_days": "Prazo de entrega (dias)",
+          "reminder_hour": "Enviar a partir de hora (fuso horário HA)",
+          "notify_service": "Canal de notificação",
+          "notify_entity": "Entidade de notificação (obrigatória para notify.send_message)",
+          "language": "Idioma do lembrete",
+          "shared_channel_enabled": "Usar canal compartilhado existente"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Verifique os usuários ativos, o canal de notificação disponível e a entidade de notificação."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Plantas"
+      },
+      "planned": {
+        "name": "Semeaduras planejadas"
+      },
+      "active": {
+        "name": "Culturas ativas"
+      },
+      "successful": {
+        "name": "Semeaduras bem-sucedidas"
+      },
+      "open_tasks": {
+        "name": "Tarefas de jardim aberto"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Trabalho de jardim"
+      }
+    }
+  }
+}

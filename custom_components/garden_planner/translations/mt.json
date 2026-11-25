@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Oħloq ġnien lokali. L-applikazzjoni tidher awtomatikament fil-sidebar. It-tfakkiriet default huma mitfija."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner huwa diġà kkonfigurat."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "L-ebda messaġġ ma jintbagħat mingħajr attivazzjoni. Immaniġġja r-rwoli tal-utent u r-riċevituri individwali tal-push/email f'Garden Planner → Settings. Entità ta' notifika mhix indirizz elettroniku.",
+        "data": {
+          "writers": "Għotjiet għall-editjar",
+          "reminders_enabled": "Attiva t-tfakkiriet b'mod espliċitu",
+          "lead_days": "Żmien ta' żmien (jiem)",
+          "reminder_hour": "Ibgħat mis-siegħa (Żona tal-ħin HA)",
+          "notify_service": "Kanal ta' notifika",
+          "notify_entity": "Entità ta' notifika (meħtieġa għal notify.send_message)",
+          "language": "Lingwa ta' tfakkira",
+          "shared_channel_enabled": "Uża kanal komuni eżistenti"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Iċċekkja l-utenti attivi, il-kanal ta’ notifika disponibbli u l-entità ta’ notifika."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Pjanti"
+      },
+      "planned": {
+        "name": "Żriegħ ippjanat"
+      },
+      "active": {
+        "name": "Uċuħ tar-raba' attivi"
+      },
+      "successful": {
+        "name": "Żrigħ b'suċċess"
+      },
+      "open_tasks": {
+        "name": "Ħidmiet tal-ġnien miftuħa"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Xogħol tal-ġnien"
+      }
+    }
+  }
+}

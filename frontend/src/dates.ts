@@ -1,3 +1,5 @@
+import { dateLocale } from "./languages";
+import { t } from "./i18n";
 import { numberValue, text, type Entity, type Language } from "./types";
 
 export function todayInZone(timeZone: string, now = new Date()): string {
@@ -92,7 +94,7 @@ export function weekDays(anchor: string): string[] {
 }
 export function formatDate(iso: string, language: Language): string {
   if (!iso) return "—";
-  return new Intl.DateTimeFormat(language === "de" ? "de-DE" : "en-GB", {
+  return new Intl.DateTimeFormat(dateLocale(language), {
     timeZone: "UTC",
     dateStyle: "medium",
   }).format(dateObject(iso));
@@ -102,7 +104,7 @@ export function taskDateLabel(task: Entity, language: Language): string {
     end = text(task, "end_date");
   const first = formatDate(start, language);
   return task.data.personal_generated && end && end > start
-    ? `${first}${language === "de" ? " bis " : " to "}${formatDate(end, language)}`
+    ? `${first} ${t(language, "rangeTo")} ${formatDate(end, language)}`
     : first;
 }
 export function monthLabel(
@@ -111,7 +113,7 @@ export function monthLabel(
   language: Language,
   short = false,
 ): string {
-  return new Intl.DateTimeFormat(language === "de" ? "de-DE" : "en-GB", {
+  return new Intl.DateTimeFormat(dateLocale(language), {
     timeZone: "UTC",
     month: short ? "short" : "long",
     ...(short ? {} : { year: "numeric" }),

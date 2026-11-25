@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Ustvarite lokalni vrt. Aplikacija se samodejno prikaže v stranski vrstici. Opomniki so privzeto izklopljeni."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner je že konfiguriran."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Nobeno sporočilo ni poslano brez aktivacije. Upravljajte uporabniške vloge in posamezne prejemnike potisne/e-pošte v Garden Planner → Nastavitve. Entiteta za obveščanje ni e-poštni naslov.",
+        "data": {
+          "writers": "Urejanje nepovratnih sredstev",
+          "reminders_enabled": "Izrecno omogoči opomnike",
+          "lead_days": "Dobavni rok (dnevi)",
+          "reminder_hour": "Pošlji od ure (časovni pas HA)",
+          "notify_service": "Kanal za obveščanje",
+          "notify_entity": "Subjekt obvestila (potreben za notify.send_message)",
+          "language": "Jezik opomnikov",
+          "shared_channel_enabled": "Uporabite obstoječi skupni kanal"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Preverite aktivne uporabnike, razpoložljiv kanal za obveščanje in entiteto za obveščanje."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Rastline"
+      },
+      "planned": {
+        "name": "Načrtovane setve"
+      },
+      "active": {
+        "name": "Aktivni pridelki"
+      },
+      "successful": {
+        "name": "Uspešne setve"
+      },
+      "open_tasks": {
+        "name": "Odprta vrtna opravila"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Delo na vrtu"
+      }
+    }
+  }
+}

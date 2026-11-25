@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "GPTRM000X",
+        "description": "Cruthaigh gairdín áitiúil. Tá an feidhmchlár le feiceáil go huathoibríoch sa bharra taoibh. Meabhrúcháin réamhshocraithe le múchadh."
+      }
+    },
+    "abort": {
+      "already_configured": "Tá GPTRM000X cumraithe cheana féin."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "GPTRM000X",
+        "description": "Ní sheoltar aon teachtaireacht gan gníomhachtaithe. Bainistigh róil úsáideora agus faighteoirí aonair brú/ríomhphoist i GPTRM000X → Socruithe. Ní seoladh ríomhphoist é eintiteas fógra.",
+        "data": {
+          "writers": "Deontais eagarthóireachta",
+          "reminders_enabled": "Cumasaigh meabhrúcháin go sainráite",
+          "lead_days": "Am luaidhe (laethanta)",
+          "reminder_hour": "Seol ón uair (crios ama HA)",
+          "notify_service": "Cainéal fógra",
+          "notify_entity": "Aonán fógra (riachtanach le haghaidh GPTRM002X)",
+          "language": "Teanga meabhrúcháin",
+          "shared_channel_enabled": "Úsáid cainéal comhroinnte atá ann cheana"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Seiceáil úsáideoirí gníomhacha, an cainéal fógra atá ar fáil agus an t-aonán fógraí."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Plandaí"
+      },
+      "planned": {
+        "name": "Síolta pleanáilte"
+      },
+      "active": {
+        "name": "Barraí gníomhacha"
+      },
+      "successful": {
+        "name": "Síolta rathúla"
+      },
+      "open_tasks": {
+        "name": "Tascanna gairdín oscailte"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Obair gairdín"
+      }
+    }
+  }
+}

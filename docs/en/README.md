@@ -173,3 +173,8 @@ Upload or capture an optional photo directly from **Current cultivations → Add
 ## Bed planner (v0.1.13)
 
 [Usage, backup and limits](../bed-planner.md). Prepare plantings in a dialog, then position and save directly on the canvas with live neighbor feedback. Back up HA before upgrading; schema 5 adds two tables and an automatic local backup.
+
+
+## Languages / Sprachen
+
+24 lokal mitgelieferte Sprachen; Auswahl in den Einstellungen oder automatisch über Home Assistant. [Sprachen, Auswahl und Übersetzungshinweise](../languages.md).

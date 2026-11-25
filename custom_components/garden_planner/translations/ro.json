@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Creați o grădină locală. Aplicația apare automat în bara laterală. Mementourile sunt dezactivate implicit."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner este deja configurat."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Niciun mesaj nu este trimis fără activare. Gestionați rolurile utilizatorilor și destinatarii individuali push/e-mail în Garden Planner → Setări. O entitate de notificare nu este o adresă de e-mail.",
+        "data": {
+          "writers": "Subvenții de editare",
+          "reminders_enabled": "Activați explicit mementourile",
+          "lead_days": "Timp de livrare (zile)",
+          "reminder_hour": "Trimiteți de la oră (fus orar HA)",
+          "notify_service": "Canal de notificare",
+          "notify_entity": "Entitate de notificare (obligatoriu pentru notify.send_message)",
+          "language": "Limba de memento",
+          "shared_channel_enabled": "Utilizați canalul partajat existent"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Verificați utilizatorii activi, canalul de notificare disponibil și entitatea de notificare."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Plante"
+      },
+      "planned": {
+        "name": "Semănături planificate"
+      },
+      "active": {
+        "name": "Culturi active"
+      },
+      "successful": {
+        "name": "Semănături reușite"
+      },
+      "open_tasks": {
+        "name": "Deschideți sarcini de grădină"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Lucrări la grădină"
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Hozzon létre egy helyi kertet. Az alkalmazás automatikusan megjelenik az oldalsávon. Az emlékeztetők alapértelmezés szerint ki vannak kapcsolva."
+      }
+    },
+    "abort": {
+      "already_configured": "A Garden Planner már konfigurálva van."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Aktiválás nélkül nem küldenek üzenetet. A felhasználói szerepkörök és az egyéni push/e-mail címzettek kezelése a Garden Planner → Beállítások menüpontban. Az értesítési entitás nem e-mail cím.",
+        "data": {
+          "writers": "Támogatások szerkesztése",
+          "reminders_enabled": "Kifejezetten engedélyezze az emlékeztetőket",
+          "lead_days": "Átfutási idő (nap)",
+          "reminder_hour": "Küldés órától (HA időzóna)",
+          "notify_service": "Értesítési csatorna",
+          "notify_entity": "Értesítési entitás (kötelező a notify.send_message esetén)",
+          "language": "Emlékeztető nyelve",
+          "shared_channel_enabled": "Meglévő megosztott csatorna használata"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Ellenőrizze az aktív felhasználókat, az elérhető értesítési csatornát és az értesítési entitást."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Növények"
+      },
+      "planned": {
+        "name": "Tervezett vetések"
+      },
+      "active": {
+        "name": "Aktív növények"
+      },
+      "successful": {
+        "name": "Sikeres vetések"
+      },
+      "open_tasks": {
+        "name": "Nyitott kerti feladatok"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Kerti munka"
+      }
+    }
+  }
+}

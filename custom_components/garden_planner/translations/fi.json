@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Luo paikallinen puutarha. Sovellus tulee automaattisesti näkyviin sivupalkkiin. Muistutukset oletuksena pois päältä."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner on jo määritetty."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Viestejä ei lähetetä ilman aktivointia. Hallinnoi käyttäjärooleja ja yksittäisiä push/sähköpostin vastaanottajia kohdassa Garden Planner → Asetukset. Ilmoitusyksikkö ei ole sähköpostiosoite.",
+        "data": {
+          "writers": "Apurahojen muokkaaminen",
+          "reminders_enabled": "Ota muistutukset käyttöön",
+          "lead_days": "Toimitusaika (päiviä)",
+          "reminder_hour": "Lähetä tunnista alkaen (HA aikavyöhyke)",
+          "notify_service": "Ilmoituskanava",
+          "notify_entity": "Ilmoitusentiteetti (pakollinen notify.send_message:lle)",
+          "language": "Muistutuksen kieli",
+          "shared_channel_enabled": "Käytä olemassa olevaa jaettua kanavaa"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Tarkista aktiiviset käyttäjät, käytettävissä oleva ilmoituskanava ja ilmoituskokonaisuus."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Kasveja"
+      },
+      "planned": {
+        "name": "Suunnitellut kylvöt"
+      },
+      "active": {
+        "name": "Aktiiviset viljelykasvit"
+      },
+      "successful": {
+        "name": "Onnistuneet kylvöt"
+      },
+      "open_tasks": {
+        "name": "Avoimet puutarhatehtävät"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Puutarhatyöt"
+      }
+    }
+  }
+}

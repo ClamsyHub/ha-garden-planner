@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Skapa en lokal trädgård. Applikationen visas automatiskt i sidofältet. Påminnelser är som standard avstängd."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner är redan konfigurerad."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Inga meddelanden skickas utan aktivering. Hantera användarroller och individuella push/e-postmottagare i Garden Planner → Inställningar. En aviseringsenhet är inte en e-postadress.",
+        "data": {
+          "writers": "Redigering av anslag",
+          "reminders_enabled": "Aktivera uttryckligen påminnelser",
+          "lead_days": "Ledtid (dagar)",
+          "reminder_hour": "Skicka från timme (HA tidszon)",
+          "notify_service": "Aviseringskanal",
+          "notify_entity": "Aviseringsenhet (krävs för notify.send_message)",
+          "language": "Påminnelsespråk",
+          "shared_channel_enabled": "Använd befintlig delad kanal"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Kontrollera aktiva användare, tillgänglig aviseringskanal och aviseringsenhet."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Växter"
+      },
+      "planned": {
+        "name": "Planerade såddar"
+      },
+      "active": {
+        "name": "Aktiva grödor"
+      },
+      "successful": {
+        "name": "Framgångsrika såddar"
+      },
+      "open_tasks": {
+        "name": "Öppna trädgårdsuppgifter"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Trädgårdsarbete"
+      }
+    }
+  }
+}

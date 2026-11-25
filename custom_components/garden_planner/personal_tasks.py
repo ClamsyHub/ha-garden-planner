@@ -10,6 +10,7 @@ from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.storage import Store
 
+from .language_data import ACTIVITY_LABELS
 from .models import (
     PlannerError,
     StorageError,
@@ -20,7 +21,7 @@ from .models import (
 )
 from .reminder_preferences import STORE_KEY, availability, selections
 from .storage import PlannerWorker
-from .task_planning import LABELS, PREFIX, complete, postpone, reconcile, visible
+from .task_planning import PREFIX, complete, postpone, reconcile, visible
 
 
 class PersonalTasks:
@@ -83,7 +84,7 @@ class PersonalTasks:
                     identifier(item.get("plant_id"))
                     if (
                         not isinstance(item.get("activity"), str)
-                        or item.get("activity") not in LABELS
+                        or item.get("activity") not in ACTIVITY_LABELS["en"]
                         or type(item.get("completed")) is not bool
                         or item.get("personal_generated") is not True
                         or type(record.get("cancelled")) is not bool

@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Creëer een lokale tuin. De applicatie verschijnt automatisch in de zijbalk. Herinneringen zijn standaard uitgeschakeld."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner is al geconfigureerd."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Zonder activering worden er geen berichten verzonden. Beheer gebruikersrollen en individuele push-/e-mailontvangers in Garden Planner → Instellingen. Een notificerende entiteit is geen e-mailadres.",
+        "data": {
+          "writers": "Subsidie bewerken",
+          "reminders_enabled": "Schakel herinneringen expliciet in",
+          "lead_days": "Doorlooptijd (dagen)",
+          "reminder_hour": "Verzenden vanaf uur (HA tijdzone)",
+          "notify_service": "Meldingskanaal",
+          "notify_entity": "Notificatie-entiteit (vereist voor notify.send_message)",
+          "language": "Herinneringstaal",
+          "shared_channel_enabled": "Gebruik een bestaand gedeeld kanaal"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Controleer actieve gebruikers, het beschikbare meldingskanaal en de meldingsentiteit."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Planten"
+      },
+      "planned": {
+        "name": "Geplande zaaiingen"
+      },
+      "active": {
+        "name": "Actieve gewassen"
+      },
+      "successful": {
+        "name": "Succesvolle zaaiingen"
+      },
+      "open_tasks": {
+        "name": "Open tuintaken"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Tuinwerk"
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Stwórz lokalny ogród. Aplikacja pojawia się automatycznie na pasku bocznym. Przypomnienia są domyślnie wyłączone."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner jest już skonfigurowany."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Bez aktywacji nie są wysyłane żadne wiadomości. Zarządzaj rolami użytkowników i indywidualnymi odbiorcami push/e-mail w Garden Planner → Ustawienia. Jednostka powiadamiająca nie jest adresem e-mail.",
+        "data": {
+          "writers": "Edycja grantów",
+          "reminders_enabled": "Jawnie włącz przypomnienia",
+          "lead_days": "Czas realizacji (dni)",
+          "reminder_hour": "Wyślij od godziny (strefa czasowa HA)",
+          "notify_service": "Kanał powiadomień",
+          "notify_entity": "Jednostka powiadamiająca (wymagana dla notify.send_message)",
+          "language": "Język przypomnienia",
+          "shared_channel_enabled": "Użyj istniejącego udostępnionego kanału"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Sprawdź aktywnych użytkowników, dostępny kanał powiadomień i jednostkę powiadomień."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Rośliny"
+      },
+      "planned": {
+        "name": "Planowane zasiewy"
+      },
+      "active": {
+        "name": "Aktywne uprawy"
+      },
+      "successful": {
+        "name": "Udane siewy"
+      },
+      "open_tasks": {
+        "name": "Otwarte zadania ogrodowe"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Prace ogrodowe"
+      }
+    }
+  }
+}

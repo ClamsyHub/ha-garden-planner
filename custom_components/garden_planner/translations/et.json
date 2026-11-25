@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Garden Planner",
+        "description": "Looge kohalik aed. Rakendus kuvatakse automaatselt külgribal. Meeldetuletused on vaikimisi välja lülitatud."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner on juba konfigureeritud."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Garden Planner",
+        "description": "Ilma aktiveerimiseta sõnumeid ei saadeta. Hallake kasutajarolle ja individuaalseid tõuke-/meili saajaid menüüs Garden Planner → Seaded. Teavitamise üksus ei ole e-posti aadress.",
+        "data": {
+          "writers": "Toetuste toimetamine",
+          "reminders_enabled": "Luba selgesõnaliselt meeldetuletused",
+          "lead_days": "Tarneaeg (päevades)",
+          "reminder_hour": "Saada alates tunnist (HA ajavöönd)",
+          "notify_service": "Teavituskanal",
+          "notify_entity": "Teavitusüksus (nõutav notify.send_message jaoks)",
+          "language": "Meeldetuletuse keel",
+          "shared_channel_enabled": "Kasutage olemasolevat jagatud kanalit"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Kontrollige aktiivseid kasutajaid, saadaolevat teavituskanalit ja teavitusüksust."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Taimed"
+      },
+      "planned": {
+        "name": "Planeeritud külvid"
+      },
+      "active": {
+        "name": "Aktiivsed põllukultuurid"
+      },
+      "successful": {
+        "name": "Edukad külvid"
+      },
+      "open_tasks": {
+        "name": "Avatud aiaülesanded"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Aiatööd"
+      }
+    }
+  }
+}

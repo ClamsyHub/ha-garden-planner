@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "GPTEM000X",
+        "description": "Stvorite lokalni vrt. Aplikacija se automatski pojavljuje na bočnoj traci. Podsjetnici su prema zadanim postavkama isključeni."
+      }
+    },
+    "abort": {
+      "already_configured": "Garden Planner je već konfiguriran."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "GPTEM000X",
+        "description": "Nijedna poruka se ne šalje bez aktivacije. Upravljajte korisničkim ulogama i pojedinačnim primateljima push/e-pošte u Garden Planner → Postavke. Entitet obavijesti nije adresa e-pošte.",
+        "data": {
+          "writers": "Potpore za uređivanje",
+          "reminders_enabled": "Izričito omogući podsjetnike",
+          "lead_days": "Vrijeme isporuke (dani)",
+          "reminder_hour": "Pošalji od sata (HA vremenska zona)",
+          "notify_service": "Kanal za obavijesti",
+          "notify_entity": "Entitet obavijesti (potreban za notify.send_message)",
+          "language": "Jezik podsjetnika",
+          "shared_channel_enabled": "Koristite postojeći zajednički kanal"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Provjerite aktivne korisnike, dostupni kanal obavijesti i entitet obavijesti."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "plants": {
+        "name": "Biljke"
+      },
+      "planned": {
+        "name": "Planirane sjetve"
+      },
+      "active": {
+        "name": "Aktivni usjevi"
+      },
+      "successful": {
+        "name": "Uspješne sjetve"
+      },
+      "open_tasks": {
+        "name": "Otvoreni vrtni zadaci"
+      }
+    },
+    "calendar": {
+      "work": {
+        "name": "Rad u vrtu"
+      }
+    }
+  }
+}

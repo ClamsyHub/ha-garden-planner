@@ -3,6 +3,7 @@
 import re
 from typing import Any
 
+from .language_data import SUPPORTED_LANGUAGES
 from .models import ValidationError
 
 DEFAULT_OPTIONS: dict[str, Any] = {
@@ -53,7 +54,7 @@ def validate_options(value: Any) -> dict[str, Any]:
         or not 0 <= result["reminder_hour"] <= 23
     ):
         raise ValidationError("Reminder hour must be 0–23.")
-    if result["language"] not in ("de", "en"):
+    if result["language"] not in SUPPORTED_LANGUAGES:
         raise ValidationError("Unsupported reminder language.")
     if not isinstance(result["writers"], list) or not all(
         isinstance(u, str) and re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", u)
