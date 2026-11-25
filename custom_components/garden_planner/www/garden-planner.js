@@ -9906,6 +9906,7 @@ var vr = ue`
     padding: 0 10px;
   }
   .brand-icon {
+    flex-shrink: 0;
     display: grid;
     place-items: center;
     color: var(--gp-green);
@@ -9914,6 +9915,9 @@ var vr = ue`
     height: 42px;
     border-radius: 14px;
   }
+  .brand > div {
+    min-width: 0;
+  }
   .brand strong {
     font-size: 18px;
     letter-spacing: -0.5px;
@@ -9921,6 +9925,7 @@ var vr = ue`
   .brand small {
     display: block;
     font-size: 10px;
+    overflow-wrap: anywhere;
     letter-spacing: 2.8px;
     text-transform: uppercase;
     color: var(--gp-muted);
@@ -9937,6 +9942,13 @@ var vr = ue`
     padding: 12px;
     color: var(--gp-muted);
     font-weight: 500;
+    text-align: start;
+    min-width: 0;
+  }
+  nav .nav-label {
+    min-width: 0;
+    flex: 1;
+    overflow-wrap: anywhere;
   }
   nav button[aria-current="page"] {
     color: var(--gp-green);
@@ -15718,7 +15730,7 @@ var Sr = class extends pt {
             </div>
           </div>
           <nav aria-label="Garden Planner">
-            ${yr.map((e) => z`<button aria-current=${this.page === e ? "page" : H} @click=${() => this.navigate(e)}>${$(e)}${this.tr(e)}</button>`)}
+            ${yr.map((e) => z`<button aria-current=${this.page === e ? "page" : H} @click=${() => this.navigate(e)}>${$(e)}<span class="nav-label">${this.tr(e)}</span></button>`)}
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>

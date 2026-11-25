@@ -5210,7 +5210,7 @@ export class GardenPlannerPanel extends LitElement {
             </div>
           </div>
           <nav aria-label="Garden Planner">
-            ${pages.map((page) => html`<button aria-current=${this.page === page ? "page" : nothing} @click=${() => this.navigate(page)}>${icon(page)}${this.tr(page)}</button>`)}
+            ${pages.map((page) => html`<button aria-current=${this.page === page ? "page" : nothing} @click=${() => this.navigate(page)}>${icon(page)}<span class="nav-label">${this.tr(page)}</span></button>`)}
           </nav>
           <div class="aside-footer">${this.tr("tagline")}</div>
         </aside>

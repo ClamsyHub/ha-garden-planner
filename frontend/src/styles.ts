@@ -116,6 +116,7 @@ export const styles = css`
     padding: 0 10px;
   }
   .brand-icon {
+    flex-shrink: 0;
     display: grid;
     place-items: center;
     color: var(--gp-green);
@@ -124,6 +125,9 @@ export const styles = css`
     height: 42px;
     border-radius: 14px;
   }
+  .brand > div {
+    min-width: 0;
+  }
   .brand strong {
     font-size: 18px;
     letter-spacing: -0.5px;
@@ -131,6 +135,7 @@ export const styles = css`
   .brand small {
     display: block;
     font-size: 10px;
+    overflow-wrap: anywhere;
     letter-spacing: 2.8px;
     text-transform: uppercase;
     color: var(--gp-muted);
@@ -147,6 +152,13 @@ export const styles = css`
     padding: 12px;
     color: var(--gp-muted);
     font-weight: 500;
+    text-align: start;
+    min-width: 0;
+  }
+  nav .nav-label {
+    min-width: 0;
+    flex: 1;
+    overflow-wrap: anywhere;
   }
   nav button[aria-current="page"] {
     color: var(--gp-green);

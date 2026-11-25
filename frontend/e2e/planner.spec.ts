@@ -4258,3 +4258,77 @@ test("all bundled languages switch offline, persist and localize the bed planner
     scale: "css",
   });
 });
+
+test("navigation labels stay aligned for every language at desktop and phone widths", async ({
+  page,
+}, testInfo) => {
+  await open(page);
+  await navigate(page, "Einstellungen");
+  const selector = page
+    .locator("select")
+    .filter({ has: page.locator('option[value="ga"]') })
+    .last();
+  const nav = page.getByRole("navigation", {
+    name: "Garden Planner",
+    exact: true,
+  });
+  const original = page.viewportSize()!;
+  const widths =
+    original.width > 760 ? [original.width, 1000] : [original.width];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: original.height });
+    let brandWidth: number | undefined;
+    for (const lang of languages) {
+      await selector.selectOption(lang);
+      await expect(page.locator("garden-planner-panel")).toHaveAttribute(
+        "lang",
+        lang,
+      );
+      await expect(nav.locator(".nav-label")).toHaveCount(
+        await nav.getByRole("button").count(),
+      );
+      const positions = await nav.getByRole("button").evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const label = button.querySelector(".nav-label")!;
+          const icon = button.querySelector("svg")!;
+          const range = document.createRange();
+          range.selectNodeContents(label);
+          const lines = Array.from(range.getClientRects());
+          return {
+            textAlign: getComputedStyle(label).textAlign,
+            left: label.getBoundingClientRect().left,
+            firstLine: lines[0]!.left,
+            lines: lines.length,
+            right: label.getBoundingClientRect().right,
+            buttonRight: button.getBoundingClientRect().right,
+            iconLeft: icon.getBoundingClientRect().left,
+          };
+        }),
+      );
+      for (const position of positions) {
+        expect(["start", "left"]).toContain(position.textAlign);
+        expect(Math.abs(position.firstLine - position.left)).toBeLessThan(1);
+        expect(position.right).toBeLessThanOrEqual(position.buttonRight);
+        if (width > 760) {
+          expect(Math.abs(position.left - positions[0]!.left)).toBeLessThan(1);
+          expect(
+            Math.abs(position.iconLeft - positions[0]!.iconLeft),
+          ).toBeLessThan(1);
+        } else expect(position.lines).toBe(1);
+      }
+      const iconWidth = await page
+        .locator(".brand-icon")
+        .evaluate((el) => el.getBoundingClientRect().width);
+      if (brandWidth === undefined) brandWidth = iconWidth;
+      expect(iconWidth).toBe(brandWidth);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+    }
+  }
+  await selector.selectOption("hu");
+  await nav.screenshot({
+    path: testInfo.outputPath("navigation-hungarian.png"),
+    scale: "css",
+  });
+});
